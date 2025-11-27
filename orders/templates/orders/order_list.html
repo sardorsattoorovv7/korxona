@@ -273,6 +273,50 @@
                 margin: 10px auto;
                 border-radius: 0.75rem;
             }
+            
+            /* Mobil uchun header qayta tartib */
+            .top-header-flex {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .top-header-flex h1 {
+                font-size: 1.5rem;
+                order: 2;
+                margin-top: 0;
+            }
+            .logout-link-modern {
+                align-self: flex-end;
+                order: 3;
+                margin-top: -50px;
+            }
+            
+            /* Logo va nom qayta tartib */
+            .logo-modern {
+                order: 1;
+                margin-bottom: 10px;
+            }
+            
+            h2.welcome-text {
+                font-size: 1.1rem;
+                padding-bottom: 0.75rem;
+            }
+            
+            /* Admin harakatlari kartasi mobil uchun */
+            .admin-actions-card {
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .admin-actions-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .action-link-btn {
+                justify-content: center;
+                padding: 0.9rem 1rem;
+                font-size: 0.9rem;
+            }
+            
             .table-wrapper {
                 margin-top: 15px; 
             }
@@ -335,6 +379,98 @@
                 gap: 5px; 
                 padding: 0; 
                 width: 100%;
+            }
+            
+            /* Mobil uchun status va muddat ko'rinishi */
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 4px 8px;
+            }
+        }
+        
+        /* 📱 Kichik mobil qurilmalar uchun qo'shimcha sozlamalar */
+        @media (max-width: 480px) {
+            .container-list-modern {
+                padding: 0.75rem;
+                margin: 5px;
+            }
+            
+            .top-header-flex h1 {
+                font-size: 1.3rem;
+            }
+            
+            .logo-modern span {
+                font-size: 1.5rem;
+            }
+            
+            .logout-link-modern {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+            
+            h2.welcome-text {
+                font-size: 1rem;
+            }
+            
+            .table-modern td {
+                padding: 8px 8px 8px 45%;
+                font-size: 13px;
+            }
+            
+            .table-modern td::before {
+                width: 42%;
+                font-size: 12px;
+            }
+            
+            .actions-cell-modern {
+                gap: 4px;
+            }
+            
+            .btn-small {
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+            
+            /* Harakat tugmalari matnini qisqartirish */
+            .btn-usta-qabul::after { content: " Qabul"; }
+            .btn-usta-boshla::after { content: " Boshlash"; }
+            .btn-usta-tugat::after { content: " Tugatdim"; }
+            
+            /* Planshetlar uchun (768px dan 900px gacha) */
+            @media (min-width: 768px) and (max-width: 900px) {
+                .container-list-modern {
+                    padding: 1.5rem;
+                }
+                
+                .top-header-flex {
+                    flex-direction: row;
+                    align-items: center;
+                }
+                
+                .top-header-flex h1 {
+                    font-size: 1.7rem;
+                    order: 2;
+                }
+                
+                .logo-modern {
+                    order: 1;
+                }
+                
+                .logout-link-modern {
+                    order: 3;
+                    margin-top: 0;
+                }
+                
+                .admin-actions-group {
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                }
+                
+                .action-link-btn {
+                    flex: 1;
+                    min-width: 200px;
+                    justify-content: center;
+                }
             }
         }
     </style>
