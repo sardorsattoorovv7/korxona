@@ -1,0 +1,386 @@
+{% extends "orders/base.html" %} 
+{% load static %}
+{% load humanize %} 
+
+{% block title %}Hisobotlar Paneli{% endblock %}
+
+{% block content %}
+    <style>
+        /* Zamonaviy Uslublar Palitrasi */
+        :root {
+            --primary-color: #0d9488; /* To'q Yashil (Teal) - Professional rang */
+            --secondary-color: #0ea5e9; /* Moviy (Info/Aksiya) */
+            --background-light: #f9fafb; /* Juda ochiq kulrang fon */
+            --card-border: #e5e7eb;
+            --text-dark: #1f2937; /* To'q matn */
+            --input-border: #d1d5db;
+        }
+
+        /* Umumiy Konteyner */
+        .container-modern {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: var(--background-light);
+            min-height: 80vh;
+        }
+
+        /* Header va Navigatsiya */
+        .report-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--card-border);
+        }
+        .report-header-flex h1 { 
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2.25rem; /* Katta sarlavha */
+            font-weight: 700;
+        }
+
+        /* Tugmalar */
+        .btn-modern {
+            text-decoration: none; 
+            padding: 0.6rem 1.25rem; 
+            border-radius: 0.5rem; 
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-secondary-dark {
+            background-color: #6b7280; 
+            color: white; 
+        }
+        .btn-secondary-dark:hover { background-color: #4b5563; }
+        .btn-export-light {
+            background-color: var(--secondary-color);
+            color: white; 
+        }
+        .btn-export-light:hover { background-color: #0284c7; }
+
+        /* Filtrlash Bo'limi */
+        .filter-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2.5rem;
+            border-left: 5px solid var(--secondary-color);
+        }
+        .filter-form-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr) auto auto; /* 4 ta input + 2 ta button */
+            gap: 1rem;
+            align-items: flex-end;
+        }
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-dark);
+            display: block;
+        }
+        .filter-group input {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--input-border);
+            border-radius: 0.5rem;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        .filter-group input:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        }
+        .btn-filter-action {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-apply {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-apply:hover { background-color: #0f766e; }
+        .btn-reset-filter {
+            background-color: #e5e7eb;
+            color: var(--text-dark);
+        }
+        .btn-reset-filter:hover { background-color: #d1d5db; }
+
+        /* Summary Kartalari */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        .summary-card-modern {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+            border-top: 5px solid;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .summary-card-modern:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .summary-card-modern h3 {
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .summary-card-modern p {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0;
+        }
+        .card-orders { border-top-color: var(--secondary-color); }
+        .card-square { border-top-color: var(--primary-color); }
+        .card-revenue { border-top-color: #f59e0b; /* To'q sariq tushum uchun */ }
+
+        .icon-box {
+            background: var(--background-light);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d1d5db; /* Icon rangi */
+        }
+        .icon-box i { font-size: 1.5rem; }
+
+        /* Jadval Stili */
+        .table-wrapper-modern {
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            background: white;
+        }
+        .table-modern { 
+            width: 100%; 
+            border-collapse: collapse;
+        }
+        .table-modern thead th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .table-modern tbody td { 
+            padding: 1rem; 
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
+        .table-modern tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .table-modern tbody tr:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .text-end-table { text-align: right !important; }
+        .text-center-table { text-align: center !important; }
+        
+        /* Status Badge'lar */
+        .status-badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            min-width: 100px;
+            text-align: center;
+        }
+        .status-kiritildi { background-color: #bfdbfe; color: #1e40af; } 
+        .status-tasdiqlandi { background-color: #d1e7dd; color: #0f5132; } 
+        .status-rad_etildi { background-color: #fecaca; color: #b91c1c; } 
+        .status-ishda { background-color: #fef08a; color: #a16207; } 
+        .status-tayyor { background-color: #ddd6fe; color: #6d28d9; } 
+        .status-bajarildi { background-color: #ccfbf1; color: #0f766e; }
+    </style>
+
+    <div class="container-modern">
+        
+        {# --- HEADER VA QAYTISH TUGMASI --- #}
+        <div class="report-header-flex">
+            <h1>📊 Buyurtmalar Hisoboti</h1>
+            <div style="display: flex; gap: 10px;">
+                <a href="{% url 'order_list' %}" class="btn-modern btn-secondary-dark">
+                    <i class="fas fa-arrow-left"></i> Buyurtmalar Ro'yxatiga Qaytish
+                </a>
+                {# Export tugmasi, filtrlarni qo'shish bilan #}
+                <a href="{% url 'export_orders_csv' %}?start_date={{ start_date|default:'' }}&end_date={{ end_date|default:'' }}" class="btn-modern btn-export-light">
+                    <i class="fas fa-download"></i> CSV Yuklab Olish
+                </a>
+            </div>
+        </div>
+
+        {# --- FILTRLASH QISMI --- #}
+        <div class="filter-card">
+            <h3 style="font-size: 1.25rem; color: var(--secondary-color); margin-bottom: 1rem; font-weight: 700;">
+                <i class="fas fa-sliders-h me-2"></i> Hisobotni Sanalar Bo'yicha Filtrlash
+            </h3>
+            <form method="GET" action="{% url 'weekly_report_view' %}" class="filter-form-grid">
+                
+                <div class="filter-group" style="grid-column: span 2;">
+                    <label for="start_date">Boshlanish Sanasi:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date|default:'' }}">
+                </div>
+                
+                <div class="filter-group" style="grid-column: span 2;">
+                    <label for="end_date">Tugash Sanasi:</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date|default:'' }}">
+                </div>
+                
+                <!-- <button type="submit" class="btn-filter-action btn-apply">
+                    <i class="fas fa-search"></i> Filtrlash
+                </button>
+                <a href="{% url 'weekly_report_view' %}" class="btn-filter-action btn-reset-filter">
+                    <i class="fas fa-sync-alt"></i> Reset
+                </a> -->
+            </form>
+            
+            <p style="margin-top: 1.5rem; font-size: 0.9rem; color: #6b7280; padding-top: 1rem; border-top: 1px solid var(--card-border);">
+                Filtr oralig'i: 
+                <strong style="color: var(--text-dark);">{{ start_date|default:'Barcha vaqt' }}</strong> dan 
+                <strong style="color: var(--text-dark);">{{ end_date|default:'Hozirgacha' }}</strong> gacha
+            </p>
+        </div>
+        
+        {# --- UMUMIY HISOBLAR QISMI --- #}
+        <div class="summary-grid">
+            <div class="summary-card-modern card-orders">
+                <div>
+                    <h3>Buyurtmalar Soni</h3>
+                    <p style="color: var(--secondary-color);">{{ total_orders_count|intcomma }}</p>
+                </div>
+                <div class="icon-box" style="background: #e0f7fa; color: var(--secondary-color);"><i class="fas fa-shopping-cart"></i></div>
+            </div>
+
+            <div class="summary-card-modern card-square">
+                <div>
+                    <h3>Umumiy Kvadratura (m²)</h3>
+                    <p style="color: var(--primary-color);">{{ total_square|floatformat:2|intcomma }}</p>
+                </div>
+                <div class="icon-box" style="background: #e0f2f1; color: var(--primary-color);"><i class="fas fa-ruler-combined"></i></div>
+            </div>
+            
+            <div class="summary-card-modern card-revenue">
+                <div>
+                    <h3>Umumiy Tushum (So'm)</h3>
+                    <p style="color: #f59e0b;">{{ total_revenue|floatformat:0|intcomma }}</p>
+                </div>
+                <div class="icon-box" style="background: #fff7ed; color: #f59e0b;"><i class="fas fa-money-bill-wave"></i></div>
+            </div>
+        </div>
+
+       
+<!-- 
+        <div class="table-wrapper-modern">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">№</th>
+                        <th style="width: 30%;">Usta Nomi</th>
+                        <th style="width: 25%;">Usta Roli</th>
+                        <th style="width: 20%;" class="text-end-table">Bajarilgan Kvadrat (m²)</th>
+                        <th style="width: 20%;" class="text-end-table">Bajarilgan Buyurtmalar Soni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in worker_report_list %}
+                    <tr>
+                        <td><strong style="color: var(--primary-color);">{{ forloop.counter }}</strong></td>
+                        <td>{{ item.worker_name }}</td>
+                        <td>
+                            <span class="status-badge" style="background-color: #f0f9ff; color: #075985; min-width: 80px;">
+                                {{ item.role }}
+                            </span>
+                        </td>
+                        <td class="text-end-table">
+                            <strong style="color: var(--primary-color);">{{ item.total_kvadrat|floatformat:2|intcomma }}</strong>
+                        </td>
+                        <td class="text-end-table">
+                            <strong style="color: var(--secondary-color);">{{ item.total_orders|intcomma }}</strong>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center-table" style="padding: 20px; color: #6b7280; font-weight: 600; background-color: #f9fafb;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Filtrlangan davr uchun bajarilgan buyurtmalar mavjud emas.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div> -->
+        
+        {# --- BUYURTMALAR RO'YXATI JADVALI --- #}
+        <h2 style="font-size: 1.5rem; color: var(--primary-color); margin-top: 3rem; margin-bottom: 1rem; font-weight: 700;">
+            <i class="fas fa-table me-2"></i> Buyurtmalar Ro'yxati
+        </h2>
+        
+        <div class="table-wrapper-modern">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 20%;">Xaridor Nomi</th>
+                        <th style="width: 15%;" class="text-end-table">Kvadrat (m²)</th>
+                        <th style="width: 15%;" class="text-end-table">Summa (so'm)</th>
+                        <th style="width: 15%;" class="text-center-table">Status</th>
+                        <th style="width: 15%;">Kiritilgan Sana</th>
+                        <th style="width: 15%;">Xodim</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in report_orders %}
+                    <tr>
+                        <td><strong style="color: var(--primary-color);">{{ forloop.counter }}</strong></td>
+                        <td>{{ order.customer_name }}</td>
+                        <td class="text-end-table"><strong style="color: #0d6efd;">{{ order.panel_kvadrat|floatformat:2 }}</strong></td>
+                        <td class="text-end-table"><strong style="color: #f59e0b;">{{ order.total_price|floatformat:0|intcomma }}</strong></td>
+                        <td class="text-center-table">
+                            <span class="status-badge status-{{ order.get_status_display|slugify|lower }}">{{ order.get_status_display }}</span>
+                        </td>
+                        <td><small class="text-muted">{{ order.created_at|date:"Y-m-d H:i" }}</small></td>
+                        <td>{{ order.created_by.get_full_name|default:order.created_by.username }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center-table" style="padding: 20px; color: #dc2626; font-weight: 600; background-color: #fef2f2;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Ko'rsatilgan davr uchun buyurtmalar mavjud emas.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "orders/base.html" %} 
+{% load humanize %} 
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    
+    <h1 class="mb-4 text-success display-6 fw-bold border-bottom pb-2">{{ title }}</h1> 
+    
+    <div class="card p-4 mb-4 shadow-sm border-success">
+        <form method="GET" class="row g-3 align-items-end">
+            
+            <div class="col-md-3">
+                <label for="start_date" class="form-label text-secondary">Boshlanish Sanasi:</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|default:'' }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="end_date" class="form-label text-secondary">Tugash Sanasi:</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|default:'' }}">
+            </div>
+            
+            <div class="col-md-6 d-flex justify-content-end align-items-end">
+                
+                <a href="{% url 'order_list' %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i> Ortga
+                </a>
+
+                <a href="{% url 'worker_activity_report' %}" class="btn btn-outline-success me-3">
+                    <i class="fas fa-sync-alt"></i> Tozalash
+                </a> 
+                
+                {# Eksport tugmasi Excelga moslab yangilandi #}
+                <a href="{% url 'export_worker_activity_csv' %}?start_date={{ start_date|default:'' }}&end_date={{ end_date|default:'' }}" 
+                   class="btn btn-success me-3" title="Excel formatida yuklab olish">
+                    <i class="fas fa-file-excel"></i> Yuklab olish
+                </a>
+                
+
+            </div>
+        </form>
+    </div>
+
+    {# Umumiy kvadratura Summary Block #}
+    <div class="alert alert-success bg-success-subtle border-success text-success fw-bold p-3 mb-4">
+        Tanlangan davr uchun umumiy bajarilgan kvadratura: 
+        <span class="float-end">{{ total_finished_kvadrat|floatformat:2|intcomma }} m²</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-bordered shadow-sm">
+            <thead class="bg-success text-white"> 
+                <tr>
+                    <th class="text-center">№</th>
+                    <th>Usta F.I.Sh.</th>
+                    <th class="text-end">Bajarilgan Kvadratura (m²)</th>
+                    <th class="text-center">Bajarilgan Buyurtmalar Soni</th>
+                    <!-- <th class="text-end">O'rtacha Kvadratura (m²)</th>  {# ✅ YANGI USTUN #} -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for worker in worker_report_list %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td>{{ worker.assigned_workers__user__first_name }} {{ worker.assigned_workers__user__last_name }}</td>
+                    <td class="text-end">{{ worker.total_finished_kvadrat|floatformat:2|intcomma }}</td>
+                    <td class="text-center">{{ worker.total_order_count|intcomma }} ta</td>
+                    <!-- <td class="text-end">{{ worker.avg_finished_kvadrat|floatformat:2|intcomma }}</td> {# ✅ YANGI DATA #} -->
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center p-3 text-muted">Tanlangan muddatda bajarilgan ishlar topilmadi.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            {# ✅ YANGI: JAMI qatorini qo'shish #}
+            {% if worker_report_list %}
+            <!-- <tfoot class="bg-light fw-bold border-top border-3">
+                <tr>
+                    <td colspan="2" class="text-end text-dark">JAMI:</td>
+                    <td class="text-end text-primary">{{ total_finished_kvadrat|floatformat:2|intcomma }}</td>
+                    <td class="text-center">{{ total_order_count|intcomma }} ta</td>
+                    {# total_order_count va grand_avg_kvadrat view dan kontekst sifatida yuborilishi kerak #}
+                    <td class="text-end text-primary">{{ grand_avg_kvadrat|floatformat:2|intcomma }}</td> 
+                </tr>
+            </tfoot> -->
+            {% endif %}
+        </table>
+    </div>
+</div>
+{% endblock %}

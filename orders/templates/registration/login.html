@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Tizimga Kirish</title>
+</head>
+<body>
+    <h1>Tizimga Kirish</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Kirish</button>
+    </form>
+    
+    {# ❌ Noto'g'ri: admin:password_reset #}
+    {# ✅ To'g'ri: password_reset #}
+    <p><a href="{% url 'password_reset' %}">Parolni unutdingizmi?</a></p>
+</body>
+</html>

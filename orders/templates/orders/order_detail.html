@@ -1,0 +1,226 @@
+{% extends "orders/base.html" %}
+{% load static %}
+
+{% block title %}Buyurtma Tafsilotlari - {{ order.order_number }}{% endblock %}
+
+{% block content %}
+<style>
+/* Stil qismini siz xohlashingizcha o'zgartirishingiz mumkin */
+.container-detail {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+.order-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+.info-card {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+}
+.image-upload-section, .manager-view-section {
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    margin-bottom: 2rem;
+}
+.image-upload-section {
+    background: #ecfdf5;
+    border: 1px solid #10b981;
+}
+.manager-view-section {
+    background: #eff6ff;
+    border: 1px solid #3b82f6;
+}
+.image-preview {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 0.5rem;
+    border: 2px solid #e5e7eb;
+    margin-bottom: 1rem;
+}
+.status-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 1rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+.status-tasdiqlandi { background: #065f46; color: white; }
+.status-usta_boshla, .status-ishda { background: #a16207; color: white; }
+.status-usta_tugatdi, .status-tayyor { background: #10b981; color: white; }
+.status-bajarildi { background: #047857; color: white; }
+
+.btn-upload, .btn-secondary {
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+.btn-upload { background: #10b981; }
+.btn-upload:hover { background: #059669; }
+.btn-secondary { background: #6b7280; }
+.btn-secondary:hover { background: #4b5563; }
+
+.message {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+.message-success { background-color: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+.message-error { background-color: #fef2f2; color: #991b1b; border-color: #fca5a5; }
+
+.upload-form { margin-top: 1rem; }
+.image-info { font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem; }
+.image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem; }
+.image-card { background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; }
+.no-image { padding: 2rem; text-align: center; background: #f9fafb; border-radius: 0.5rem; border: 2px dashed #d1d5db; color: #6b7280; font-style: italic; }
+</style>
+
+<div class="container-detail">
+    <div class="order-header">
+        <div>
+            <h1>Buyurtma #{{ order.order_number }}</h1>
+            <span class="status-badge status-{{ order.status|lower }}">
+                {{ order.get_status_display }}
+            </span>
+        </div>
+        <a href="{% url 'order_list' %}" class="btn-secondary">← Orqaga</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message message-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="order-info-grid">
+        <div class="info-card">
+            <h3>Asosiy Ma'lumotlar</h3>
+            <p><strong>Xaridor:</strong> {{ order.customer_name }}</p>
+            <p><strong>Mahsulot:</strong> {{ order.product_name }}</p>
+            <p><strong>Kvadrat:</strong> {{ order.panel_kvadrat }} m²</p>
+            <p><strong>Narx:</strong> 
+                {% if is_worker %} *** {% else %} {{ order.total_price|floatformat:0 }} so'm {% endif %}
+            </p>
+            <p><strong>Muddat:</strong> 
+                {% if order.deadline %}{{ order.deadline|date:"Y-m-d H:i" }}{% else %} Belgilanmagan {% endif %}
+            </p>
+        </div>
+
+        <div class="info-card">
+            <h3>Jarayon Ma'lumotlari</h3>
+            <p><strong>Yaratilgan:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
+            <p><strong>Yaratuvchi:</strong> {{ order.created_by.get_full_name|default:order.created_by.username }}</p>
+            {% if order.worker_started_at %}<p><strong>Boshlangan:</strong> {{ order.worker_started_at|date:"Y-m-d H:i" }}</p>{% endif %}
+            {% if order.worker_finished_at %}<p><strong>Tugatilgan:</strong> {{ order.worker_finished_at|date:"Y-m-d H:i" }}</p>{% endif %}
+            {% if order.assigned_workers.exists %}
+                <p><strong>Tayinlangan Ustalar:</strong></p>
+                <ul style="margin-left:1rem;">
+                    {% for worker in order.assigned_workers.all %}
+                        <li>{{ worker.user.get_full_name|default:worker.user.username }} - {{ worker.get_role_display }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if is_assigned_worker %}
+        <div class="image-upload-section">
+            <h3>📸 Rasm Yuklash</h3>
+
+            <!-- Boshlash Rasmi -->
+            {% if not order.start_image %}
+                {% if order.status == 'TASDIQLANDI' %}
+                    <div class="upload-form">
+                        <h4>Ish Boshlash Rasmi</h4>
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="upload_type" value="start_image">
+                            <input type="file" name="start_image" accept="image/*" required>
+                            <button type="submit" class="btn-upload">✅ Boshlash Rasmini Yuklash</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <p style="color:#a16207;">Boshlash rasm yuklash uchun holat mos emas.</p>
+                {% endif %}
+            {% else %}
+                <div>
+                    <h4>✅ Boshlash Rasmi Yuklangan</h4>
+                    <img src="{{ order.start_image.url }}" class="image-preview">
+                    <p class="image-info">Vaqt: {{ order.start_image_uploaded_at|date:"Y-m-d H:i" }}</p>
+                </div>
+            {% endif %}
+
+            <!-- Tugatish Rasmi -->
+            {% if not order.finish_image %}
+                {% if order.status in "USTA_BOSHLA,ISHDA" %}
+                    <div class="upload-form">
+                        <h4>Ish Tugatish Rasmi</h4>
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="upload_type" value="finish_image">
+                            <input type="file" name="finish_image" accept="image/*" required>
+                            <button type="submit" class="btn-upload">✅ Tugatish Rasmini Yuklash</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <p style="color:#a16207;">Tugatish rasm yuklash uchun holat mos emas.</p>
+                {% endif %}
+            {% else %}
+                <div>
+                    <h4>✅ Tugatish Rasmi Yuklangan</h4>
+                    <img src="{{ order.finish_image.url }}" class="image-preview">
+                    <p class="image-info">Vaqt: {{ order.finish_image_uploaded_at|date:"Y-m-d H:i" }}</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if is_manager or is_production_boss or is_glavniy_admin %}
+        <div class="manager-view-section">
+            <h3>Usta Rasmlari (Nazorat)</h3>
+            <div class="image-grid">
+                <div class="image-card">
+                    <h4>Boshlash Rasmi</h4>
+                    {% if order.start_image %}
+                        <img src="{{ order.start_image.url }}" class="image-preview">
+                        <p class="image-info">Yuklangan: {{ order.start_image_uploaded_at|date:"Y-m-d H:i" }}</p>
+                    {% else %}
+                        <div class="no-image">❌ Hali yuklanmagan</div>
+                    {% endif %}
+                </div>
+                <div class="image-card">
+                    <h4>Tugatish Rasmi</h4>
+                    {% if order.finish_image %}
+                        <img src="{{ order.finish_image.url }}" class="image-preview">
+                        <p class="image-info">Yuklangan: {{ order.finish_image_uploaded_at|date:"Y-m-d H:i" }}</p>
+                    {% else %}
+                        <div class="no-image">❌ Hali yuklanmagan</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

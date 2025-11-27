@@ -1,0 +1,24 @@
+{% comment %} workers_panel.html {% endcomment %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Usta</th>
+            <th>Roli</th>
+            <th>Jami Buyurtma</th>
+            <th>Hozir Ishda</th>
+            <th>Tugallagan</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for worker in workers %} 
+        <tr>
+            <td>{{ worker.user.username }}</td>
+            <td>{{ worker.get_role_display }}</td>
+            <td>{{ worker.total_assigned_orders }}</td> 
+            <td>{{ worker.orders_in_progress }}</td> 
+            <td>{{ worker.orders_finished }}</td> 
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

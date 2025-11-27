@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Haftalik Buyurtmalar Hisoboti</title>
+    <style>
+        /* orders/order_list.html dan olingan ranglar va uslublar */
+        :root {
+            --primary-green: #198754; 
+            --light-green: #e6f4ea; 
+            --text-dark: #343a40;
+            --border-color: #dee2e6;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background-color: #f8f9fa; 
+            color: var(--text-dark);
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+        }
+        h1 { 
+            color: var(--primary-green);
+            border-bottom: 3px solid var(--light-green);
+            padding-bottom: 10px;
+        }
+        .summary-box {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        .summary-card {
+            background-color: var(--light-green);
+            flex: 1;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--primary-green);
+        }
+        .summary-card h3 {
+            color: var(--primary-green);
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            border-bottom: none;
+        }
+        .summary-card p {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        /* Jadval Stili */
+        table { 
+            width: 100%; 
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td { 
+            border: 1px solid var(--border-color);
+            padding: 10px 8px; 
+            text-align: left; 
+            font-size: 14px;
+        }
+        thead th {
+            background-color: var(--primary-green);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        /* Tugmalar */
+        .action-link { 
+            text-decoration: none; 
+            padding: 8px 15px; 
+            border-radius: 5px; 
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+            margin-right: 10px;
+        }
+        .btn-export { background-color: #0dcaf0; color: white; }
+        .btn-export:hover { background-color: #08a3c2; }
+        .btn-back { background-color: #6c757d; color: white; }
+        .btn-back:hover { background-color: #5a6268; }
+
+        /* Status Stili (order_list.html dan olingan) */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .status-kiritildi { background-color: #cfe2ff; color: #084298; } 
+        .status-tasdiqlandi { background-color: #d1e7dd; color: #0f5132; } 
+        .status-rad_etildi { background-color: #f8d7da; color: #721c24; } 
+        .status-ishda { background-color: #fff3cd; color: #664d03; } 
+        .status-tayyor { background-color: #e3dff0; color: #432889; } 
+        .status-bajarildi { background-color: #cff4fc; color: #055160; } 
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <a href="{% url 'order_list' %}" class="action-link btn-back">⬅️ Orqaga</a>
+        <a href="{% url 'export_orders_csv' %}" class="action-link btn-export">⬇️ CSV formatda yuklab olish</a>
+        
+        <h1>Haftalik Buyurtmalar Hisoboti</h1>
+        <p>Ko'rsatilgan sanalar oralig'i: **{{ start_date }}** dan **{{ end_date }}** gacha</p>
+        <hr>
+
+        {# Umumiy hisob-kitoblar #}
+        <div class="summary-box">
+            <div class="summary-card">
+                <h3>Jami Buyurtmalar Soni</h3>
+                <p>{{ total_orders_count }} ta</p>
+            </div>
+            <div class="summary-card">
+                <h3>Umumiy Kvadratura</h3>
+                <p>{{ total_square|floatformat:2 }} m²</p>
+            </div>
+            <div class="summary-card">
+                <h3>Umumiy Tushum</h3>
+                <p>{{ total_revenue|floatformat:0 }} so'm</p>
+            </div>
+        </div>
+        
+        <h2>Hisobot Ro'yxati</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Raqami</th>
+                    <th>Xaridor Nomi</th>
+                    <th>Kvadrat (m²)</th>
+                    <th>Summa</th>
+                    <th>Status</th>
+                    <th>Kiritilgan Sana</th>
+                    <th>Kiritgan Xodim</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in report_orders %}
+                <tr>
+                    <td>{{ order.order_number }}</td>
+                    <td>{{ order.customer_name }}</td>
+                    <td style="text-align: right;">{{ order.panel_kvadrat|floatformat:2 }}</td>
+                    <td style="text-align: right;">{{ order.total_price|floatformat:0 }} so'm</td>
+                    <td><span class="status-badge status-{{ order.status|lower }}">{{ order.get_status_display }}</span></td>
+                    <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ order.created_by.get_full_name|default:order.created_by.username }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-dark);">Ko'rsatilgan davr uchun buyurtmalar mavjud emas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tizimga Kirish | Eco Prom Management</title>
+    <style>
+        /* Asosiy ranglar */
+        :root {
+            --primary-green: #198754; 
+            --light-green-bg: #e6f4ea; 
+            --text-dark: #343a40;
+            --border-color: #dee2e6;
+            --danger-red: #dc3545;
+        }
+
+        /* Body va Asosiy Kontayner */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 0;
+            background-color: var(--light-green-bg); 
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .login-container {
+            width: 90%; /* Kichik ekranlarda 90% joy egallaydi */
+            max-width: 400px;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); 
+        }
+        
+        /* Sarlavha */
+        h1 { 
+            color: var(--primary-green);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            border-bottom: 2px solid var(--light-green-bg);
+            padding-bottom: 10px;
+        }
+
+        /* Xabar va Xatolar */
+        .error-message {
+            color: var(--danger-red);
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Forma Stili */
+        form p {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        input[type="text"], 
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, 
+        input[type="password"]:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2);
+            outline: none;
+        }
+
+        /* Tugma */
+        button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s;
+            margin-top: 10px;
+        }
+        button[type="submit"]:hover {
+            background-color: #157347; 
+            transform: translateY(-1px);
+        }
+
+        /* Pastki Link */
+        .admin-link-container {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+        }
+        .admin-link-container a {
+            color: #0dcaf0;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .admin-link-container a:hover {
+            text-decoration: underline;
+        }
+        
+        /* 📱 MOBIL UCHUN ADAPTIV O'ZGARISHLAR (Maxsus optimallashtirish) */
+        @media (max-width: 480px) {
+            body {
+                /* Mobil ekranlarda tepadan pastgacha joyni egallash */
+                align-items: flex-start; 
+                padding: 20px 0;
+                background-color: white; /* Fon rangini mobil qurilmalarda oq qilish */
+            }
+            .login-container {
+                width: 90%; 
+                margin: 0 auto;
+                padding: 20px;
+                box-shadow: none; /* Mobil qurilmalarda box-shadow ni o'chirish */
+                border: 1px solid var(--border-color); /* Tozalik uchun ramka qo'shish */
+            }
+            h1 {
+                font-size: 22px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        
+        <h1>Eco Prom Buyurtmalari Tizimi</h1>
+        
+        {% if form.errors %}
+            <p class="error-message">
+                Login yoki parol xato kiritildi. Iltimos, qayta urinib ko'ring.
+            </p>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <p>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span style="color: var(--danger-red); font-size: 12px;">{{ error }}</span>
+                    {% endfor %}
+                </p>
+            {% endfor %}
+
+            <input type="hidden" name="next" value="{{ next }}">
+            
+            <button type="submit">Kirish</button>
+        </form>
+        <div class="admin-link-container">
+            <p>Admin yoki boshqa xodimlar uchun: <a href="{% url 'admin:login' %}">Admin Login sahifasi</a></p>
+        </div>
+    </div>
+</body>
+</html>

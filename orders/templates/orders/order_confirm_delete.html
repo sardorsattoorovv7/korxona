@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Buyurtmani O'chirishni Tasdiqlash</title>
+    <style>
+        /* Ranglar Palitrasi */
+        :root {
+            --primary-green: #1e7e34; /* To'q Yashil */
+            --light-bg: #f8f9fa; 
+            --danger-red: #dc3545; 
+            --danger-light: #fbe6e8; 
+            --secondary-gray: #495057; 
+            --cancel-gray: #6c757d; /* Bekor qilish uchun kulrang */
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--light-bg);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        /* Tasdiqlash Box Stili */
+        .confirm-box { 
+            width: 90%; 
+            max-width: 400px; /* Kenglik biroz kamaytirildi */
+            padding: 30px;
+            border: 1px solid var(--danger-red); /* Chegara yengilroq */
+            border-radius: 16px; /* Yumaloqroq burchaklar */
+            background-color: white;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); 
+            text-align: center;
+        }
+        
+        h1 { 
+            color: var(--danger-red); 
+            font-size: 24px; /* Kichikroq sarlavha */
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--danger-light);
+            padding-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        /* Xabar Stili */
+        .message-p { 
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--secondary-gray);
+            margin-bottom: 20px;
+        }
+        
+        .order-number {
+            color: var(--primary-green);
+            font-weight: bold;
+            display: inline-block;
+            padding: 2px 8px;
+            background-color: #e6f4ea; 
+            border-radius: 4px;
+        }
+
+        .warning-text {
+            color: var(--danger-red); 
+            font-weight: 600;
+            margin: 20px 0;
+            padding: 12px;
+            background-color: var(--danger-light);
+            border-radius: 8px;
+            border: 1px solid var(--danger-red); /* Solid chegara */
+            font-size: 14px;
+        }
+
+        /* Tugmalar Stili */
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px; /* Tugmalar orasidagi masofa kamaytirildi */
+            margin-top: 25px;
+        }
+        
+        .actions .btn { 
+            flex-grow: 1;
+            padding: 10px 15px; /* Kichikroq o'lcham */
+            border: none; 
+            border-radius: 6px; /* Yumaloqroq burchaklar */
+            cursor: pointer; 
+            font-size: 13px; /* Kichikroq shrift */
+            font-weight: 600; 
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+            display: inline-block; 
+            text-align: center; 
+        }
+        
+        .actions .delete-btn { 
+            background-color: var(--danger-red); 
+            color: white; 
+        }
+        .actions .delete-btn:hover { 
+            background-color: #a3202e; 
+            transform: translateY(-1px);
+        }
+        
+        .actions .cancel-btn { 
+            background-color: var(--cancel-gray); 
+            color: white;
+        }
+        .actions .cancel-btn:hover { 
+            background-color: #5a6268; 
+            transform: translateY(-1px);
+        }
+
+        /* 📱 MOBIL UCHUN ADAPTIV O'ZGARISHLAR */
+        @media (max-width: 576px) {
+            .confirm-box {
+                margin: 15px;
+                padding: 20px;
+                border-radius: 12px;
+            }
+            .actions {
+                flex-direction: column; 
+                gap: 8px; 
+            }
+            .actions .btn {
+                width: 80%; 
+                padding: 33px; /* Mobilga qulaylik uchun bu yerda o'lcham biroz kattaroq qoldirildi */
+                font-size: 14px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="confirm-box">
+        <h1>🗑️ O'chirishni Tasdiqlash</h1>
+        
+        <p class="message-p">
+            Haqiqatan ham **<span class="order-number">Buyurtma №{{ object.order_number }}</span>** ni butunlay o'chirib tashlamoqchimisiz?
+        </p>
+        
+        <p class="warning-text">
+            ⚠️ **DIQQAT**: Bu amal qaytarilmaydi! Barcha ma'lumotlar tizimdan butunlay yo'qoladi.
+        </p>
+        
+        <form method="post" class="actions">
+            {% csrf_token %}
+            
+            {# BEKOR QILISH tugmasi #}
+            <a href="{% url 'order_list' %}" class="btn cancel-btn">❌ BEKOR QILISH</a>
+            
+            {# O'CHIRISH tugmasi #}
+            <button type="submit" class="btn delete-btn">🗑️ O'CHIRISHNI TASDIQLASH</button>
+            
+        </form>
+    </div>
+</body>
+</html>

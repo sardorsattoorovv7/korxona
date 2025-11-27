@@ -1,0 +1,561 @@
+{% extends "orders/base.html" %} 
+{% load static %}
+{% load humanize %} 
+{% load i18n %}
+
+{% block title %}Buyurtmalar Ro'yxati{% endblock %}
+
+{% block content %}
+    <style>
+        /* To'q Yashil va Oq Ranglar Palitrasi (Dark Green & Neutrals) */
+        :root {
+            --primary-color: #047857; /* To'q Zangori Yashil (Dark Emerald Green) */
+            --primary-darker: #059669; /* Yorqinroq To'q Yashil */
+            --background-light: #f7fcf8; /* Juda ochiq yashil fon */
+            --card-bg: #ffffff;
+            --text-dark: #1f2937;
+            --border-color: #e5e7eb;
+            
+            /* Neytral/Ogohlantirish ranglari (ma'noni saqlash uchun) */
+            --danger-text: #991b1b;
+            --warning-text: #a16207;
+            --info-text: #1e40af;
+
+            --audit-log-color: #4b5563; /* To'q kulrang */
+            --logout-color: #9ca3af; 
+            --text-secondary: #6b7280;
+            
+            /* YANGI: Muddat buzilgan qator foni */
+            --expired-row-bg: #fee2e2; /* Juda ochiq qizil */
+            --expired-row-border: #fca5a5;
+        }
+
+        body { 
+            background-color: var(--background-light); 
+        }
+        
+        .container-list-modern {
+            width: 100%;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 2.5rem;
+            background: var(--card-bg);
+            border-radius: 1rem;
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.05); 
+        }
+
+        /* Header va Chiqish */
+        .top-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .logout-link-modern {
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 8px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            background-color: #f9fafb;
+        }
+        .logout-link-modern:hover {
+            background-color: var(--border-color);
+            color: var(--text-dark);
+        }
+
+        h1 { 
+            color: var(--primary-color);
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        h2.welcome-text {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-top: 0;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        /* Admin Harakatlari Guruhini boshqarish - Karta Ko'rinishi */
+        .admin-actions-card {
+            background-color: #ecfdf5; /* Juda och yashil fon */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--primary-darker);
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+        .admin-actions-card h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+            font-size: 1.25rem;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .admin-actions-group {
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        /* Action Tugmalari Stili */
+        .action-link-btn { 
+            text-decoration: none; 
+            padding: 0.75rem 1.25rem; 
+            border-radius: 0.5rem; 
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.07);
+        }
+
+        .create-btn-modern { 
+            background-color: var(--primary-color); /* To'q yashil */
+            color: white; 
+        }
+        .create-btn-modern:hover { background-color: #065f46; }
+
+        .report-btn-modern, .audit-btn-modern { 
+            background-color: var(--text-secondary); /* Kulrang - Neytral Harakat */
+            color: white; 
+        }
+        .report-btn-modern:hover, .audit-btn-modern:hover { background-color: #4b5563; }
+        
+        /* Jadval Stili (Katta ekranlar) */
+        .table-wrapper {
+            margin-top: 25px; 
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .table-modern { 
+            width: 100%; 
+            border-collapse: collapse; 
+        }
+        .table-modern thead th {
+            background-color: var(--primary-color); /* To'q yashil */
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: left;
+            border: none;
+            text-transform: uppercase;
+        }
+        .table-modern tbody td { 
+            padding: 1rem; 
+            text-align: left; 
+            font-size: 0.95rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+        .table-modern tbody tr:last-child td {
+            border-bottom: none;
+        }
+        /* Muddat buzilgan qator */
+        .order-expired {
+            background-color: var(--expired-row-bg) !important;
+        }
+        .order-expired:hover {
+            background-color: #fce7e7 !important;
+        }
+
+        .table-modern tbody tr:nth-child(even) { 
+            background-color: #f9fdfb; 
+        } 
+        .table-modern tbody tr:hover { 
+            background-color: #f0fdf4; 
+        } 
+        
+        .text-right-table { text-align: right !important; }
+
+        /* Status Stili (YANGI USTA STATUSLARI QO'SHILDI) */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+        }
+        /* Status Ranglari */
+        .status-kiritildi { background-color: #d1e7dd; color: #0f5132; } 
+        .status-tasdiqlandi { background-color: #065f46; color: white; } 
+        .status-rad_etildi { background-color: #fef2f2; color: var(--danger-text); } 
+        
+        /* YANGI USTA STATUSLARI RANGI */
+        .status-usta_qabul_qildi { background-color: #bae6fd; color: #075985; } /* Ochiq moviy */
+        .status-usta_boshla { background-color: #fef08a; color: var(--warning-text); } /* Sariq/Jiddiy boshlandi */
+        .status-ishda { background-color: #fef08a; color: var(--warning-text); } /* Eski ishda */
+        .status-usta_tugatdi { background-color: #a7f3d0; color: #065f46; } /* Ochiq yashil/Yakunlashga yaqin */
+
+        .status-tayyor { background-color: #d1fae5; color: #065f46; } 
+        .status-bajarildi { background-color: var(--primary-darker); color: white; } 
+        
+        .pdf-link-modern {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        /* Harakatlar Td ichida */
+        .actions-cell-modern {
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 6px; 
+            max-width: 250px; 
+        }
+        .btn-small { 
+            padding: 5px 10px; 
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 4px;
+            text-decoration: none;
+            box-shadow: none;
+            transition: all 0.15s ease;
+        }
+        
+        /* Harakat Tugmalari Ranglari (Usta tugmalari qo'shildi) */
+        .btn-edit { background-color: #fef3c7; color: var(--warning-text); } 
+        .btn-delete { background-color: #fecaca; color: var(--danger-text); } 
+        .btn-confirm { background-color: #10b981; color: white; } 
+        .btn-reject { background-color: #f9fafb; color: var(--text-secondary); border: 1px solid var(--border-color); } 
+        .btn-start { background-color: #065f46; color: white; } 
+        .btn-finish { background-color: #d1fae5; color: var(--primary-color); } 
+        .btn-complete { background-color: var(--primary-color); color: white; } 
+        
+        /* YANGI USTA TUGMALARI */
+        .btn-usta-qabul { background-color: #075985; color: white; } /* Tovarni oldim */
+        .btn-usta-boshla { background-color: #a16207; color: white; } /* Boshlash */
+        .btn-usta-tugat { background-color: #10b981; color: white; } /* Tugatdim */
+
+        /* Django Messages Stili */
+        .message {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            border: 1px solid;
+        }
+        .message-success {
+            background-color: #d1fae5; 
+            color: #065f46;
+            border-color: #a7f3d0;
+        }
+        .message-error {
+            background-color: #fef2f2;
+            color: var(--danger-text);
+            border-color: #fca5a5;
+        }
+        .message-warning {
+            background-color: #fef9c3;
+            color: var(--warning-text);
+            border-color: #fde68a;
+        }
+
+        /* 📱 MOBIL UCHUN ADAPTIV O'ZGARISHLAR */
+        @media (max-width: 900px) {
+            .container-list-modern {
+                padding: 1rem;
+                margin: 10px auto;
+                border-radius: 0.75rem;
+            }
+            .table-wrapper {
+                margin-top: 15px; 
+            }
+            .table-modern, .table-modern thead, .table-modern tbody, .table-modern th, .table-modern td, .table-modern tr { 
+                display: block; 
+            }
+            .table-modern thead { 
+                display: none; 
+            }
+            .table-modern tr {
+                margin-bottom: 15px;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                background: white;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+                padding: 0;
+            }
+            .table-modern tbody tr:nth-child(even) { 
+                background-color: white; 
+            } 
+            
+            /* Muddat buzilgan qator mobil uchun */
+            .order-expired {
+                border: 2px solid var(--expired-row-border) !important;
+                background-color: var(--expired-row-bg) !important; 
+            }
+
+            .table-modern td {
+                border: none;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding: 10px 10px 10px 50%; 
+                text-align: right;
+                font-size: 14px;
+                min-height: 40px; 
+                box-sizing: border-box;
+            }
+            .table-modern td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                width: 45%;
+                font-weight: 600;
+                text-align: left;
+                color: var(--audit-log-color); 
+                line-height: 1.5;
+            }
+            .table-modern td:last-child {
+                border-bottom: none;
+                text-align: left; 
+                padding: 10px;
+            }
+            .table-modern td:last-child::before {
+                content: ""; 
+                display: none;
+            }
+            .actions-cell-modern {
+                display: flex;
+                flex-wrap: wrap; 
+                gap: 5px; 
+                padding: 0; 
+                width: 100%;
+            }
+        }
+    </style>
+
+    <div class="container-list-modern">
+        
+        <div class="top-header-flex">
+            <div class="logo-modern" style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 50px; height: 50px; background-color: #16a34a; border: 3px solid #059669; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-weight: 700; color: white; font-size: 1.5rem;">
+                    EC
+                </div>
+                <span style="font-size: 1.8rem; font-weight: 700; color: #000;">EcoProm</span>
+            </div>
+            <h1>{{ request.user.get_full_name|default:request.user.username }} Boshqarish Paneli</h1>
+            <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+                {% csrf_token %} 
+                <button type="submit" class="logout-link-modern" style="border: none; background: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-sign-out-alt"></i> Tizimdan Chiqish
+                </button>
+            </form>
+        </div>
+
+        <h2 class="welcome-text">Xush kelibsiz, **{{ request.user.get_full_name|default:request.user.username }}**!</h2>
+
+        {# Django Messages #}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message message-{{ message.tags }}">
+                    <i class="fas fa-info-circle me-2"></i> {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if is_glavniy_admin %} 
+            <div class="admin-actions-card">
+                <h3>Admin va Hisobot Harakatlari</h3>
+                <div class="admin-actions-group">
+                    <a href="{% url 'order_create' %}" class="action-link-btn create-btn-modern">
+                        <i class="fas fa-plus-circle"></i> Yangi Buyurtmani Kiritish
+                    </a>
+                    
+                    <a href="{% url 'sales_report_view' %}" class="action-link-btn report-btn-modern">
+                        <i class="fas fa-chart-bar"></i> Sotuv Hisoboti (Vaqt Oralig'i)
+                    </a>
+                    
+                    <a href="{% url 'product_audit_log_view' %}" class="action-link-btn audit-btn-modern">
+                        <i class="fas fa-history"></i> Mahsulot O'zgarishlari Jurnali
+                    </a>
+
+                    <a href="{% url 'worker_activity_report' %}" class="action-link-btn audit-btn-modern">
+                        <i class="fas fa-chart-bar"></i> Ustalar Hisoboti
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+        
+        <h2>Buyurtmalar Ro'yxati</h2>
+        
+        <div class="table-wrapper">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">Raqami</th>
+                        <th style="width: 12%;">Xaridor Nomi</th>
+                        <th style="width: 10%;" class="text-right-table">Kvadrat (m²)</th>
+                        <th style="width: 15%;" class="text-right-table">Summa</th>
+                        <th style="width: 15%;" style="text-align: center;">Muddat</th> 
+                        <th style="width: 15%;" style="text-align: center;">Status</th>
+                        <th style="width: 5%;">PDF</th>
+                        <th style="width: 20%;">Harakatlar</th> 
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    
+                    {% with status_code=order.status|lower %}
+                    
+                    <tr 
+                        {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}
+                            class="order-expired"
+                        {% endif %}
+                    >
+                        <td data-label="Raqami"><strong style="color: var(--primary-color);">{{ order.order_number }}</strong></td>
+                        <td data-label="Xaridor Nomi">{{ order.customer_name }}</td>
+                        <td data-label="Kvadrat (m²)" class="text-right-table">{{ order.panel_kvadrat|floatformat:2|intcomma }}</td>
+                        <td data-label="Summa" class="text-right-table">
+                            {% if is_worker %}
+                                ***
+                            {% else %}
+                                <strong style="color: var(--primary-color);">{{ order.total_price|floatformat:0|intcomma }}</strong> so'm
+                            {% endif %}
+                        </td>
+                        
+                        {# Muddat #}
+                        <td data-label="Muddat">
+                            {% if order.deadline %}
+                                <div style="font-weight: 600; color: {% if order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}var(--danger-text){% else %}var(--primary-darker){% endif %};">
+                                    {{ order.deadline|date:"Y-m-d" }}
+                                </div>
+                                <small class="text-secondary">{{ order.deadline|time:"H:i" }}</small>
+                                
+                                {% if order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}
+                                    <span class="status-badge" style="background-color: #fca5a5; color: var(--danger-text); margin-top: 2px;">
+                                        MUDDAT O'TDI!
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <small class="text-secondary">Belgilanmagan</small>
+                            {% endif %}
+                        </td>
+
+                        <td data-label="Status" style="text-align: center;">
+                            <span class="status-badge status-{{ status_code }}">{{ order.get_status_display }}</span>
+                        </td>
+                        
+                        <td data-label="PDF">
+                            {% if order.pdf_file %}
+                                <a href="{{ order.pdf_file.url }}" target="_blank" class="pdf-link-modern">Chizmani ko'rish</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        
+                        {# Harakatlar Ustuni #}
+                        <td data-label="Harakatlar">
+                            <div class="actions-cell-modern">
+                                
+                                {# USTA HARAKATLARI #}
+                                {% if is_worker and request.user.worker_profile in order.assigned_workers.all %}
+                                
+                                    {# 1. QABUL QILISH tugmasi (Tovar olindi / Ishga tayyor) #}
+                                    {% if status_code == 'tasdiqlandi' or status_code == 'kiritildi' %}
+                                        <a href="{% url 'order_worker_accept' order.pk %}" class="action-link btn-small btn-usta-qabul" title="Tovarni oldim"
+                                            onclick="return confirm('Tovarlarni qabul qilganingizni tasdiqlaysizmi? Status: USTA QABUL QILDI.')">
+                                            ✅ Qabul
+                                        </a>
+                                    
+                                    {# 2. BOSHLASH tugmasi (Ishga kirishdi) #}
+                                    {% elif status_code == 'usta_qabul_qildi' %}
+                                        
+                                        {% if order.start_image %} 
+                                            {# Rasm yuklangan bo'lsa, endi boshlashi mumkin #}
+                                            <a href="{% url 'order_worker_start' order.pk %}" class="action-link btn-small btn-usta-boshla" title="Ishni Boshlash"
+                                                onclick="return confirm('Ishni boshlashni tasdiqlaysizmi? Status: USTA BOSHLADI.')">
+                                                ▶️ Boshlash
+                                            </a>
+                                        {% else %}
+                                            {# Rasm yuklanmagan bo'lsa, rasm yuklashga undash (Tafsilot sahifasiga yo'naltiramiz) #}
+                                            <a href="{% url 'order_detail' order.pk %}" class="action-link btn-small btn-edit" title="Boshlash Rasmi Yuklanmagan" style="background-color: #fca5a5; color: #991b1b;">
+                                                📸 Boshlash Rasmi
+                                            </a>
+                                        {% endif %}
+
+                                    {# 3. TUGATISH tugmasi (Ishni yakunladi) #}
+                                    {% elif status_code == 'usta_boshla' or status_code == 'ishda' %}
+
+                                        {% if order.finish_image %}
+                                            {# Rasm yuklangan bo'lsa, endi tugatishi mumkin #}
+                                            <a href="{% url 'order_worker_finish' order.pk %}" class="action-link btn-small btn-usta-tugat" title="Ishni Tugatish"
+                                                onclick="return confirm('Ishni tugatganingizni tasdiqlaysizmi? Status: USTA YAKUNLADI.')">
+                                                ✔️ Tugatdim
+                                            </a>
+                                        {% else %}
+                                            {# Rasm yuklanmagan bo'lsa, rasm yuklashga undash (Tafsilot sahifasiga yo'naltiramiz) #}
+                                            <a href="{% url 'order_detail' order.pk %}" class="action-link btn-small btn-edit" title="Tugatish Rasmi Yuklanmagan" style="background-color: #fca5a5; color: #991b1b;">
+                                                🖼️ Tugatish Rasmi
+                                            </a>
+                                        {% endif %}
+                                            
+                                    {% endif %}
+                                
+                                {# ADMIN/MENEJER/BOSHLIQ HARAKATLARI #}
+                                {% elif is_manager or is_production_boss or is_glavniy_admin %}
+                                
+                                    {# GLAVNIY ADMIN uchun Tahrirlash/O'chirish #}
+                                    {% if is_glavniy_admin %} 
+                                        <a href="{% url 'order_edit' order.pk %}" class="action-link btn-small btn-edit" title="Tahrirlash">✏️</a>
+                                        <a href="{% url 'order_delete' order.pk %}" class="action-link btn-small btn-delete" title="O'chirish">🗑️</a>
+                                    {% endif %}
+                                    
+                                    {# MENEJER/TASDIQLOVCHI uchun Harakatlar #}
+                                    {% if is_manager or is_glavniy_admin %}
+                                        {% if status_code == 'kiritildi' %}
+                                            <a href="{% url 'order_confirm' order.pk %}" class="action-link btn-small btn-confirm" title="Qabul qilish">✅</a>
+                                            <a href="{% url 'order_reject' order.pk %}" class="action-link btn-small btn-reject" title="Rad etish">❌</a>
+                                        {% elif status_code == 'tayyor' %}
+                                            <a href="{% url 'order_complete' order.pk %}" class="action-link btn-small btn-complete" title="Bajarildi (Yakuniy)">✔️</a>
+                                        {% endif %}
+                                    {% endif %}
+                                    
+                                    {# ISHLAB CHIQARISH BOSHLIG'I uchun Harakatlar #}
+                                    {% if is_production_boss or is_glavniy_admin %}
+                                        {% if status_code == 'tasdiqlandi' or status_code == 'usta_qabul_qildi' %}
+                                            <a href="{% url 'order_start_production' order.pk %}" class="action-link btn-small btn-start" title="Ishlab chiqarishga berish">▶️ Ishga Berish</a>
+                                        {% elif status_code == 'ishda' or status_code == 'usta_tugatdi' %}
+                                            <a href="{% url 'order_finish' order.pk %}" class="action-link btn-small btn-finish" title="Tayyor Deb Belglash">✅ Tayyor</a>
+                                        {% endif %}
+                                    {% endif %}
+
+                                {% else %}
+                                    <span style="color: var(--text-secondary); font-style: italic; font-size: 11px;">Faoliyat yo'q</span>
+                                {% endif %}
+
+                                {# Buyurtma tafsilotlariga o'tish tugmasi (barchasi uchun, eng past ustun) #}
+                                <a href="{% url 'order_detail' order.pk %}" class="action-link btn-small" style="background-color: #f5f5f5; color: var(--audit-log-color);" title="Tafsilotlar">Hakaratlarni ko'rish</a>
+
+                            </div>
+                        </td>
+                        
+                    </tr>
+                    {% endwith %}
+                    
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-dark); padding: 20px;">
+                            <i class="fas fa-exclamation-circle"></i> Hozircha tizimda buyurtmalar mavjud emas.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

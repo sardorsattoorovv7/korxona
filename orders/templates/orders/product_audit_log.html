@@ -1,0 +1,197 @@
+{% extends "orders/base.html" %} 
+{% load static %}
+{% load humanize %} 
+
+{% block title %}Mahsulot O'zgarishlari Jurnali{% endblock %}
+
+{% block content %}
+
+    <style>
+        /* orders/order_list.html dan olingan ranglar va uslublar */
+        :root {
+            --primary-green: #198754; 
+            --light-green: #e6f4ea; 
+            --text-dark: #343a40;
+            --border-color: #dee2e6;
+            --action-create: #198754; /* Yashil */
+            --action-update: #ffc107; /* Sariq */
+            --action-delete: #dc3545; /* Qizil */
+            --action-download: #007bff; /* Moviy (Yuklab olish uchun) */
+        }
+
+        /* Umumiy uslublar */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+        }
+        h1 { 
+            color: var(--primary-green);
+            border-bottom: 3px solid var(--light-green);
+            padding-bottom: 10px;
+        }
+        
+        /* Tugmalar guruhi va Stili */
+        .button-group {
+            display: flex;
+            justify-content: space-between; /* Tugmalarni ikki chetga joylashtirish */
+            margin-bottom: 20px;
+        }
+
+        .action-link { 
+            text-decoration: none; 
+            padding: 8px 15px; 
+            border-radius: 5px; 
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .btn-back { 
+            background-color: #6c757d; 
+            color: white; 
+        }
+        .btn-back:hover { background-color: #5a6268; }
+
+        /* YANGI: Yuklab olish tugmasi */
+        .btn-download {
+            background-color: var(--action-download); /* Moviy */
+            color: white;
+        }
+        .btn-download:hover {
+            background-color: #0056b3;
+        }
+
+        /* Jadval Stili */
+        table { 
+            width: 100%; 
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td { 
+            border: 1px solid var(--border-color);
+            padding: 10px 8px; 
+            text-align: left; 
+            font-size: 14px;
+            vertical-align: top; 
+        }
+        thead th {
+            background-color: var(--text-dark); 
+            color: white;
+            font-weight: 600;
+            text-align: left;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        /* Harakat Badge'lari */
+        .action-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .action-C { background-color: var(--action-create); color: white; }
+        .action-U { background-color: var(--action-update); color: var(--text-dark); }
+        .action-D { background-color: var(--action-delete); color: white; }
+
+        /* Tafsilot Box */
+        .details-box {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-left: 3px solid var(--primary-green);
+            white-space: pre-wrap; 
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            border-radius: 4px;
+        }
+
+    </style>
+
+    <div class="container">
+        
+        <div class="button-group">
+            <a href="{% url 'order_list' %}" class="action-link btn-back">
+                ⬅️ Asosiy Ro'yxatga Qaytish
+            </a>
+            
+            {# Xatoni keltirib chiqargan qator: URL nomi 'export_audit_log_csv' #}
+            <a href="{% url 'export_audit_log_csv' %}" class="action-link btn-download" title="Barcha log yozuvlarini CSV formatida yuklab olish">
+                ⬇️ CSV Yuklab Olish
+            </a>
+        </div>
+        
+        <h1>Mahsulot O'zgarishlari Jurnali (Audit Log)</h1>
+        <p>Barcha foydalanuvchilarning mahsulotlar ustida qilgan amallari ro'yxati.</p>
+        <hr>
+        
+        <h2>Amallar Ro'yxati</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 150px;">Sana & Vaqt</th>
+                    <th style="width: 150px;">Foydalanuvchi</th>
+                    <th style="width: 150px;">Amal Turi</th>
+                    <th>Mahsulot (O'zgartirilgan Obyekt)</th>
+                    <th>O'zgarish Tafsiloti</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in log_entries %}
+                <tr>
+                    <td>
+                        {# LogEntry modelidagi action_time maydoni #}
+                        {{ log.action_time|date:"Y-m-d" }}<br> 
+                        <small class="text-muted"><strong>{{ log.action_time|date:"H:i:s" }}</strong></small> 
+                    </td>
+                    
+                    <td>
+                        <strong>{{ log.user.get_full_name|default:log.user.username }}</strong>
+                    </td>
+                    
+                    <td>
+                        {# action_flag = 1 (ADDITION), 2 (CHANGE), 3 (DELETION) #}
+                        {% if log.action_flag == 1 %}
+                            <span class="action-badge action-C">Tahrirlandi</span>
+                        {% elif log.action_flag == 2 %}
+                            <span class="action-badge action-U">Tahrirlandi</span>
+                        {% elif log.action_flag == 3 %}
+                            <span class="action-badge action-D">O'CHIRILDI</span>
+                        {% else %}
+                            <span class="action-badge bg-secondary">BOSHQA</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        {# views.py da Order raqami bilan to'ldirilgan #}
+                        {{ log.content_type.model|capfirst }}: <strong>{{ log.related_object_name }}</strong>
+                    </td>
+                    
+                    <td>
+                        {% if log.change_message %}
+                            <div class="details-box">
+                                {{ log.change_message|safe|linebreaksbr }}
+                            </div>
+                        {% else %}
+                            <span class="text-muted">Tafsilotlar mavjud emas.</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-dark);">Mahsulotlarga oid o'zgarishlar jurnali yozuvlari topilmadi.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+from django import template
+from django.utils import timezone
+from datetime import datetime
+
+register = template.Library()
+
+@register.filter
+def filter_expired_orders(orders_queryset):
+    """
+    Berilgan QuerySet ichidan muddati o'tgan va 'BAJARILDI' statusida bo'lmagan
+    buyurtmalarni filterlaydi.
+    """
+    now = timezone.now()
+    
+    # Muddati o'tgan buyurtmalarni filtrlash: 
+    # deadline maydoni to'ldirilgan BO'LISHI va hozirgi vaqtdan KICHIK BO'LISHI
+    # hamda statusi 'BAJARILDI' ga teng BO'LMASLIGI kerak.
+    expired_orders = orders_queryset.filter(
+        deadline__isnull=False,  # Muddati o'rnatilgan bo'lishi kerak
+        deadline__lt=now         # Muddat hozirgi vaqtdan o'tgan bo'lishi kerak
+    ).exclude(status='BAJARILDI').exclude(status='RAD_ETILDI')
+    
+    return expired_orders
+
+@register.simple_tag
+def get_current_time():
+    """ Hozirgi vaqtni qaytaradi. Shablon ichida foydalanish uchun. """
+    return timezone.now()
