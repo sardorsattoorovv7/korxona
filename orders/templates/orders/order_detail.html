@@ -17,6 +17,8 @@
     --warning-text: #a16207;
     --info-text: #1e40af;
     --text-secondary: #6b7280;
+    --observer-color: #6b7280;
+    --observer-bg: #f3f4f6;
 }
 
 body {
@@ -28,6 +30,20 @@ body {
     max-width: 1200px;
     margin: 20px auto;
     padding: 2rem;
+}
+
+/* Kuzatuvchi banneri */
+.observer-banner {
+    background-color: var(--observer-bg);
+    border: 1px solid var(--observer-color);
+    color: var(--observer-color);
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
 }
 
 /* Header qismi */
@@ -247,7 +263,7 @@ body {
     display: block;
 }
 
-/* Yuklash formasi */
+/* Yuklash formasi (faqat usta va admin uchun) */
 .upload-form {
     background: white;
     padding: 1.5rem;
@@ -350,7 +366,7 @@ input[type="file"]:hover {
     border-color: #fde68a;
 }
 
-/* Mobil harakatlar */
+/* Mobil harakatlar (faqat usta va admin uchun) */
 .mobile-actions {
     display: none;
     gap: 0.5rem;
@@ -548,6 +564,16 @@ input[type="file"]:hover {
 </style>
 
 <div class="container-detail">
+    <!-- Kuzatuvchi banneri -->
+    {% if is_observer %}
+    <div class="observer-banner">
+        <i class="fas fa-eye"></i>
+        <div>
+            <strong>Kuzatuvchi Rejimi</strong> - Siz faqat ma'lumotlarni ko'rish huquqiga egasiz.
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Sarlavha kartasi -->
     <div class="order-header-card {% if order.deadline and order.deadline < now and order.status not in 'BAJARILDI,RAD_ETILDI,USTA_TUGATDI' %}order-expired{% endif %}">
         <div class="order-header-content">
@@ -578,21 +604,21 @@ input[type="file"]:hover {
         {% endfor %}
     {% endif %}
 
-    <!-- Mobil tezkor harakatlar -->
+    <!-- Mobil tezkor harakatlar (faqat usta va admin uchun) -->
+    {% if not is_observer and is_assigned_worker %}
     <div class="mobile-actions">
-        {% if is_assigned_worker %}
-            {% if not order.start_image and order.status == 'TASDIQLANDI' %}
-                <a href="#start-upload" class="mobile-action-btn">
-                    <i class="fas fa-camera"></i> Boshlash Rasmi
-                </a>
-            {% endif %}
-            {% if not order.finish_image and order.status in "USTA_BOSHLA,ISHDA" %}
-                <a href="#finish-upload" class="mobile-action-btn">
-                    <i class="fas fa-image"></i> Tugatish Rasmi
-                </a>
-            {% endif %}
+        {% if not order.start_image and order.status == 'TASDIQLANDI' %}
+            <a href="#start-upload" class="mobile-action-btn">
+                <i class="fas fa-camera"></i> Boshlash Rasmi
+            </a>
+        {% endif %}
+        {% if not order.finish_image and order.status in "USTA_BOSHLA,ISHDA" %}
+            <a href="#finish-upload" class="mobile-action-btn">
+                <i class="fas fa-image"></i> Tugatish Rasmi
+            </a>
         {% endif %}
     </div>
+    {% endif %}
 
     <!-- Asosiy ma'lumotlar kartalari -->
     <div class="info-cards-grid">
@@ -613,7 +639,7 @@ input[type="file"]:hover {
             <div class="detail-item">
                 <span class="detail-label">Narx:</span>
                 <span class="detail-value">
-                    {% if is_worker %} 
+                    {% if is_worker and not is_observer %} 
                         ***
                     {% else %} 
                         <strong style="color: var(--primary-color);">{{ order.total_price|floatformat:0 }}</strong> so'm
@@ -674,8 +700,8 @@ input[type="file"]:hover {
         </div>
     </div>
 
-    <!-- Usta uchun rasm yuklash bo'limi -->
-    {% if is_assigned_worker %}
+    <!-- Usta uchun rasm yuklash bo'limi (faqat usta va admin uchun) -->
+    {% if not is_observer and is_assigned_worker %}
     <div class="upload-section">
         <h3 class="section-title"><i class="fas fa-camera"></i> Rasm Yuklash</h3>
         
@@ -745,10 +771,9 @@ input[type="file"]:hover {
     </div>
     {% endif %}
 
-    <!-- Menejerlar uchun rasm ko'rish bo'limi -->
-    {% if is_manager or is_production_boss or is_glavniy_admin %}
+    <!-- Rasm ko'rish bo'limi (barcha foydalanuvchilar uchun) -->
     <div class="view-section">
-        <h3 class="section-title"><i class="fas fa-eye"></i> Usta Rasmlari (Nazorat)</h3>
+        <h3 class="section-title"><i class="fas fa-eye"></i> Ish Jarayoni Rasmlari</h3>
         <div class="images-grid">
             <div class="image-card">
                 <h4>Boshlash Rasmi</h4>
@@ -778,6 +803,30 @@ input[type="file"]:hover {
                     </div>
                 {% endif %}
             </div>
+        </div>
+    </div>
+
+    <!-- PDF fayl mavjud bo'lsa -->
+    {% if order.pdf_file %}
+    <div class="info-card">
+        <h3><i class="fas fa-file-pdf"></i> Texnik Hujjatlar</h3>
+        <div class="detail-item">
+            <span class="detail-label">PDF Fayl:</span>
+            <span class="detail-value">
+                <a href="{{ order.pdf_file.url }}" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">
+                    <i class="fas fa-external-link-alt"></i> Chizmani ko'rish
+                </a>
+            </span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Izohlar mavjud bo'lsa -->
+    {% if order.comment %}
+    <div class="info-card">
+        <h3><i class="fas fa-comment"></i> Izohlar</h3>
+        <div style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color);">
+            {{ order.comment|linebreaks }}
         </div>
     </div>
     {% endif %}
@@ -811,7 +860,15 @@ document.getElementById('imageModal').addEventListener('click', function(e) {
     }
 });
 
-// Yuklash progress bari
+// Klaviatura orqali modalni yopish
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeImageModal();
+    }
+});
+
+// Yuklash progress bari (faqat usta va admin uchun)
+{% if not is_observer and is_assigned_worker %}
 document.addEventListener('DOMContentLoaded', function() {
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
@@ -839,7 +896,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Mobil navigatsiya
+// Mobil navigatsiya (faqat usta va admin uchun)
 document.addEventListener('DOMContentLoaded', function() {
     const mobileLinks = document.querySelectorAll('.mobile-action-btn');
     mobileLinks.forEach(link => {
@@ -853,5 +910,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+{% endif %}
 </script>
 {% endblock %}
