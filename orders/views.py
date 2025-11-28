@@ -42,6 +42,23 @@ def is_in_group(user, group_name):
     except Group.DoesNotExist:
         return False
 
+# --- Yangi: Kuzatuvchi funksiyalari ---
+def is_observer(user):
+    """Foydalanuvchi kuzatuvchi guruhida ekanligini tekshiradi."""
+    if user.is_anonymous:
+        return False
+    return is_in_group(user, 'Kuzatuvchi')
+
+def is_observer_or_above(user):
+    """Kuzatuvchi yoki undan yuqori darajadagi foydalanuvchilarni tekshiradi."""
+    return (
+        is_observer(user) or 
+        is_in_group(user, 'Glavniy Admin') or 
+        is_in_group(user, 'Menejer') or 
+        is_in_group(user, "Ishlab Chiqarish Boshlig'i") or
+        user.is_superuser
+    )
+
 # ----------------------------------------------------------------------
 # 💡 YORDAMCHI FUNKSIYA: MUDDAT BUZILISHINI TEKSHIRISH
 # ----------------------------------------------------------------------
@@ -83,10 +100,6 @@ def check_and_create_overdue_alerts(order):
     
     return True
 
-
-
-# orders/views.py ichida, is_in_group funksiyasidan keyin qo'shing
-
 # --- Yordamchi Funksiya: Hisobotni ko'rishga ruxsatni tekshirish ---
 def is_report_viewer(user):
     """Admin, Menejer va Ishlab Chiqarish Boshlig'iga ruxsat beradi."""
@@ -101,9 +114,11 @@ def is_report_viewer(user):
         is_in_group(user, 'Menejer') or 
         is_in_group(user, "Ishlab Chiqarish Boshlig'i")
     )
-# ------------------------------------------------------------------
 
-
+# --- Yangi: Hisobotlar uchun kengaytirilgan ruxsat tekshiruvi ---
+def is_report_viewer_or_observer(user):
+    """Admin, Menejer, Ishlab Chiqarish Boshlig'i yoki Kuzatuvchiga ruxsat beradi."""
+    return is_report_viewer(user) or is_observer(user)
 
 # ----------------------------------------------------------------------
 # YANGI: RASM YUKLASH FUNKSIYASI
@@ -207,6 +222,7 @@ def order_list(request):
     is_production_boss = is_in_group(request.user, "Ishlab Chiqarish Boshlig'i")
     is_manager_or_confirmer = is_in_group(request.user, 'Menejer/Tasdiqlovchi')
     is_worker = is_in_group(request.user, 'Usta')
+    is_observer = is_in_group(request.user, 'Kuzatuvchi')  # ✅ YANGI
 
     # Boshlang'ich Buyurtmalar
     orders = Order.objects.all().order_by('-created_at')
@@ -214,17 +230,15 @@ def order_list(request):
     # Filterlash mantigi
     should_filter = True 
 
-    if is_glavniy_admin or is_production_boss or is_manager_or_confirmer:
+    if is_glavniy_admin or is_production_boss or is_manager_or_confirmer or is_observer:  # ✅ YANGI
         should_filter = False 
     
     if is_worker:
-        if not (is_glavniy_admin or is_production_boss or is_manager_or_confirmer):
+        if not (is_glavniy_admin or is_production_boss or is_manager_or_confirmer or is_observer):
             try:
                 # Ustaga tayinlangan barcha buyurtmalar ro'yxatini olamiz
                 orders = orders.filter(
                     assigned_workers__user=request.user, 
-                # ✅ TO'G'RILANGAN FILTR: Faqat 'RAD ETILDI' statusidagi buyurtmalarni chiqarib tashlaymiz.
-                # Natijada, 'TASDIQLANDI' dan 'BAJARILDI' gacha bo'lgan barcha statuslar ko'rinadi.
                 ).exclude(
                     status='RAD_ETILDI'
                 ).distinct().order_by('-created_at')
@@ -257,8 +271,9 @@ def order_list(request):
         'is_glavniy_admin': is_glavniy_admin,
         'is_manager': is_manager_or_confirmer, 
         'is_production_boss': is_production_boss,
-        'notifications': user_notifications, 
         'is_worker': is_worker,
+        'is_observer': is_observer,  # ✅ YANGI
+        'notifications': user_notifications, 
         'now': timezone.now(), 
     }
     return render(request, 'orders/order_list.html', context)
@@ -275,6 +290,23 @@ def order_detail(request, pk):
     is_manager = is_in_group(request.user, 'Menejer/Tasdiqlovchi')
     is_production_boss = is_in_group(request.user, "Ishlab Chiqarish Boshlig'i")
     is_worker = is_in_group(request.user, 'Usta') 
+    is_observer = is_in_group(request.user, 'Kuzatuvchi')  # ✅ YANGI
+    
+    # ✅ KUZATUVCHI UCHUN ALTERNATIV RENDER
+    if is_observer:
+        context = {
+            'order': order,
+            'order_form': None,
+            'is_glavniy_admin': False,
+            'is_manager': False,
+            'is_production_boss': False,
+            'is_worker': False,
+            'is_observer': True,
+            'start_image_form': None,
+            'finish_image_form': None,
+            'readonly': True,
+        }
+        return render(request, 'orders/order_detail.html', context)
     
     # Usta tayinlanganligini TO'G'RI tekshirish
     is_assigned_worker = False
@@ -300,8 +332,6 @@ def order_detail(request, pk):
     if is_worker and not is_assigned_worker and not is_production_boss:
         messages.error(request, "Siz faqat o'zingizga tayinlangan buyurtma tafsilotlarini ko'rishingiz mumkin.")
         return redirect('order_list')
-
-    # ... qolgan kod ...
     
     is_assigned_worker = False
     if is_worker:
@@ -387,6 +417,7 @@ def order_detail(request, pk):
         'is_manager': is_manager,
         'is_production_boss': is_production_boss,
         'is_worker': is_worker,
+        'is_observer': is_observer,  # ✅ YANGI
         'is_assigned_worker': is_assigned_worker,
         'start_image_form': start_image_form, 
         'finish_image_form': finish_image_form, 
@@ -401,6 +432,11 @@ def order_detail(request, pk):
 @user_passes_test(lambda u: is_in_group(u, 'Usta') or u.is_superuser, login_url='/login/')
 def order_worker_accept(request, pk):
     """Usta buyurtmani qabul qilish."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     order = get_object_or_404(Order, pk=pk)
     
     if not request.user.is_superuser and not order.assigned_workers.filter(user=request.user).exists():
@@ -424,6 +460,11 @@ def order_worker_accept(request, pk):
 @user_passes_test(lambda u: is_in_group(u, 'Usta') or u.is_superuser, login_url='/login/')
 def order_worker_start(request, pk):
     """Usta ishni boshlash."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     order = get_object_or_404(Order, pk=pk)
     
     if not request.user.is_superuser and not order.assigned_workers.filter(user=request.user).exists():
@@ -444,6 +485,11 @@ def order_worker_start(request, pk):
 @user_passes_test(lambda u: is_in_group(u, 'Usta') or u.is_superuser, login_url='/login/')
 def order_worker_finish(request, pk):
     """Usta ishni yakunlash."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     order = get_object_or_404(Order, pk=pk)
 
     if not request.user.is_superuser and not order.assigned_workers.filter(user=request.user).exists():
@@ -474,16 +520,19 @@ def order_worker_finish(request, pk):
 # YANGI: USTALAR PANELI FUNKSIYALARI
 # ----------------------------------------------------------------------
 @login_required
-@user_passes_test(lambda u: is_in_group(u, 'Usta') or u.is_superuser or is_in_group(u, "Ishlab Chiqarish Boshlig'i"), login_url='/login/')
+@user_passes_test(lambda u: is_in_group(u, 'Usta') or u.is_superuser or 
+                   is_in_group(u, "Ishlab Chiqarish Boshlig'i") or 
+                   is_in_group(u, 'Kuzatuvchi'), login_url='/login/')  # ✅ YANGI
 def worker_panel(request):
     """
     Ustalar paneli - barcha ustalar ro'yxati
     """
-    # Faqat admin va ishlab chiqarish boshliqlari ko'ra oladi
+    # Faqat admin, ishlab chiqarish boshliqlari va kuzatuvchilar ko'ra oladi
     is_glavniy_admin = request.user.is_superuser or is_in_group(request.user, 'Glavniy Admin')
     is_production_boss = is_in_group(request.user, "Ishlab Chiqarish Boshlig'i")
+    is_observer = is_in_group(request.user, 'Kuzatuvchi')  # ✅ YANGI
     
-    if not (is_glavniy_admin or is_production_boss):
+    if not (is_glavniy_admin or is_production_boss or is_observer):  # ✅ YANGI
         messages.error(request, "Sizda bu sahifani ko'rish uchun ruxsat yo'q.")
         return redirect('order_list')
     
@@ -506,12 +555,15 @@ def worker_panel(request):
         'workers': workers,
         'is_glavniy_admin': is_glavniy_admin,
         'is_production_boss': is_production_boss,
+        'is_observer': is_observer,  # ✅ YANGI
     }
     
     return render(request, 'orders/worker_panel.html', context)
 
 @login_required
-@user_passes_test(lambda u: is_in_group(u, 'Usta') or u.is_superuser or is_in_group(u, "Ishlab Chiqarish Boshlig'i"), login_url='/login/')
+@user_passes_test(lambda u: is_in_group(u, 'Usta') or u.is_superuser or 
+                   is_in_group(u, "Ishlab Chiqarish Boshlig'i") or 
+                   is_in_group(u, 'Kuzatuvchi'), login_url='/login/')  # ✅ YANGI
 def worker_orders(request, worker_id):
     """
     Muayyan ustaning barcha buyurtmalari
@@ -522,8 +574,9 @@ def worker_orders(request, worker_id):
     is_glavniy_admin = request.user.is_superuser or is_in_group(request.user, 'Glavniy Admin')
     is_production_boss = is_in_group(request.user, "Ishlab Chiqarish Boshlig'i")
     is_worker_self = request.user == worker.user
+    is_observer = is_in_group(request.user, 'Kuzatuvchi')  # ✅ YANGI
     
-    if not (is_glavniy_admin or is_production_boss or is_worker_self):
+    if not (is_glavniy_admin or is_production_boss or is_worker_self or is_observer):  # ✅ YANGI
         messages.error(request, "Sizda bu sahifani ko'rish uchun ruxsat yo'q.")
         return redirect('order_list')
     
@@ -563,6 +616,7 @@ def worker_orders(request, worker_id):
         'is_glavniy_admin': is_glavniy_admin,
         'is_production_boss': is_production_boss,
         'is_worker_self': is_worker_self,
+        'is_observer': is_observer,  # ✅ YANGI
     }
     
     return render(request, 'orders/worker_orders.html', context)
@@ -574,6 +628,11 @@ def worker_orders(request, worker_id):
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def order_create(request):
     """1-Bosqich: Buyurtmani yuklash/kiritish."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     if request.method == 'POST':
         form = OrderForm(request.POST, request.FILES)
         if form.is_valid():
@@ -623,6 +682,11 @@ def order_create(request):
 @login_required
 def order_confirm(request, pk):
     """2-Bosqich: Buyurtmani tasdiqlash."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     order = get_object_or_404(Order, pk=pk)
     
     if not is_in_group(request.user, 'Menejer/Tasdiqlovchi'): 
@@ -678,6 +742,11 @@ def order_confirm(request, pk):
 @login_required
 def order_reject(request, pk):
     """Buyurtmani Rad Etish."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     order = get_object_or_404(Order, pk=pk)
     
     if not is_in_group(request.user, 'Menejer/Tasdiqlovchi'): 
@@ -722,6 +791,11 @@ def order_reject(request, pk):
 @login_required
 def order_start_production(request, pk):
     """3-Bosqich: Ishlab chiqarishga berish."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     order = get_object_or_404(Order, pk=pk)
     
     if not is_in_group(request.user, "Ishlab Chiqarish Boshlig'i"):
@@ -759,6 +833,11 @@ def order_start_production(request, pk):
 @login_required
 def order_finish(request, pk):
     """4-Bosqich: Buyurtmani yakunlash."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     order = get_object_or_404(Order, pk=pk)
     
     if not is_in_group(request.user, "Ishlab Chiqarish Boshlig'i"):
@@ -807,6 +886,11 @@ def order_finish(request, pk):
 @login_required
 def order_complete(request, pk):
     """Yakuniy bosqich: Buyurtmani to'liq Bajarildi deb belgilash."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     order = get_object_or_404(Order, pk=pk)
     
     if not is_in_group(request.user, 'Menejer/Tasdiqlovchi'): 
@@ -844,6 +928,11 @@ def order_complete(request, pk):
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def order_edit(request, pk):
     """Buyurtmani Glavniy Admin tomonidan tahrirlash."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     order = get_object_or_404(Order, pk=pk)
     original_order = get_object_or_404(Order, pk=pk)
     
@@ -916,6 +1005,11 @@ def order_edit(request, pk):
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def order_delete(request, pk):
     """Buyurtmani Glavniy Admin tomonidan o'chirish."""
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     order = get_object_or_404(Order, pk=pk)
     
     if request.method == 'POST':
@@ -937,7 +1031,7 @@ def order_delete(request, pk):
     return render(request, 'orders/order_confirm_delete.html', {'order': order})
 
 @login_required
-@user_passes_test(lambda u: is_in_group(u, 'Menejer'), login_url='/login/') 
+@user_passes_test(is_report_viewer_or_observer, login_url='/login/')  # ✅ YANGI
 def weekly_report_view(request):
     """
     Buyurtmalar va Ustalar ish faoliyati bo'yicha umumiy hisobot.
@@ -1037,27 +1131,22 @@ def weekly_report_view(request):
         
         # 💡 YANGI: Ustalar hisoboti konteksti
         'worker_report_list': worker_report_list,
-        'total_finished_kvadrat': total_finished_kvadrat
+        'total_finished_kvadrat': total_finished_kvadrat,
+        
+        # ✅ YANGI: Role konteksti
+        'is_observer': is_observer(request.user),
     }
 
     return render(request, 'orders/weekly_report_view.html', context)
 
-
-
-# orders/views.py ichida, 'weekly_report_view' funksiyasining o'rniga qo'ying:
-
-
-@user_passes_test(is_report_viewer, login_url=settings.LOGIN_URL) 
+@login_required
+@user_passes_test(is_report_viewer_or_observer, login_url='/login/')  # ✅ YANGI
 def worker_activity_report_view(request): 
     """
     Ustalar ish faoliyati bo'yicha hisobot (Bajarilgan ishlar)
     Sanalar bo'yicha filtrlash imkoniyati mavjud.
     """
     
-    # MUHIM: Funksiya ichidagi eskirgan ruxsat tekshiruvini olib tashlaymiz, 
-    # chunki dekorator uni yuqorida bajaradi.
-    # if not (is_in_group(request.user, 'Glavniy Admin') or ...): messages.error(...)
-
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
 
@@ -1088,8 +1177,6 @@ def worker_activity_report_view(request):
     'assigned_workers__user__first_name',
     'assigned_workers__user__last_name',
     ).annotate(
-        # ❌ Xato qator edi: total_finished_kvadrat=Sum('total_square'),
-        # ✅ TO'G'RILANGAN QATOR: Endi 'panel_kvadrat' dan foydalanamiz
         total_finished_kvadrat=Sum('panel_kvadrat'), 
         total_order_count=Count('id')
     ).order_by('-total_finished_kvadrat')
@@ -1102,13 +1189,13 @@ def worker_activity_report_view(request):
         'total_finished_kvadrat': total_finished_kvadrat,
         'start_date': start_date,
         'end_date': end_date,
+        'is_observer': is_observer(request.user),  # ✅ YANGI
     }
 
     return render(request, 'orders/weekly_report_view.html', context)
 
-# yuklashh
 @login_required
-@user_passes_test(is_report_viewer, login_url='/')
+@user_passes_test(is_report_viewer_or_observer, login_url='/')  # ✅ YANGI
 def export_worker_activity_csv(request):
     """
     Ustalarning ish faoliyati hisobotini CSV fayl shaklida eksport qiladi.
@@ -1156,8 +1243,6 @@ def export_worker_activity_csv(request):
         'assigned_workers__user__first_name',
         'assigned_workers__user__last_name'
     ).annotate(
-    # 'finished_kvadrat' mavjud emasligi sababli 'panel_kvadrat' ishlatiladi.
-    # Agar sizda maxsus tugatilgan maydon bo'lsa, uning nomini shu yerga qo'ying.
     total_finished_kvadrat=Sum('panel_kvadrat', default=0), 
     total_order_count=Count('id')
 
@@ -1178,7 +1263,11 @@ def export_worker_activity_csv(request):
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def export_orders_csv(request):
     """Buyurtmalarni CSV formatida eksport qilish (oxirgi 7 kunlik)."""
-    
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="EcoProm_Buyurtmalar_Hisboti_7kunlik.csv"'
 
@@ -1216,7 +1305,11 @@ def export_orders_csv(request):
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def sales_report_view(request):
     """Vaqt oralig'i bo'yicha sotuv hisobotini ko'rsatish va filtrlash."""
-    
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
 
@@ -1259,7 +1352,11 @@ def sales_report_view(request):
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def product_audit_log_view(request):
     """Mahsulot/Buyurtma o'zgarishlari jurnalini ko'rish funksiyasi."""
-    
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     try:
         order_content_type = ContentType.objects.get(app_label='orders', model='order')
         
@@ -1285,46 +1382,15 @@ def product_audit_log_view(request):
     
     return render(request, 'orders/product_audit_log.html', context)
 
-
-
-def weekly_report_view(request):
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-
-    orders = Order.objects.all()
-    
-    if start_date:
-        orders = orders.filter(created_at__date__gte=start_date)
-    if end_date:
-        orders = orders.filter(created_at__date__lte=end_date)
-    
-    # Workerlar hisobi
-    worker_report_list = orders.values('worker__id', 'worker__name', 'worker__role').annotate(
-        total_kvadrat=Sum('panel_kvadrat'),
-        total_orders=Sum('id')  # bu faqat misol, uni count qilish kerak
-    )
-
-    # Totallar
-    total_orders_count = orders.count()
-    total_square = orders.aggregate(Sum('panel_kvadrat'))['panel_kvadrat__sum'] or 0
-    total_revenue = orders.aggregate(Sum('total_price'))['total_price__sum'] or 0
-
-    context = {
-        'worker_report_list': worker_report_list,
-        'report_orders': orders,
-        'start_date': start_date,
-        'end_date': end_date,
-        'total_orders_count': total_orders_count,
-        'total_square': total_square,
-        'total_revenue': total_revenue,
-    }
-    return render(request, 'orders/sales_report.html', context)
-
 @login_required
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def export_audit_log_csv(request):
     """Audit Log yozuvlarini CSV formatida eksport qilish."""
-    
+    # Kuzatuvchi tekshiruvi
+    if is_observer(request.user):
+        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+        return redirect('order_list')
+        
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="EcoProm_Audit_Log_Hisoboti.csv"'
 
