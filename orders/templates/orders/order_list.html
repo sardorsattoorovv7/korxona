@@ -25,6 +25,10 @@
             --logout-color: #9ca3af; 
             --text-secondary: #6b7280;
             
+            /* YANGI: Kuzatuvchi ranglari */
+            --observer-color: #6b7280;
+            --observer-bg: #f3f4f6;
+            
             /* YANGI: Muddat buzilgan qator foni */
             --expired-row-bg: #fee2e2; /* Juda ochiq qizil */
             --expired-row-border: #fca5a5;
@@ -81,6 +85,23 @@
             padding-bottom: 1rem;
         }
 
+        /* YANGI: Kuzatuvchi uchun maxsus banner */
+        .observer-banner {
+            background-color: var(--observer-bg);
+            border: 1px solid var(--observer-color);
+            color: var(--observer-color);
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+        }
+        .observer-banner i {
+            font-size: 1.2rem;
+        }
+
         /* Admin Harakatlari Guruhini boshqarish - Karta Ko'rinishi */
         .admin-actions-card {
             background-color: #ecfdf5; /* Juda och yashil fon */
@@ -129,6 +150,13 @@
             color: white; 
         }
         .report-btn-modern:hover, .audit-btn-modern:hover { background-color: #4b5563; }
+
+        /* YANGI: Kuzatuvchi uchun hisobot tugmalari */
+        .observer-btn-modern { 
+            background-color: var(--observer-color); 
+            color: white; 
+        }
+        .observer-btn-modern:hover { background-color: #4b5563; }
         
         /* Jadval Stili (Katta ekranlar) */
         .table-wrapper {
@@ -242,6 +270,9 @@
         .btn-usta-boshla { background-color: #a16207; color: white; } /* Boshlash */
         .btn-usta-tugat { background-color: #10b981; color: white; } /* Tugatdim */
 
+        /* YANGI: Kuzatuvchi uchun ko'rish tugmasi */
+        .btn-view { background-color: var(--observer-color); color: white; } 
+
         /* Django Messages Stili */
         .message {
             padding: 1rem;
@@ -300,6 +331,12 @@
             h2.welcome-text {
                 font-size: 1.1rem;
                 padding-bottom: 0.75rem;
+            }
+            
+            /* Kuzatuvchi banner mobil */
+            .observer-banner {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
             }
             
             /* Admin harakatlari kartasi mobil uchun */
@@ -412,6 +449,11 @@
                 font-size: 1rem;
             }
             
+            .observer-banner {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+            
             .table-modern td {
                 padding: 8px 8px 8px 45%;
                 font-size: 13px;
@@ -495,6 +537,17 @@
 
         <h2 class="welcome-text">Xush kelibsiz, **{{ request.user.get_full_name|default:request.user.username }}**!</h2>
 
+        {# YANGI: Kuzatuvchi uchun maxsus banner #}
+        {% if is_observer %}
+            <div class="observer-banner">
+                <i class="fas fa-eye"></i>
+                <div>
+                    <strong>Kuzatuvchi Rejimi</strong> - Siz faqat ma'lumotlarni ko'rish huquqiga egasiz. 
+                    Hech qanday o'zgartirish amallarini bajarolmaysiz.
+                </div>
+            </div>
+        {% endif %}
+
         {# Django Messages #}
         {% if messages %}
             {% for message in messages %}
@@ -504,7 +557,31 @@
             {% endfor %}
         {% endif %}
 
-        {% if is_glavniy_admin %} 
+        {# YANGI: Kuzatuvchi uchun hisobotlar paneli #}
+        {% if is_observer %} 
+            <div class="admin-actions-card" style="background-color: var(--observer-bg); border-color: var(--observer-color);">
+                <h3 style="color: var(--observer-color);">Hisobotlar va Monitoring</h3>
+                <div class="admin-actions-group">
+                    <a href="{% url 'sales_report_view' %}" class="action-link-btn observer-btn-modern">
+                        <i class="fas fa-chart-bar"></i> Sotuv Hisoboti
+                    </a>
+                    
+                    <a href="{% url 'product_audit_log_view' %}" class="action-link-btn observer-btn-modern">
+                        <i class="fas fa-history"></i> O'zgarishlar Jurnali
+                    </a>
+
+                    <a href="{% url 'worker_activity_report' %}" class="action-link-btn observer-btn-modern">
+                        <i class="fas fa-chart-bar"></i> Ustalar Hisoboti
+                    </a>
+
+                    <a href="{% url 'worker_panel' %}" class="action-link-btn observer-btn-modern">
+                        <i class="fas fa-users"></i> Ustalar Paneli
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if is_glavniy_admin and not is_observer %} 
             <div class="admin-actions-card">
                 <h3>Admin va Hisobot Harakatlari</h3>
                 <div class="admin-actions-group">
@@ -522,6 +599,10 @@
 
                     <a href="{% url 'worker_activity_report' %}" class="action-link-btn audit-btn-modern">
                         <i class="fas fa-chart-bar"></i> Ustalar Hisoboti
+                    </a>
+
+                    <a href="{% url 'worker_panel' %}" class="action-link-btn audit-btn-modern">
+                        <i class="fas fa-users"></i> Ustalar Paneli
                     </a>
                 </div>
             </div>
@@ -598,8 +679,14 @@
                         <td data-label="Harakatlar">
                             <div class="actions-cell-modern">
                                 
+                                {# KUZATUVCHI HARAKATLARI - FAQAT KO'RISH #}
+                                {% if is_observer %}
+                                    <a href="{% url 'order_detail' order.pk %}" class="action-link btn-small btn-view" title="Tafsilotlarni ko'rish">
+                                        <i class="fas fa-eye"></i> Ko'rish
+                                    </a>
+
                                 {# USTA HARAKATLARI #}
-                                {% if is_worker and request.user.worker_profile in order.assigned_workers.all %}
+                                {% elif is_worker and request.user.worker_profile in order.assigned_workers.all %}
                                 
                                     {# 1. QABUL QILISH tugmasi (Tovar olindi / Ishga tayyor) #}
                                     {% if status_code == 'tasdiqlandi' or status_code == 'kiritildi' %}
@@ -675,7 +762,9 @@
                                 {% endif %}
 
                                 {# Buyurtma tafsilotlariga o'tish tugmasi (barchasi uchun, eng past ustun) #}
-                                <a href="{% url 'order_detail' order.pk %}" class="action-link btn-small" style="background-color: #f5f5f5; color: var(--audit-log-color);" title="Tafsilotlar">Hakaratlarni ko'rish</a>
+                                {% if not is_observer %}
+                                    <a href="{% url 'order_detail' order.pk %}" class="action-link btn-small" style="background-color: #f5f5f5; color: var(--audit-log-color);" title="Tafsilotlar">Harakatlarni ko'rish</a>
+                                {% endif %}
 
                             </div>
                         </td>
