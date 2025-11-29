@@ -807,19 +807,41 @@ input[type="file"]:hover {
     </div>
 
     <!-- PDF fayl mavjud bo'lsa -->
-    {% if order.pdf_file %}
-    <div class="info-card">
-        <h3><i class="fas fa-file-pdf"></i> Texnik Hujjatlar</h3>
-        <div class="detail-item">
-            <span class="detail-label">PDF Fayl:</span>
-            <span class="detail-value">
-                <a href="{{ order.pdf_file.url }}" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">
-                    <i class="fas fa-external-link-alt"></i> Chizmani ko'rish
+    {# orders/order_detail.html - PDF qismini yangilaymiz #}
+
+<!-- PDF fayl mavjud bo'lsa -->
+{% if order.pdf_file %}
+<div class="info-card" style="border-left: 4px solid #3b82f6;">
+    <h3><i class="fas fa-file-pdf"></i> Texnik Hujjatlar (Chizma)</h3>
+    <div class="detail-item">
+        <span class="detail-label">PDF Fayl:</span>
+        <span class="detail-value">
+            {% if order.status in 'USTA_QABUL_QILDI,USTA_BOSHLA,ISHDA,USTA_TUGATDI,TAYYOR,BAJARILDI' or not is_worker %}
+                {# ✅ PDF ko'rish mumkin #}
+                <a href="{{ order.pdf_file.url }}" target="_blank" 
+                   style="color: #3b82f6; text-decoration: none; font-weight: 600; padding: 8px 16px; background: #eff6ff; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-external-link-alt"></i> Chizmani Ko'rish
                 </a>
-            </span>
-        </div>
+            {% else %}
+                {# ❌ Usta hali qabul qilmagan - PDF ko'rinmasin #}
+                <span style="color: var(--text-secondary); padding: 8px 16px; background: #f3f4f6; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-lock"></i> Qabul qilingach ochiladi
+                </span>
+            {% endif %}
+        </span>
+    </div>
+    
+    {# ✅ YANGI: Ogohlantirish #}
+    {% if not is_observer and is_assigned_worker and order.status == 'TASDIQLANDI' %}
+    <div style="margin-top: 1rem; padding: 10px; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
+        <strong><i class="fas fa-info-circle"></i> Ma'lumot:</strong>
+        <p style="margin: 5px 0 0 0; font-size: 0.9rem;">
+            Chizmani ko'rish uchun avval buyurtmani <strong>"Qabul qilish"</strong> tugmasi orqali qabul qiling.
+        </p>
     </div>
     {% endif %}
+</div>
+{% endif %}
 
     <!-- Izohlar mavjud bo'lsa -->
     {% if order.comment %}
