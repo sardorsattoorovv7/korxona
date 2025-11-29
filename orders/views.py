@@ -214,6 +214,7 @@ class CustomLoginView(LoginView):
 # ----------------------------------------------------------------------
 # ASOSIY SAHIFA / RO'YXAT
 # ----------------------------------------------------------------------
+
 @login_required 
 def order_list(request):
     
@@ -222,15 +223,36 @@ def order_list(request):
     is_production_boss = is_in_group(request.user, "Ishlab Chiqarish Boshlig'i")
     is_manager_or_confirmer = is_in_group(request.user, 'Menejer/Tasdiqlovchi')
     is_worker = is_in_group(request.user, 'Usta')
-    is_observer = is_in_group(request.user, 'Kuzatuvchi')  # ✅ YANGI
+    is_observer = is_in_group(request.user, 'Kuzatuvchi')
 
+    # Filtr parametri
+    filter_type = request.GET.get('filter', 'all')  # all, completed, in_progress, overdue
+    
     # Boshlang'ich Buyurtmalar
     orders = Order.objects.all().order_by('-created_at')
+    
+    # Filtrlash
+    now = timezone.now()
+    if filter_type == 'completed':
+        # Tayyor buyurtmalar
+        orders = orders.filter(status__in=['TAYYOR', 'BAJARILDI'])
+    elif filter_type == 'in_progress':
+        # Jarayondagi buyurtmalar - FAQAT MUDDATI O'TMAGANLAR
+        orders = orders.exclude(status__in=['TAYYOR', 'BAJARILDI', 'RAD_ETILDI']).filter(
+            Q(deadline__isnull=True) | Q(deadline__gte=now)  # Muddati o'tmagan yoki muddati yo'q
+        )
+    elif filter_type == 'overdue':
+        # Muddati o'tgan buyurtmalar - FAQAT JARAYONDAGI VA MUDDATI O'TGANLAR
+        orders = orders.filter(
+            deadline__lt=now
+        ).exclude(
+            status__in=['BAJARILDI', 'RAD_ETILDI', 'TAYYOR']
+        )
     
     # Filterlash mantigi
     should_filter = True 
 
-    if is_glavniy_admin or is_production_boss or is_manager_or_confirmer or is_observer:  # ✅ YANGI
+    if is_glavniy_admin or is_production_boss or is_manager_or_confirmer or is_observer:
         should_filter = False 
     
     if is_worker:
@@ -266,15 +288,38 @@ def order_list(request):
 
     user_notifications = Notification.objects.filter(user=request.user, is_read=False)[:5]
     
+    # Filtr statistikasi
+    total_orders = Order.objects.all().count()
+    completed_orders = Order.objects.filter(status__in=['TAYYOR', 'BAJARILDI']).count()
+    
+    # Jarayondagi buyurtmalar soni - FAQAT MUDDATI O'TMAGANLAR
+    in_progress_orders = Order.objects.exclude(
+        status__in=['TAYYOR', 'BAJARILDI', 'RAD_ETILDI']
+    ).filter(
+        Q(deadline__isnull=True) | Q(deadline__gte=now)
+    ).count()
+    
+    # Muddati o'tgan buyurtmalar soni
+    overdue_orders_count = Order.objects.filter(
+        deadline__lt=now
+    ).exclude(
+        status__in=['BAJARILDI', 'RAD_ETILDI', 'TAYYOR']
+    ).count()
+    
     context = {
         'orders': orders,
         'is_glavniy_admin': is_glavniy_admin,
         'is_manager': is_manager_or_confirmer, 
         'is_production_boss': is_production_boss,
         'is_worker': is_worker,
-        'is_observer': is_observer,  # ✅ YANGI
+        'is_observer': is_observer,
         'notifications': user_notifications, 
-        'now': timezone.now(), 
+        'now': timezone.now(),
+        'filter_type': filter_type,
+        'total_orders': total_orders,
+        'completed_orders': completed_orders,
+        'in_progress_orders': in_progress_orders,
+        'overdue_orders_count': overdue_orders_count,
     }
     return render(request, 'orders/order_list.html', context)
 
@@ -1302,13 +1347,14 @@ def export_orders_csv(request):
     return response
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
+# @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
+@user_passes_test(is_report_viewer_or_observer, login_url='/login/')
 def sales_report_view(request):
     """Vaqt oralig'i bo'yicha sotuv hisobotini ko'rsatish va filtrlash."""
     # Kuzatuvchi tekshiruvi
-    if is_observer(request.user):
-        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
-        return redirect('order_list')
+    # if is_observer(request.user):
+    #     messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
+    #     return redirect('order_list')
         
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
@@ -1345,6 +1391,8 @@ def sales_report_view(request):
         'total_square': total_square,
         'total_revenue': total_revenue,
         'is_glavniy_admin': True,
+        'is_observer': is_observer(request.user),  # ✅ YANGI: Kontekstga qo'shildi
+
     }
     return render(request, 'orders/sales_report.html', context)
 
@@ -1378,6 +1426,7 @@ def product_audit_log_view(request):
         "title": "Mahsulot O'zgarishlari Jurnali (Audit Log)",
         'log_entries': log_entries,
         'is_glavniy_admin': True,
+        'is_observer': False, 
     }
     
     return render(request, 'orders/product_audit_log.html', context)
