@@ -1,13 +1,30 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Order
-import os
+from .models import Order # Order modelining import qilinganligiga ishonch hosil qiling
 from django.utils import timezone
+import os
+
+# 💡 Panel Qalinligi uchun tanlovlar ro'yxati
+PANEL_THICKNESS_CHOICES = [
+    ('', '--- Tanlang ---'), # Majburiy bo'lganda, foydalanuvchini tanlashga undaydi
+    ('5', '5 mm'),
+    ('10', '10 mm'),
+    ('15', '15 mm'),
+]
 
 class OrderForm(forms.ModelForm):
     """
     Buyurtmani kiritish va tahrirlash uchun asosiy ModelForm.
     """
+    
+    # 💡 panel_thickness ni CharField/HiddenInput o'rniga ChoiceField/Select ga o'zgartirish
+    panel_thickness = forms.ChoiceField(
+        choices=PANEL_THICKNESS_CHOICES,
+        required=True, # Majburiy qilib qo'ydik, chunki bu muhim ma'lumot
+        label="Panel Qalinligi (mm)",
+        widget=forms.Select(attrs={'class': 'form-control'}) # CSS sinfini qo'shamiz
+    )
+    
     class Meta:
         model = Order
         fields = [
@@ -15,10 +32,14 @@ class OrderForm(forms.ModelForm):
             'pdf_file',
             'customer_name',
             'product_name', 
-            'comment',      
-            'worker_comment',  # YANGI QO'SHILDI
+            'comment', 
+            'worker_comment', 
             'panel_kvadrat',
             'total_price',
+            
+            # ChoiceField sifatida qo'shilgan maydon
+            'panel_thickness', 
+            
             'assigned_workers',
             'deadline',
             'status',
@@ -47,7 +68,7 @@ class OrderForm(forms.ModelForm):
                 'placeholder': 'Qoʻshimcha izohlar...',
                 'class': 'form-control'
             }),
-            'worker_comment': forms.Textarea(attrs={  # YANGI QO'SHILDI
+            'worker_comment': forms.Textarea(attrs={ 
                 'rows': 3, 
                 'placeholder': 'Usta izohlari...',
                 'class': 'form-control'
@@ -87,7 +108,10 @@ class OrderForm(forms.ModelForm):
                 'class': 'form-control',
                 'accept': 'image/*'
             }),
+            # 'panel_thickness': forms.HiddenInput(), # ESKI KOD OLIB TASHLANDI
         }
+    
+    # Clean metodlari o'zgarishsiz qoladi
     
     def clean_order_number(self):
         """Buyurtma raqami takrorlanmasligini tekshirish"""
@@ -95,12 +119,10 @@ class OrderForm(forms.ModelForm):
         if not order_number:
             raise ValidationError("Buyurtma raqami majburiy")
             
-        if Order.objects.filter(order_number=order_number).exists():
-            if self.instance and self.instance.pk:
-                if Order.objects.filter(order_number=order_number).exclude(pk=self.instance.pk).exists():
-                    raise ValidationError("Bu buyurtma raqami allaqachon mavjud")
-            else:
-                raise ValidationError("Bu buyurtma raqami allaqachon mavjud")
+        # Tahrirlashda o'z raqamini e'tiborsiz qoldirib, takrorlanmaslikni tekshirish
+        if Order.objects.filter(order_number=order_number).exclude(pk=self.instance.pk if self.instance else None).exists():
+            raise ValidationError("Bu buyurtma raqami allaqachon mavjud")
+            
         return order_number
     
     def clean_panel_kvadrat(self):
@@ -121,12 +143,13 @@ class OrderForm(forms.ModelForm):
         """PDF fayl hajmini va formatini tekshirish"""
         pdf_file = self.cleaned_data.get('pdf_file')
         
-        if not self.instance.pk and not pdf_file:
+        # Yangi buyurtma yaratishda yoki eski fayl yo'q bo'lganda PDF majburiy
+        if (not self.instance or not self.instance.pk) and not pdf_file:
             raise ValidationError("PDF fayl majburiy")
             
         if pdf_file:
             if pdf_file.size > 10 * 1024 * 1024:
-                raise ValidationError("PDF fayl hajmi 10MB dan oshmasligi kerak")
+                raise ValidationError("PDF fayl hajmi 10MB dan oshmasligi kerak (Maks. 10MB)")
             
             ext = os.path.splitext(pdf_file.name)[1].lower()
             if ext != '.pdf':
@@ -140,18 +163,14 @@ class OrderForm(forms.ModelForm):
         
         deadline = cleaned_data.get('deadline')
         if deadline and deadline < timezone.now():
-            raise ValidationError({
-                'deadline': "Muddat o'tgan sana bo'lishi mumkin emas"
-            })
+            self.add_error('deadline', "Muddat o'tgan sana bo'lishi mumkin emas")
         
         worker_started_at = cleaned_data.get('worker_started_at')
         worker_finished_at = cleaned_data.get('worker_finished_at')
         
         if worker_started_at and worker_finished_at:
             if worker_finished_at < worker_started_at:
-                raise ValidationError({
-                    'worker_finished_at': "Tugatish vaqti boshlash vaqtidan oldin bo'lishi mumkin emas"
-                })
+                self.add_error('worker_finished_at', "Tugatish vaqti boshlash vaqtidan oldin bo'lishi mumkin emas")
         
         return cleaned_data
 
@@ -179,7 +198,7 @@ class StartImageUploadForm(forms.ModelForm):
             raise ValidationError("Boshlash rasmi majburiy")
         
         if start_image.size > 5 * 1024 * 1024:
-            raise ValidationError("Rasm hajmi 5MB dan oshmasligi kerak")
+            raise ValidationError("Rasm hajmi 5MB dan oshmasligi kerak (Maks. 5MB)")
         
         allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
         ext = os.path.splitext(start_image.name)[1].lower()
@@ -212,7 +231,7 @@ class FinishImageUploadForm(forms.ModelForm):
             raise ValidationError("Tugatish rasmi majburiy")
         
         if finish_image.size > 5 * 1024 * 1024:
-            raise ValidationError("Rasm hajmi 5MB dan oshmasligi kerak")
+            raise ValidationError("Rasm hajmi 5MB dan oshmasligi kerak (Maks. 5MB)")
         
         allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
         ext = os.path.splitext(finish_image.name)[1].lower()
