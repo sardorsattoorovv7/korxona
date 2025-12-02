@@ -1184,6 +1184,86 @@ def weekly_report_view(request):
 
     return render(request, 'orders/weekly_report_view.html', context)
 
+
+from django.db.models.functions import Coalesce # ⬅️ Mana bu qatorni qo'shing
+from decimal import Decimal # ✅ Decimal to'g'ri import qilindi
+def material_sarfi_report(request):
+    
+    # Kvadrat maydoni NULL bo'lishi mumkinligini hisobga olamiz
+    # Shuningdek, DecimalField bilan ishlash uchun Decimal(0) dan foydalanamiz
+    
+    # =======================================================================
+    # 1. SARFNI HISOBLASH UCHUN KVADRAT METRLARNI GURUH BO'YICHA YIG'ISH
+    # =======================================================================
+    
+    # Barcha buyurtmalarni filtrlash (misol uchun, faqat 'BAJARILDI' statusdagilarni)
+    # Agar barcha kiritilgan buyurtmalar kerak bo'lsa, filter() qismini olib tashlang
+    all_orders = Order.objects.all() 
+    
+    # Barcha panellarning umumiy kvadratini topish (Jami List uchun kerak)
+    # Coalesce(Sum('panel_kvadrat'), Decimal(0)) yig'indi bo'sh bo'lsa 0 ni qaytaradi
+    total_kvadrat = all_orders.aggregate(
+        sum_kvadrat=Coalesce(Sum('panel_kvadrat'), Decimal(0))
+    )['sum_kvadrat']
+
+    # Qalinlik bo'yicha kvadrat yig'indilarini hisoblash (Siryo uchun kerak)
+    sum_kvadrat_5mm = all_orders.filter(panel_thickness='5').aggregate(
+        sum_kvadrat=Coalesce(Sum('panel_kvadrat'), Decimal(0))
+    )['sum_kvadrat']
+
+    sum_kvadrat_10mm = all_orders.filter(panel_thickness='10').aggregate(
+        sum_kvadrat=Coalesce(Sum('panel_kvadrat'), Decimal(0))
+    )['sum_kvadrat']
+
+    sum_kvadrat_15mm = all_orders.filter(panel_thickness='15').aggregate(
+        sum_kvadrat=Coalesce(Sum('panel_kvadrat'), Decimal(0))
+    )['sum_kvadrat']
+
+    # =======================================================================
+    # 2. SARF FORMULALARINI QO'LLASH
+    # =======================================================================
+    
+    # 1. Jami List Sarfi (m²): (Total Kvadrat * 2) + 10
+    # Natijani Decimal formatda saqlash, floatga o'tkazishdan qochish yaxshi amaliyot
+    jami_list_sarfi = (total_kvadrat * Decimal(2)) + Decimal(10)
+    
+    # 2. Siryo Sarfi (kg): Har bir qalinlik uchun alohida hisoblash
+    
+    # 5mm siryo: Sum Kvadrat * 2
+    siryo_5mm_sarfi = sum_kvadrat_5mm * Decimal(2)
+    
+    # 10mm siryo: Sum Kvadrat * 4
+    siryo_10mm_sarfi = sum_kvadrat_10mm * Decimal(4)
+    
+    # 15mm siryo: Sum Kvadrat * 6
+    siryo_15mm_sarfi = sum_kvadrat_15mm * Decimal(6)
+
+    # Umumiy Siryo Sarfi
+    jami_siryo_sarfi = siryo_5mm_sarfi + siryo_10mm_sarfi + siryo_15mm_sarfi
+
+    # =======================================================================
+    # 3. CONTEXT GA YUKLASH
+    # =======================================================================
+    
+    context = {
+        # Umumiy yakuniy hisobot
+        'jami_list_sarfi': jami_list_sarfi,
+        'jami_siryo_sarfi': jami_siryo_sarfi,
+        
+        # Detallashgan siryo hisoboti
+        'siryo_5mm_sarfi': siryo_5mm_sarfi,
+        'siryo_10mm_sarfi': siryo_10mm_sarfi,
+        'siryo_15mm_sarfi': siryo_15mm_sarfi,
+        
+        # Xom ma'lumotlar
+        'total_kvadrat': total_kvadrat,
+        'sum_kvadrat_5mm': sum_kvadrat_5mm,
+        'sum_kvadrat_10mm': sum_kvadrat_10mm,
+        'sum_kvadrat_15mm': sum_kvadrat_15mm,
+    }
+    
+    return render(request, 'orders/material_sarfi_report.html', context)
+
 @login_required
 @user_passes_test(is_report_viewer_or_observer, login_url='/login/')  # ✅ YANGI
 def worker_activity_report_view(request): 
