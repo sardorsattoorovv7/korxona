@@ -1,0 +1,393 @@
+{% extends "orders/base.html" %} 
+{% load static %}
+
+{% block title %}Material Sarfi Hisoboti{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-green: #10b981;
+        --primary-green-light: #d1fae5;
+        --primary-green-dark: #059669;
+        --bg-white: #ffffff;
+        --bg-light: #f9fafb;
+        --border-light: #e5e7eb;
+        --text-dark: #1f2937;
+        --text-gray: #6b7280;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --radius-lg: 0.75rem;
+        --radius-md: 0.5rem;
+        --radius-sm: 0.375rem;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+        background-color: var(--bg-light);
+        color: var(--text-dark);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .container-modern {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: var(--bg-white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+    }
+
+    .header-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    h1 {
+        color: var(--text-dark);
+        margin: 0;
+        font-size: 1.875rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    h1:before {
+        content: "📊";
+        font-size: 2rem;
+    }
+
+    h2 {
+        color: var(--text-dark);
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    h3 {
+        color: var(--text-dark);
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 1.5rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-green-light);
+    }
+
+    .btn-back-modern {
+        color: var(--text-gray);
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.625rem 1.25rem;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--bg-white);
+        font-size: 0.875rem;
+    }
+
+    .btn-back-modern:hover {
+        color: var(--primary-green-dark);
+        border-color: var(--primary-green);
+        background-color: var(--primary-green-light);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .intro-text {
+        color: var(--text-gray);
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: var(--bg-light);
+        border-radius: var(--radius-md);
+        border-left: 3px solid var(--primary-green);
+    }
+
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, var(--bg-white) 0%, #f8fafc 100%);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        border: 1px solid var(--border-light);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .stat-card:nth-child(1) {
+        border-top: 4px solid var(--primary-green);
+    }
+
+    .stat-card:nth-child(2) {
+        border-top: 4px solid #3b82f6;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+        line-height: 1;
+    }
+
+    .stat-card:nth-child(1) .stat-value {
+        color: var(--primary-green);
+    }
+
+    .stat-card:nth-child(2) .stat-value {
+        color: #3b82f6;
+    }
+
+    .stat-formula {
+        font-size: 0.8125rem;
+        color: var(--text-gray);
+        background: var(--bg-light);
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-sm);
+        display: inline-block;
+        margin-top: 0.5rem;
+        border-left: 2px solid var(--border-light);
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 1.5rem 0 2rem 0;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+    }
+
+    .table-modern thead {
+        background: linear-gradient(to right, var(--primary-green-light), #dbeafe);
+    }
+
+    .table-modern th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-dark);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .table-modern td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-light);
+        color: var(--text-dark);
+        font-size: 0.9375rem;
+    }
+
+    .table-modern tbody tr {
+        transition: var(--transition);
+    }
+
+    .table-modern tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-modern tfoot {
+        background: var(--bg-light);
+        font-weight: 600;
+    }
+
+    .table-modern tfoot td {
+        color: var(--text-dark);
+        font-size: 1rem;
+        padding: 1.25rem;
+    }
+
+    .table-modern tfoot td:last-child {
+        background-color: #f0fdf4;
+        color: var(--primary-green-dark);
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 0.5rem;
+    }
+
+    .badge-5mm {
+        background-color: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .badge-10mm {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-15mm {
+        background-color: #fce7f3;
+        color: #9d174d;
+    }
+
+    .total-summary {
+        background: linear-gradient(135deg, var(--bg-light) 0%, #f0fdf4 100%);
+        padding: 1.25rem;
+        border-radius: var(--radius-md);
+        margin-top: 2rem;
+        border-left: 4px solid var(--primary-green);
+        font-weight: 500;
+    }
+
+    hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(to right, transparent, var(--border-light), transparent);
+        margin: 2rem 0;
+    }
+
+    @media (max-width: 768px) {
+        .container-modern {
+            padding: 1.25rem;
+            margin: 1rem;
+        }
+        
+        .header-box {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+        }
+        
+        .table-modern {
+            font-size: 0.875rem;
+        }
+        
+        .table-modern th,
+        .table-modern td {
+            padding: 0.75rem;
+        }
+    }
+</style>
+
+<div class="container-modern">
+    <!-- Sarlavha qismi -->
+    <div class="header-box">
+        <h1>Material Sarfi Hisoboti</h1>
+        <a href="{% url 'order_list' %}" class="btn-back-modern">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Buyurtmalar Ro'yxati
+        </a>
+    </div>
+    
+    <!-- Kirish matni -->
+    <p class="intro-text">
+        Bu hisobot tizimdagi barcha buyurtmalar bo'yicha umumiy list va siryo sarfini ko'rsatadi. 
+        Ma'lumotlar qalinlik bo'yicha guruhlangan holda taqdim etilgan.
+    </p>
+    
+    <!-- Statistik kartalar -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <h2>Jami List Sarfi</h2>
+            <div class="stat-value">{{ jami_list_sarfi|floatformat:2 }} m²</div>
+            <div class="stat-formula">Formula: (Jami Kvadrat × 2) + 10</div>
+        </div>
+        
+        <div class="stat-card">
+            <h2>Jami Siryo Sarfi</h2>
+            <div class="stat-value">{{ jami_siryo_sarfi|floatformat:2 }} kg</div>
+            <div class="stat-formula">Formula: Qalinlik bo'yicha yig'indi</div>
+        </div>
+    </div>
+    
+    <hr>
+    
+    <!-- Detal hisobot -->
+    <h3>Siryo Sarfi Qalinlik Bo'yicha Tafsilotlar</h3>
+    
+    <table class="table-modern">
+        <thead>
+            <tr>
+                <th>Panel Qalinligi</th>
+                <th>Umumiy Kvadrat (m²)</th>
+                <th>Sarf Koeffitsienti</th>
+                <th>Siryo Sarfi (kg)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <span class="badge badge-5mm">5 mm</span>
+                </td>
+                <td>{{ sum_kvadrat_5mm|floatformat:2 }}</td>
+                <td>× 2</td>
+                <td style="font-weight: 600;">{{ siryo_5mm_sarfi|floatformat:2 }} kg</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="badge badge-10mm">10 mm</span>
+                </td>
+                <td>{{ sum_kvadrat_10mm|floatformat:2 }}</td>
+                <td>× 4</td>
+                <td style="font-weight: 600;">{{ siryo_10mm_sarfi|floatformat:2 }} kg</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="badge badge-15mm">15 mm</span>
+                </td>
+                <td>{{ sum_kvadrat_15mm|floatformat:2 }}</td>
+                <td>× 6</td>
+                <td style="font-weight: 600;">{{ siryo_15mm_sarfi|floatformat:2 }} kg</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" style="text-align: right; font-weight: 600;">JAMI SIRYO SARFI:</td>
+                <td>{{ jami_siryo_sarfi|floatformat:2 }} kg</td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <!-- Umumiy yig'indi -->
+    <div class="total-summary">
+        <strong>Jami Barcha Kvadratlar Yig'indisi:</strong> {{ total_kvadrat|floatformat:2 }} m²
+    </div>
+</div>
+{% endblock %}
