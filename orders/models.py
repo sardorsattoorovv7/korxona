@@ -50,6 +50,7 @@ class Order(models.Model):
         
         ('TAYYOR', "7. Tayyor (Sifat Nazorati)"),
         ('BAJARILDI', "8. Bajarildi (Yakuniy)") 
+        
 
         
     ]
@@ -59,6 +60,11 @@ class Order(models.Model):
         default=False, 
         verbose_name="Telegramga muddat haqida xabar berilgan"
     )
+    panel_thickness = models.CharField(
+        max_length=50, 
+        blank=True, 
+        null=True, 
+        verbose_name="Panel Qalinligi (mm)")
     
     order_number = models.CharField(max_length=50, unique=True, verbose_name="Buyurtma Raqami")
     pdf_file = models.FileField(upload_to='order_pdfs/', verbose_name="PDF Fayl")
