@@ -45,6 +45,60 @@
             background-color: var(--background-light);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
+        .actions-box {
+            display: flex;
+            gap: 15px; /* Tugmalar orasidagi masofa */
+            align-items: center;
+        }
+
+        .btn-primary-modern {
+            /* Buyurtma yaratish tugmasi stili */
+            background-color: var(--primary-action); /* #10b981 */
+            color: white;
+            padding: 0.6rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border: none;
+        }
+       
+        
+        /* Yangi hisobot tugmasi stili */
+        .btn-secondary-modern {
+            background-color: var(--secondary-color); /* #0ea5e9 */
+            color: var(--primary-green-dark);
+            padding: 0.6rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: var(--primary-green);
+            color: white;
+            border-radius: 5px;
+
+        }
+        
+        .header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--input-border);
+            padding-bottom: 1rem;
+        }
+        h1 {
+            color: var(--primary-green);
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
         
         .container-list-modern {
             width: 100%;
@@ -712,6 +766,11 @@
                     <a href="{% url 'worker_activity_report' %}" class="action-link-btn audit-btn-modern">
                         <i class="fas fa-chart-bar"></i> Ustalar Hisoboti
                     </a>
+
+
+                    <a href="{% url 'material_report' %}" class="btn-secondary-modern">
+                      List va Siryo Sarfi
+                    </a>
                 </div>
             </div>
         {% endif %}
@@ -782,7 +841,46 @@
                     </div>
                     {% endif %}
                 </div>
-                
+                <div class="order-card-body">
+    
+    <div class="order-detail-row">
+        <span class="detail-label">Mahsulot Nomi</span>
+        <span class="detail-value">
+            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                ***
+            {% else %}
+                {{ order.product_name|default:"—" }}
+            {% endif %}
+        </span>
+    </div>
+    
+    <div class="order-detail-row">
+        <span class="detail-label">Panel Qalinligi (mm)</span>
+        <span class="detail-value">
+            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                ***
+            {% else %}
+                {% if order.panel_thickness %}
+                    {{ order.panel_thickness }}
+                {% else %}
+                    <span style="color: #9ca3af;">Aniqlanmagan</span>
+                {% endif %}
+            {% endif %}
+        </span>
+    </div>
+    
+    <div class="order-detail-row">
+        <span class="detail-label">Kvadrat (m²)</span>
+        <span class="detail-value">
+            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                ***
+            {% else %}
+                {{ order.panel_kvadrat|floatformat:2|intcomma }}
+            {% endif %}
+        </span>
+    </div>
+    
+    </div>
                 <div class="order-card-body">
                     <div class="order-detail-row">
                         <span class="detail-label">Kvadrat (m²)</span>
