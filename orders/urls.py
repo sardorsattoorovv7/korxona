@@ -54,4 +54,5 @@ urlpatterns = [
     
     # EKSPORT YO'LI
     path('worker-report/export-csv/', views.export_worker_activity_csv, name='export_worker_activity_csv'),
+    path('material_report/', views.material_sarfi_report, name='material_report'),
 ]
