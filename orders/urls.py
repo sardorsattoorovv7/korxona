@@ -55,4 +55,25 @@ urlpatterns = [
     # EKSPORT YO'LI
     path('worker-report/export-csv/', views.export_worker_activity_csv, name='export_worker_activity_csv'),
     path('material_report/', views.material_sarfi_report, name='material_report'),
+
+    path('', views.warehouse_dashboard_view, name='warehouse_dashboard'),
+
+    # 2. Harakatlar
+    path('transactions/', views.transaction_history_view, name='transaction_history'),
+    path('transactions/add/', views.add_transaction_view, name='add_transaction'),
+    path('transactions/remove/', views.remove_transaction_view, name='remove_transaction'),
+
+    # 3. Inventarizatsiya
+    path('inventory/list/', views.material_list, name='material_list'),
+    
+    # 4. Boshqa inventarizatsiya harakatlari
+    path('inventory/transaction/create/', views.material_transaction_create, name='material_transaction_create'),
+    path('fast-scanner/', views.fast_scanner_view, name='fast_scanner'),
+    path('api/find-material/', views.find_material_by_code_api, name='find_material_api'),
+    path('api/save-scanned-transactions/', views.save_scanned_transactions_api, name='save_scanned_transactions_api'),
 ]
+
+
+
+
+# Agar mavjud bo'lsa, "Xomashyolar" kategoriyasini olamiz
