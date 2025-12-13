@@ -1,7 +1,7 @@
 from django import template
 from django.utils import timezone
 from datetime import datetime
-
+from decimal import Decimal  # 👈 BU QATORNI QO'SHING
 register = template.Library()
 
 @register.filter
@@ -26,3 +26,58 @@ def filter_expired_orders(orders_queryset):
 def get_current_time():
     """ Hozirgi vaqtni qaytaradi. Shablon ichida foydalanish uchun. """
     return timezone.now()
+
+@register.filter(name='times')
+def times(value, arg):
+    """Qiymatni berilgan argumentga ko'paytiradi."""
+    try:
+        return Decimal(value) * Decimal(arg)
+    except (ValueError, TypeError, AttributeError):
+        return ''
+    
+
+@register.filter
+def sub(value, arg):
+    """
+    Argumentdan qiymatni ayiradi.
+    Foydalanish: {{ material.quantity|sub:material.min_stock_level }}
+    """
+    try:
+        # Decimal yoki floatlar bilan ishlash uchun konvertatsiya
+        return float(value) - float(arg)
+    except (ValueError, TypeError):
+        return '' # Xatolik yuz bersa bo'sh qoldirish
+
+@register.filter
+def times(value, arg):
+    """
+    Argumentga qiymatni ko'paytirish.
+    Foydalanish: {{ material.quantity|times:material.price_per_unit }}
+    """
+    try:
+        return float(value) * float(arg)
+    except (ValueError, TypeError):
+        return ''
+    
+from django import template
+
+register = template.Library()
+
+@register.filter
+def mul(value, arg):
+    """ value * arg ni qaytaradi """
+    try:
+        return float(value) * float(arg)
+    except (ValueError, TypeError):
+        return ''
+
+@register.filter
+def divide(value, arg):
+    """ value / arg ni qaytaradi """
+    try:
+        # Bo'linuvchi 0 ga teng bo'lsa, xatolikni oldini olamiz
+        if arg == 0:
+            return 0
+        return float(value) / float(arg)
+    except (ValueError, TypeError):
+        return ''
