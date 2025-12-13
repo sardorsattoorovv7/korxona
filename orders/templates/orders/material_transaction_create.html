@@ -1,0 +1,827 @@
+{% extends "orders/base.html" %}
+{% load static %}
+
+{% block title %}Kirim / Chiqim{% endblock %}
+
+{% block content %}
+<div class="modern-form-container">
+    <div class="modern-header mb-4">
+        <div class="modern-header-content">
+            <div class="modern-icon-circle bg-gradient-success">
+                <i class="fas fa-exchange-alt text-white"></i>
+            </div>
+            <div class="modern-header-text">
+                <h4 class="modern-title mb-1">Ombor Harakati</h4>
+                <p class="modern-subtitle">Material kirimi yoki chiqimini boshqarish</p>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="modern-alerts mb-4">
+        {% for message in messages %}
+        <div class="modern-alert modern-alert-{{ message.tags }} fade-in">
+            <div class="modern-alert-icon">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+            </div>
+            <div class="modern-alert-content">
+                {{ message|safe }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="modern-card smooth-card">
+        <form method="post" id="transactionForm" class="modern-form">
+            {% csrf_token %}
+            
+            <!-- Transaction Type -->
+            <div class="modern-form-section">
+                <label class="modern-label">Harakat Turi</label>
+                <div class="modern-radio-group">
+                    <div class="modern-radio-item">
+                        <input type="radio" name="transaction_type" value="IN" id="type_in" 
+                               {% if form.transaction_type.value == 'IN' %}checked{% endif %} class="modern-radio-input">
+                        <label for="type_in" class="modern-radio-label bg-success-light">
+                            <span class="modern-radio-icon">
+                                <i class="fas fa-arrow-down text-success"></i>
+                            </span>
+                            <span class="modern-radio-text">
+                                <span class="modern-radio-title">Kirim</span>
+                                <span class="modern-radio-desc">Omborga qabul qilish</span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="modern-radio-item">
+                        <input type="radio" name="transaction_type" value="OUT" id="type_out"
+                               {% if form.transaction_type.value == 'OUT' %}checked{% endif %} class="modern-radio-input">
+                        <label for="type_out" class="modern-radio-label bg-warning-light">
+                            <span class="modern-radio-icon">
+                                <i class="fas fa-arrow-up text-warning"></i>
+                            </span>
+                            <span class="modern-radio-text">
+                                <span class="modern-radio-title">Chiqim</span>
+                                <span class="modern-radio-desc">Omboridan berish</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Material Selection -->
+            <div class="modern-form-section">
+                <label for="id_material_select" class="modern-label with-icon">
+                    <i class="fas fa-box-open text-success"></i>
+                    <span>Material</span>
+                </label>
+                <div class="modern-input-group">
+                    <span class="modern-input-icon">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    {{ form.material }}
+                </div>
+                
+                <div id="materialInfo" class="modern-info-card d-none slide-down">
+                    <div class="modern-info-header">
+                        <h6 class="modern-info-title" id="matName">Material nomi</h6>
+                        <div id="productNameContainer" class="d-none">
+                            <span class="modern-info-badge bg-success-light">
+                                <i class="fas fa-tag text-success me-1"></i>
+                                Maxsulot: <span id="productName">-</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="modern-info-body">
+                        <div class="modern-info-grid">
+                            <div class="modern-info-item">
+                                <span class="modern-info-label">Kategoriya</span>
+                                <span class="modern-info-value badge bg-light border text-dark" id="matCategory">-</span>
+                            </div>
+                            <div class="modern-info-item">
+                                <span class="modern-info-label">Oʻlchov birligi</span>
+                                <span class="modern-info-value badge bg-light border text-dark" id="matUnit">-</span>
+                            </div>
+                        </div>
+                        <div class="modern-stock-display">
+                            <div class="modern-stock-value text-success" id="currentStock">0</div>
+                            <span class="modern-stock-label">Joriy qoldiq</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Selection -->
+            <div class="modern-form-section">
+                <div class="modern-form-row">
+                    <div class="modern-form-col">
+                        <label class="modern-label with-icon">
+                            <i class="fas fa-folder text-primary"></i>
+                            <span>Mavjud Kategoriya</span>
+                        </label>
+                        <div class="modern-input-group">
+                            <span class="modern-input-icon">
+                                <i class="fas fa-tag text-muted"></i>
+                            </span>
+                            {{ form.category }}
+                        </div>
+                    </div>
+                    <div class="modern-form-col">
+                        <label class="modern-label with-icon">
+                            <i class="fas fa-plus-circle text-secondary"></i>
+                            <span>Yangi Kategoriya</span>
+                        </label>
+                        <div class="modern-input-group">
+                            {{ form.new_category_name }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Name -->
+            <div class="modern-form-section">
+                <label for="id_product_name" class="modern-label with-icon">
+                    <i class="fas fa-barcode text-info"></i>
+                    <span>Maxsulot nomi</span>
+                </label>
+                <div class="modern-input-group">
+                    <span class="modern-input-icon">
+                        <i class="fas fa-pen text-muted"></i>
+                    </span>
+                    {{ form.product_name }}
+                </div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="modern-form-section">
+                <label for="id_quantity_change" class="modern-label with-icon">
+                    <i class="fas fa-balance-scale text-success"></i>
+                    <span id="quantityLabel">Miqdor</span>
+                </label>
+                <div class="modern-input-group">
+                    <span class="modern-input-icon">
+                        <i class="fas fa-hashtag text-muted"></i>
+                    </span>
+                    {{ form.quantity_change }}
+                    <span class="modern-input-addon">
+                        <span id="quantityUnit" class="text-success fw-medium">-</span>
+                    </span>
+                </div>
+                <div id="quantityHelper" class="modern-helper-text"></div>
+            </div>
+
+            <!-- Received By -->
+            <div class="modern-form-section">
+                <label for="id_received_by" class="modern-label with-icon">
+                    <i class="fas fa-user-circle text-primary"></i>
+                    <span>Kimga/Kimdan</span>
+                </label>
+                <div class="modern-input-group">
+                    <span class="modern-input-icon">
+                        <i class="fas fa-user text-muted"></i>
+                    </span>
+                    {{ form.received_by }}
+                </div>
+            </div>
+
+            <!-- Order and Notes -->
+            <div class="modern-form-section">
+                <div class="modern-form-row">
+                    <div class="modern-form-col">
+                        <label class="modern-label with-icon">
+                            <i class="fas fa-file-contract text-warning"></i>
+                            <span>Buyurtma</span>
+                        </label>
+                        <div class="modern-input-group">
+                            <span class="modern-input-icon">
+                                <i class="fas fa-file-alt text-muted"></i>
+                            </span>
+                            {{ form.order }}
+                        </div>
+                    </div>
+                    <div class="modern-form-col">
+                        <label class="modern-label with-icon">
+                            <i class="fas fa-sticky-note text-info"></i>
+                            <span>Izoh</span>
+                        </label>
+                        <div class="modern-input-group">
+                            <span class="modern-input-icon">
+                                <i class="fas fa-comment text-muted"></i>
+                            </span>
+                            {{ form.notes }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="modern-form-actions">
+                <button type="submit" class="modern-btn modern-btn-success">
+                    <i class="fas fa-save me-2"></i>
+                    Saqlash
+                </button>
+                <a href="{% url 'material_list' %}" class="modern-btn modern-btn-outline">
+                    <i class="fas fa-times me-2"></i>
+                    Bekor qilish
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Modern Green/White Theme */
+:root {
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --success-dark: #059669;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --primary: #3b82f6;
+    --primary-light: #dbeafe;
+    --info: #06b6d4;
+    --light-bg: #f8fafc;
+    --border-color: #e2e8f0;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+}
+
+.modern-form-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.modern-header {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+}
+
+.modern-header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.modern-icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+}
+
+.modern-header-text {
+    flex: 1;
+}
+
+.modern-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.modern-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Alerts */
+.modern-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modern-alert {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    border-radius: 12px;
+    background: white;
+    border-left: 4px solid;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.modern-alert-success {
+    border-left-color: var(--success);
+    background: linear-gradient(to right, var(--success-light) 0%, white 100%);
+}
+
+.modern-alert-error {
+    border-left-color: #ef4444;
+    background: linear-gradient(to right, #fee2e2 0%, white 100%);
+}
+
+.modern-alert-icon {
+    font-size: 1.25rem;
+    margin-right: 14px;
+}
+
+.modern-alert-success .modern-alert-icon {
+    color: var(--success);
+}
+
+/* Card */
+.modern-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+}
+
+.smooth-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.smooth-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.12);
+}
+
+/* Form Sections */
+.modern-form-section {
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modern-form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Labels */
+.modern-label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+}
+
+.modern-label.with-icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Radio Group */
+.modern-radio-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.modern-radio-item {
+    position: relative;
+}
+
+.modern-radio-input {
+    position: absolute;
+    opacity: 0;
+}
+
+.modern-radio-label {
+    display: flex;
+    align-items: center;
+    padding: 18px;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--light-bg);
+}
+
+.modern-radio-input:checked + .modern-radio-label {
+    border-color: var(--success);
+    background: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.modern-radio-icon {
+    font-size: 1.5rem;
+    margin-right: 14px;
+}
+
+.modern-radio-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.modern-radio-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.modern-radio-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+/* Input Groups */
+.modern-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.modern-input-icon {
+    position: absolute;
+    left: 16px;
+    color: var(--text-secondary);
+    z-index: 2;
+}
+
+.modern-input-group select,
+.modern-input-group input {
+    width: 100%;
+    padding: 14px 20px 14px 48px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.modern-input-group input:focus,
+.modern-input-group select:focus {
+    outline: none;
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.modern-input-addon {
+    position: absolute;
+    right: 16px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Form Layout */
+.modern-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Material Info Card */
+.modern-info-card {
+    background: linear-gradient(135deg, #f8fafc 0%, white 100%);
+    border-radius: 16px;
+    border: 2px solid var(--success-light);
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+.modern-info-header {
+    padding: 20px 20px 0 20px;
+}
+
+.modern-info-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.modern-info-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: var(--success-light);
+    color: var(--success-dark);
+}
+
+.modern-info-body {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modern-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.modern-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modern-info-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.modern-info-value.badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.modern-stock-display {
+    text-align: center;
+}
+
+.modern-stock-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.modern-stock-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Helper Text */
+.modern-helper-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    padding: 0 4px;
+}
+
+/* Buttons */
+.modern-form-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 32px;
+}
+
+.modern-btn {
+    flex: 1;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+}
+
+.modern-btn-success {
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.modern-btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.modern-btn-outline {
+    background: white;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.modern-btn-outline:hover {
+    border-color: var(--success);
+    color: var(--success);
+    transform: translateY(-2px);
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.5s ease;
+}
+
+.slide-down {
+    animation: slideDown 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Utility Classes */
+.bg-success-light {
+    background-color: var(--success-light);
+}
+
+.bg-warning-light {
+    background-color: var(--warning-light);
+}
+
+.text-success {
+    color: var(--success) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modern-form-container {
+        padding: 12px;
+    }
+    
+    .modern-card {
+        padding: 20px;
+    }
+    
+    .modern-radio-group,
+    .modern-form-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .modern-form-actions {
+        flex-direction: column;
+    }
+    
+    .modern-info-body {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .modern-info-grid {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const materialData = JSON.parse('{{ material_data_json|escapejs }}');
+    
+    const materialSelect = document.getElementById('id_material_select');
+    const materialInfo = document.getElementById('materialInfo');
+    const currentStock = document.getElementById('currentStock');
+    const matName = document.getElementById('matName');
+    const productNameContainer = document.getElementById('productNameContainer');
+    const productNameDisplay = document.getElementById('productName');
+    const quantityLabel = document.getElementById('quantityLabel');
+    const matUnit = document.getElementById('matUnit');
+    const matCategory = document.getElementById('matCategory');
+    const quantityUnit = document.getElementById('quantityUnit');
+    const quantityHelper = document.getElementById('quantityHelper');
+    const quantityInput = document.getElementById('id_quantity_change');
+    
+    // Material selection handler
+    materialSelect.addEventListener('change', function() {
+        const selectedId = this.value;
+        
+        if (selectedId && materialData[selectedId]) {
+            const material = materialData[selectedId];
+            
+            // Update material info
+            matName.textContent = material.name;
+            currentStock.textContent = parseFloat(material.quantity).toFixed(3);
+            matUnit.textContent = material.unit;
+            matCategory.textContent = material.category;
+            quantityUnit.textContent = material.unit;
+            
+            // Show product name if available
+            if (material.product_name && material.product_name.trim() !== '') {
+                productNameDisplay.textContent = material.product_name;
+                productNameContainer.classList.remove('d-none');
+            } else {
+                productNameContainer.classList.add('d-none');
+            }
+
+            // Update quantity label with material name
+            if (quantityLabel) {
+                quantityLabel.innerHTML = `<span class="text-success">${material.name}</span> miqdori`;
+            }
+            
+            // Show material info with animation
+            materialInfo.classList.remove('d-none');
+            materialInfo.classList.add('slide-down');
+            
+            // Update helper text
+            updateQuantityHelper();
+        } else {
+            materialInfo.classList.add('d-none');
+            productNameContainer.classList.add('d-none');
+            
+            // Reset quantity label
+            if (quantityLabel) {
+                quantityLabel.innerHTML = '<i class="fas fa-balance-scale text-success me-1"></i>Miqdor';
+            }
+            
+            quantityUnit.textContent = '-';
+            quantityHelper.textContent = '';
+        }
+        
+        validateQuantity();
+    });
+    
+    // Quantity validation and helper text
+    function updateQuantityHelper() {
+        if (!materialSelect.value) return;
+        
+        const material = materialData[materialSelect.value];
+        if (!material) return;
+        
+        const currentQty = parseFloat(material.quantity);
+        const transactionType = document.querySelector('input[name="transaction_type"]:checked')?.value;
+        
+        if (transactionType === 'OUT') {
+            quantityHelper.innerHTML = `
+                <span class="text-warning">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Mavjud qoldiq: <strong>${currentQty.toFixed(3)} ${material.unit}</strong>
+                </span>`;
+        } else {
+            quantityHelper.innerHTML = `
+                <span class="text-success">
+                    <i class="fas fa-plus-circle me-1"></i>
+                    Yangi qo'shiladigan miqdor
+                </span>`;
+        }
+    }
+    
+    function validateQuantity() {
+        if (!materialSelect.value || !quantityInput.value) return;
+        
+        const material = materialData[materialSelect.value];
+        if (!material) return;
+        
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const transactionType = document.querySelector('input[name="transaction_type"]:checked')?.value;
+        
+        if (transactionType === 'OUT' && quantity > parseFloat(material.quantity)) {
+            quantityInput.classList.add('is-invalid');
+            quantityHelper.innerHTML = `
+                <span class="text-danger">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Chiqim miqdori mavjud qoldiqdan (${material.quantity} ${material.unit}) ko'p!
+                </span>`;
+        } else {
+            quantityInput.classList.remove('is-invalid');
+        }
+    }
+    
+    // Event listeners
+    quantityInput.addEventListener('input', validateQuantity);
+    document.querySelectorAll('input[name="transaction_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateQuantityHelper();
+            validateQuantity();
+            
+            // Animate radio label selection
+            document.querySelectorAll('.modern-radio-label').forEach(label => {
+                label.classList.remove('selected');
+            });
+            this.nextElementSibling.classList.add('selected');
+        });
+    });
+    
+    // Add smooth hover effects to form elements
+    document.querySelectorAll('.modern-input-group select, .modern-input-group input').forEach(el => {
+        el.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        el.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+    
+    // Auto validate on page load
+    setTimeout(() => {
+        updateQuantityHelper();
+        validateQuantity();
+    }, 100);
+});
+</script>
+{% endblock %}

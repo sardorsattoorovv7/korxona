@@ -1,0 +1,1508 @@
+{% extends "orders/base.html" %}
+{% load static %}
+{% load humanize %}
+{% load tz %}
+
+{% block title %}Materiallar | OMBORXONA{% endblock %}
+
+{% block content %}
+<div class="inventory-container">
+    <!-- Header -->
+    
+
+    <div class="page-header">
+    <div class="header-left">
+        <h1><i class="fas fa-boxes me-2"></i>Materiallar Boshqaruvi</h1>
+    </div>
+    
+    <div class="header-right">
+        <div class="user-info">
+            <i class="fas fa-user-circle fa-2x text-primary"></i>
+            <div>
+                <strong>{{ request.user.username }}</strong>
+                <small class="text-muted">Admin</small>
+            </div>
+        </div>
+        
+       <!-- <div class="action-button-header me-4">
+            <a href="{% url 'fast_scanner' %}" class="btn btn-warning">
+                <i class="fas fa-qrcode me-2"></i> Skanerlash Rejimi
+            </a>
+        </div> -->
+        
+        
+    </div>
+</div>
+
+    <!-- Tabs Navigation -->
+    <div class="material-tabs">
+        <button class="tab-btn active" onclick="showTab('all')" id="tabAll">
+            <i class="fas fa-boxes me-2"></i>
+            Barcha Materiallar
+            <span class="badge">{{ materials.paginator.count }}</span>
+        </button>
+        <button class="tab-btn" onclick="showTab('income')" id="tabIncome">
+            <i class="fas fa-arrow-down me-2 text-success"></i>
+            Kirim Materiallari
+            <span class="badge">{{ income_materials|length }}</span>
+        </button>
+        <button class="tab-btn" onclick="showTab('outcome')" id="tabOutcome">
+            <i class="fas fa-arrow-up me-2 text-danger"></i>
+            Chiqim Materiallari
+            <span class="badge">{{ outcome_materials|length }}</span>
+        </button>
+    </div>
+
+    <!-- Stats Section -->
+
+
+    <!-- Content Sections -->
+    
+    <!-- All Materials Tab -->
+    <div class="content-section active" id="contentAll">
+
+
+        <!-- <div class="content-header">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Material qidirish..." id="searchAll">
+                <button class="btn btn-sm btn-primary" onclick="searchAll()">Qidirish</button>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-outline-secondary" onclick="toggleAllFilters()">
+                    <i class="fas fa-filter me-1"></i>Filter
+                </button>
+                <button class="btn btn-outline-secondary">
+                    <i class="fas fa-file-export me-1"></i>Export
+                </button>
+                <button class="btn btn-outline-secondary">
+                    <i class="fas fa-file-import me-1"></i>Import
+                </button>
+            </div>
+        </div> -->
+
+        <!-- Materials Grid -->
+        <div class="materials-grid">
+            {% for material in materials %}
+            <div class="material-card {% if material.quantity <= material.min_quantity %}low-stock{% endif %}" 
+                 onclick="openMaterialModal('{{ material.id }}')">
+                <div class="material-header">
+                    <span class="material-code">{{ material.code }}</span>
+                    <div class="material-type">
+                        <span class="badge bg-primary">Ombor</span>
+                    </div>
+                </div>
+                
+                <div class="material-body">
+                    <h5 class="material-name">{{ material.name }}</h5>
+                    
+                    {% if material.product_name %}
+                    <div class="product-info">
+                        <small><i class="fas fa-tag me-1"></i>{{ material.product_name }}</small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="material-meta">
+                        <span><i class="fas fa-layer-group me-1"></i>{{ material.category }}</span>
+                        <span><i class="fas fa-weight me-1"></i>{{ material.unit }}</span>
+                    </div>
+                    
+                    <div class="material-stats">
+                        <div class="stat">
+                            <small>Qoldiq</small>
+                            <div class="value {% if material.quantity <= material.min_quantity %}text-danger{% endif %}">
+                                {{ material.quantity|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="stat">
+                            <small>Narx</small>
+                            <div class="value text-success">
+                                {{ material.price|floatformat:0|intcomma }}
+                            </div>
+                        </div>
+                        <div class="stat">
+                            <small>Umumiy</small>
+                            <div class="value">
+                                {{ material.total_value|floatformat:0|intcomma }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress" style="height: 5px; margin-top: 10px;">
+                        {% with percent=material.stock_percentage|default:0 %}
+                        <div class="progress-bar {% if material.quantity <= material.min_quantity %}bg-danger{% else %}bg-success{% endif %}" 
+                             style="width: {{ percent }}%"></div>
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <div class="material-footer">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        {{ material.updated_at|timesince }} oldin
+                    </small>
+                    <div class="actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-sm btn-outline-success" onclick="openQuickReceipt('{{ material.id }}')" title="Kirim">
+                            <i class="fas fa-arrow-down"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="openQuickIssue('{{ material.id }}')" title="Chiqim">
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                <h5>Materiallar topilmadi</h5>
+                <p>Birorta ham material ro'yxatga qo'shilmagan</p>
+                <button class="btn btn-primary" onclick="openNewMaterialModal()">
+                    <i class="fas fa-plus me-2"></i>Material Qo'shish
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+
+        
+    </div>
+
+            <!-- Income Materials Tab -->
+    <div class="content-section" id="contentIncome" style="display: none;">
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Sana</th>
+                        <th>Material</th>
+                        <th>Maxsulot nomi</th> 
+                        <th>Miqdor</th>
+                        <th>Narx</th>
+                        <th>Summa</th>
+                        <th>Izoh</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for income in income_materials %}
+                    <tr onclick="openIncomeModal('{{ income.id }}')">
+                        <td>{{ income.date|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            <strong>{{ income.material.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ income.material.code }}</small>
+                        </td>
+                        <td>
+                            {% if income.material.product_name %}
+                                {{ income.material.product_name|truncatechars:30 }}
+                            {% else %}
+                                <small class="text-muted">-</small>
+                            {% endif %}
+                        </td>
+                        <td class="text-success">
+                            <i class="fas fa-plus"></i> {{ income.quantity|floatformat:2 }}
+                        </td>
+                        <td>{{ income.price|floatformat:0|intcomma }}</td>
+                        <td class="text-success">{{ income.total|floatformat:0|intcomma }}</td>
+                        <td>
+                            {% if income.notes %} <small>{{ income.notes|truncatechars:30 }}</small>
+                            {% else %}
+                            <small class="text-muted">-</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-arrow-down fa-2x text-muted mb-3"></i>
+                            <h5>Kirim ma'lumotlari topilmadi</h5>
+                            <p class="text-muted">Hozircha kirim qilingan materiallar yo'q</p>
+                            <button class="btn btn-success" onclick="addIncome()">
+                                <i class="fas fa-plus me-2"></i>Birinchi Kirim Qo'shish
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+
+    <div class="content-section" id="contentOutcome" style="display: none;">
+
+        <div class="content-section" id="contentOutcome" 
+            style="{% if filter_type != 'outcome' %}display: none;{% endif %}"> 
+            
+            <div class="content-header">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Chiqim materiallarini qidirish..." id="searchOutcome">
+                    <button class="btn btn-sm btn-primary" onclick="searchOutcome()">Qidirish</button>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-danger" onclick="addOutcome()">
+                        <i class="fas fa-minus me-1"></i>Yangi Chiqim
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="toggleOutcomeFilters()">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                </div>
+        </div>
+
+
+        
+     <div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Sana</th>
+                <th>Material</th>
+                <th>Maxsulot nomi</th> 
+                <th>Miqdor</th>
+                <th>Narx (1 dona)</th>
+                <th>Summa</th>
+                <th>Izoh</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for outcome in outcome_materials %}
+            <tr onclick="openOutcomeModal('{{ outcome.id }}')">
+                <td>{{ outcome.date|date:"d.m.Y H:i" }}</td>
+                
+                <td>
+                    <strong>{{ outcome.material.name|default:"Noma'lum" }}</strong>
+                    <br>
+                    <small class="text-muted">{{ outcome.material.unit|default:"-" }}</small> 
+                </td>
+                
+                <td>
+                    {% if outcome.material.product_name %}
+                        {{ outcome.material.product_name|truncatechars:30 }}
+                    {% else %}
+                        <small class="text-muted">-</small>
+                    {% endif %}
+                </td>
+                
+                <td class="text-danger">
+                    <i class="fas fa-minus"></i> {{ outcome.quantity_change|floatformat:2|default:"0" }}
+                </td>
+                
+                <td>{{ outcome.unit_price|floatformat:0|intcomma|default:"0" }}</td>
+                
+                <td class="text-danger">{{ outcome.total_value|floatformat:0|intcomma|default:"0" }}</td>
+                
+                <td>
+                    {% if outcome.notes %} <small>{{ outcome.notes|truncatechars:30 }}</small>
+                    {% else %}
+                    <small class="text-muted">-</small>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center py-4">
+                    <i class="fas fa-arrow-up fa-2x text-muted mb-3"></i>
+                    <h5>Chiqim ma'lumotlari topilmadi</h5>
+                    <p class="text-muted">Hozircha chiqim qilingan materiallar yo'q</p>
+                    <button class="btn btn-danger" onclick="addOutcome()">
+                        <i class="fas fa-plus me-2"></i>Birinchi Chiqim Qo'shish
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+
+
+
+<style>
+/* Asosiy konteyner */
+.inventory-container {
+    padding: 20px;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Header */
+.page-header {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Tablar */
+.material-tabs {
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    display: flex;
+    gap: 5px;
+}
+
+.tab-btn {
+    padding: 12px 20px;
+    border: none;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s;
+    flex: 1;
+    justify-content: center;
+    position: relative;
+}
+
+.tab-btn:hover {
+    background: #e9ecef;
+}
+
+.tab-btn.active {
+    background: #2c3e50;
+    color: white;
+}
+
+.tab-btn .badge {
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 8px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+/* Statistika */
+.stats-section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.stats-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.stat-tab {
+    padding: 8px 16px;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 6px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.stat-tab.active {
+    background: #2c3e50;
+    color: white;
+    border-color: #2c3e50;
+}
+
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-left: 4px solid;
+}
+
+.stat-card:nth-child(1) { border-color: #007bff; }
+.stat-card:nth-child(2) { border-color: #ffc107; }
+.stat-card:nth-child(3) { border-color: #28a745; }
+.stat-card:nth-child(4) { border-color: #17a2b8; }
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.bg-primary { background: #007bff; }
+.bg-success { background: #28a745; }
+.bg-danger { background: #dc3545; }
+.bg-warning { background: #ffc107; }
+.bg-info { background: #17a2b8; }
+.bg-secondary { background: #6c757d; }
+
+.stat-card h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.stat-card p {
+    margin: 5px 0 0;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+/* Kontent bo'limlari */
+.content-section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 15px;
+}
+
+.search-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 8px 15px;
+    border: 1px solid #dee2e6;
+}
+
+.search-box i {
+    color: #6c757d;
+    margin-right: 10px;
+}
+
+.search-box input {
+    border: none;
+    background: transparent;
+    flex: 1;
+    outline: none;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* Material kartalar grid */
+.materials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.material-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.material-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.material-card.low-stock {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
+.material-header {
+    background: #2c3e50;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.material-code {
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.material-body {
+    padding: 15px;
+}
+
+.material-name {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.product-info {
+    background: #e3f2fd;
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.material-meta {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.material-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    text-align: center;
+}
+
+.stat .value {
+    font-weight: 600;
+    font-size: 18px;
+    margin-top: 5px;
+}
+
+.text-success { color: #28a745 !important; }
+.text-danger { color: #dc3545 !important; }
+
+.material-footer {
+    padding: 15px;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #dee2e6;
+}
+
+.actions {
+    display: flex;
+    gap: 5px;
+}
+
+.actions button {
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+
+.actions button:hover {
+    opacity: 1;
+}
+
+/* Jadval */
+.table-responsive {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+}
+
+.table {
+    margin: 0;
+}
+
+.table th {
+    background: #2c3e50;
+    color: white;
+    border: none;
+    font-weight: 500;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.table tbody tr {
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+/* MODAL STYLES */
+.custom-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-lg {
+    max-width: 900px;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #2c3e50;
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header.bg-success {
+    background: #28a745;
+}
+
+.modal-header.bg-danger {
+    background: #dc3545;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s;
+}
+
+.close-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+}
+
+/* Info sections in modal */
+.info-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid #007bff;
+}
+
+.info-section h5 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.info-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.info-value {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Section header */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Products list */
+#materialProducts {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.product-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.product-item:hover {
+    background: #f8f9fa;
+    transform: translateX(5px);
+}
+
+.product-info h6 {
+    margin: 0;
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+.product-info small {
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.product-stats {
+    text-align: right;
+}
+
+.product-stats .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+}
+
+/* Mini stats grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.mini-stat {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #dee2e6;
+}
+
+.mini-stat .stat-icon {
+    width: 40px;
+    height: 40px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.mini-stat h4 {
+    margin: 0;
+    font-size: 20px;
+    color: #2c3e50;
+}
+
+.mini-stat small {
+    color: #6c757d;
+    font-size: 12px;
+}
+
+/* Empty states */
+.empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Recent transactions */
+.transaction-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-date {
+    color: #6c757d;
+    font-size: 11px;
+}
+
+.transaction-type {
+    font-weight: 500;
+}
+
+.transaction-type.income {
+    color: #28a745;
+}
+
+.transaction-type.outcome {
+    color: #dc3545;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .material-tabs {
+        flex-direction: column;
+    }
+    
+    .content-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        width: 100%;
+    }
+    
+    .action-buttons {
+        justify-content: flex-end;
+    }
+    
+    .materials-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .custom-modal {
+        padding: 10px;
+    }
+    
+    .modal-content {
+        max-height: 95vh;
+    }
+    
+    .modal-body .row {
+        flex-direction: column;
+    }
+    
+    .modal-body .col-6 {
+        width: 100%;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+let currentMaterialId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    showTab('all');
+    showStatsTab('all');
+});
+
+function showTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('tab' + capitalizeFirst(tabName)).classList.add('active');
+    
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.style.display = 'none';
+        section.classList.remove('active');
+    });
+    const activeSection = document.getElementById('content' + capitalizeFirst(tabName));
+    activeSection.style.display = 'block';
+    setTimeout(() => activeSection.classList.add('active'), 10);
+}
+
+function showStatsTab(tabName) {
+    document.querySelectorAll('.stat-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`.stat-tab[onclick="showStatsTab('${tabName}')"]`).classList.add('active');
+    
+    document.querySelectorAll('.stats-cards').forEach(cards => cards.style.display = 'none');
+    document.getElementById('stats' + capitalizeFirst(tabName)).style.display = 'grid';
+}
+
+function capitalizeFirst(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// MODAL FUNCTIONS
+function openMaterialModal(materialId) {
+    currentMaterialId = materialId;
+    
+    // Modalni ochish
+    document.getElementById('materialModal').style.display = 'flex';
+    
+    // API orqali real ma'lumotlarni yuklash
+    loadMaterialDetails(materialId);
+}
+
+function openIncomeModal(incomeId) {
+    document.getElementById('incomeModal').style.display = 'flex';
+    loadIncomeDetails(incomeId);
+}
+
+function openOutcomeModal(outcomeId) {
+    document.getElementById('outcomeModal').style.display = 'flex';
+    loadOutcomeDetails(outcomeId);
+}
+
+function closeModal() {
+    document.querySelectorAll('.custom-modal').forEach(modal => {
+        modal.style.display = 'none';
+    });
+}
+
+// ESC tugmasi bilan modalni yopish
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+
+// Modal tashqarisini bosganda yopish
+document.querySelectorAll('.custom-modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+});
+
+// MATERIAL DETAILS FUNCTIONS - REAL API ORQALI
+async function loadMaterialDetails(materialId) {
+    try {
+        // API orqali material ma'lumotlarini olish
+        const response = await fetch(`/api/materials/${materialId}/details/`);
+        
+        if (!response.ok) {
+            throw new Error('API dan ma\'lumot olishda xatolik');
+        }
+        
+        const material = await response.json();
+        
+        // Sarlavhani to'ldirish
+        document.getElementById('materialName').textContent = material.name;
+        
+        // Asosiy ma'lumotlar
+        document.getElementById('infoCode').textContent = material.code;
+        document.getElementById('infoQuantity').innerHTML = `
+            <span class="${material.quantity <= material.min_quantity ? 'text-danger fw-bold' : 'text-success'}">
+                ${parseFloat(material.quantity).toFixed(2)} ${material.unit}
+            </span>
+        `;
+        document.getElementById('infoPrice').textContent = formatPrice(material.price);
+        document.getElementById('infoCategory').textContent = material.category;
+        document.getElementById('infoUnit').textContent = material.unit;
+        document.getElementById('infoMinQuantity').textContent = `${material.min_quantity} ${material.unit}`;
+        
+        // Oxirgi harakatlarni yuklash
+        loadRecentTransactions(materialId);
+        
+        // Mahsulotlarni yuklash
+        loadMaterialProducts(materialId);
+        
+        // Statistikani yuklash
+        loadMaterialStatistics(materialId);
+        
+    } catch (error) {
+        console.error('Error loading material details:', error);
+        
+        // Xatolik holatida ko'rsatish
+        document.getElementById('recentTransactions').innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle text-danger"></i>
+                <p>Ma'lumotlarni yuklashda xatolik yuz berdi</p>
+            </div>
+        `;
+        
+        document.getElementById('materialProducts').innerHTML = `
+            <div class="empty-state text-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Mahsulotlarni yuklashda xatolik</p>
+            </div>
+        `;
+    }
+}
+
+async function loadRecentTransactions(materialId) {
+    try {
+        // API orqali oxirgi harakatlarni olish
+        const response = await fetch(`/api/materials/${materialId}/transactions/`);
+        
+        if (!response.ok) {
+            throw new Error('Harakatlarni yuklashda xatolik');
+        }
+        
+        const transactions = await response.json();
+        
+        if (transactions.length === 0) {
+            document.getElementById('recentTransactions').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-history"></i>
+                    <p>Hozircha harakatlar mavjud emas</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const transactionsHtml = transactions.map(trans => `
+            <div class="transaction-item">
+                <div class="d-flex justify-content-between">
+                    <span class="transaction-type ${trans.type}">
+                        <i class="fas fa-arrow-${trans.type === 'income' ? 'down text-success' : 'up text-danger'} me-1"></i>
+                        ${trans.type === 'income' ? 'Kirim' : 'Chiqim'}: ${parseFloat(trans.quantity).toFixed(2)}
+                    </span>
+                    <span class="transaction-date">${trans.date}</span>
+                </div>
+                <small class="text-muted">${trans.user || 'Noma\'lum'} tomonidan</small>
+            </div>
+        `).join('');
+        
+        document.getElementById('recentTransactions').innerHTML = transactionsHtml;
+        
+    } catch (error) {
+        console.error('Error loading transactions:', error);
+        document.getElementById('recentTransactions').innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+                <p>Harakatlarni yuklashda xatolik</p>
+            </div>
+        `;
+    }
+}
+
+async function loadMaterialProducts(materialId) {
+    try {
+        // API orqali materialdan tayyorlangan mahsulotlarni olish
+        const response = await fetch(`/api/materials/${materialId}/products/`);
+        
+        if (!response.ok) {
+            throw new Error('Mahsulotlarni yuklashda xatolik');
+        }
+        
+        const products = await response.json();
+        
+        document.getElementById('productsCount').textContent = `${products.length} ta`;
+        
+        if (products.length === 0) {
+            document.getElementById('materialProducts').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-industry fa-2x"></i>
+                    <p>Bu materialdan hali mahsulot tayyorlanmagan</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const productsHtml = products.map(product => `
+            <div class="product-item">
+                <div class="product-info">
+                    <h6>${product.name}</h6>
+                    <small class="text-muted">Kodi: ${product.code}</small>
+                    <div class="mt-2">
+                        <small>
+                            <i class="fas fa-cube me-1"></i>
+                            Material sarfi: ${parseFloat(product.material_usage).toFixed(2)} ${product.unit}/mahsulot
+                        </small>
+                    </div>
+                </div>
+                <div class="product-stats">
+                    <span class="badge ${getStatusBadge(product.status)} mb-2">
+                        ${product.status}
+                    </span>
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-box me-1"></i>
+                            ${product.quantity} ta
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('materialProducts').innerHTML = productsHtml;
+        
+    } catch (error) {
+        console.error('Error loading material products:', error);
+        document.getElementById('materialProducts').innerHTML = `
+            <div class="empty-state text-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Mahsulotlarni yuklashda xatolik yuz berdi</p>
+            </div>
+        `;
+    }
+}
+
+async function loadMaterialStatistics(materialId) {
+    try {
+        // API orqali statistika ma'lumotlarini olish
+        const response = await fetch(`/api/materials/${materialId}/statistics/`);
+        
+        if (!response.ok) {
+            throw new Error('Statistika ma\'lumotlarini yuklashda xatolik');
+        }
+        
+        const stats = await response.json();
+        
+        document.getElementById('totalIncome').textContent = stats.total_income || 0;
+        document.getElementById('totalOutcome').textContent = stats.total_outcome || 0;
+        document.getElementById('totalValue').textContent = formatPrice(stats.total_value || 0);
+        
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+        document.getElementById('totalIncome').textContent = "0";
+        document.getElementById('totalOutcome').textContent = "0";
+        document.getElementById('totalValue').textContent = formatPrice(0);
+    }
+}
+
+async function loadIncomeDetails(incomeId) {
+    try {
+        // API orqali kirim ma'lumotlarini olish
+        const response = await fetch(`/api/incomes/${incomeId}/`);
+        
+        if (!response.ok) {
+            throw new Error('Kirim ma\'lumotlarini yuklashda xatolik');
+        }
+        
+        const income = await response.json();
+        
+        const modalBody = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-section">
+                        <h5><i class="fas fa-box me-2 text-primary"></i>Material ma'lumotlari</h5>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Nomi:</span>
+                                <span class="info-value">${income.material.name}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Kodi:</span>
+                                <span class="info-value">${income.material.code}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Miqdor:</span>
+                                <span class="info-value text-success">+${parseFloat(income.quantity).toFixed(2)}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Narxi:</span>
+                                <span class="info-value">${formatPrice(income.price)}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Summa:</span>
+                                <span class="info-value text-success fw-bold">${formatPrice(income.total)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-section">
+                        <h5><i class="fas fa-truck me-2 text-success"></i>Yetkazib beruvchi</h5>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Nomi:</span>
+                                <span class="info-value">${income.supplier || '-'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Invoice raqami:</span>
+                                <span class="info-value">${income.invoice_number || '-'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Sana:</span>
+                                <span class="info-value">${income.date}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Kirim qiluvchi:</span>
+                                <span class="info-value">${income.created_by.username}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            ${income.description ? `
+            <div class="info-section">
+                <h5><i class="fas fa-comment me-2 text-info"></i>Izoh</h5>
+                <p>${income.description}</p>
+            </div>
+            ` : ''}
+        `;
+        
+        document.getElementById('incomeModalBody').innerHTML = modalBody;
+        
+    } catch (error) {
+        console.error('Error loading income details:', error);
+        document.getElementById('incomeModalBody').innerHTML = `
+            <div class="empty-state text-danger">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                <p>Ma'lumotlarni yuklashda xatolik yuz berdi</p>
+            </div>
+        `;
+    }
+}
+
+async function loadOutcomeDetails(outcomeId) {
+    try {
+        // API orqali chiqim ma'lumotlarini olish
+        const response = await fetch(`/api/outcomes/${outcomeId}/`);
+        
+        if (!response.ok) {
+            throw new Error('Chiqim ma\'lumotlarini yuklashda xatolik');
+        }
+        
+        const outcome = await response.json();
+        
+        const modalBody = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-section">
+                        <h5><i class="fas fa-box me-2 text-primary"></i>Material ma'lumotlari</h5>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Nomi:</span>
+                                <span class="info-value">${outcome.material.name}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Kodi:</span>
+                                <span class="info-value">${outcome.material.code}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Miqdor:</span>
+                                <span class="info-value text-danger">-${parseFloat(outcome.quantity).toFixed(2)}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Narxi:</span>
+                                <span class="info-value">${formatPrice(outcome.price)}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Summa:</span>
+                                <span class="info-value text-danger fw-bold">${formatPrice(outcome.total)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-section">
+                        <h5><i class="fas fa-building me-2 text-danger"></i>Chiqim ma'lumotlari</h5>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Bo'lim:</span>
+                                <span class="info-value">${outcome.department || '-'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Sana:</span>
+                                <span class="info-value">${outcome.date}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Chiqim qiluvchi:</span>
+                                <span class="info-value">${outcome.created_by.username}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            ${outcome.purpose ? `
+            <div class="info-section">
+                <h5><i class="fas fa-bullseye me-2 text-warning"></i>Chiqim maqsadi</h5>
+                <p>${outcome.purpose}</p>
+            </div>
+            ` : ''}
+        `;
+        
+        document.getElementById('outcomeModalBody').innerHTML = modalBody;
+        
+    } catch (error) {
+        console.error('Error loading outcome details:', error);
+        document.getElementById('outcomeModalBody').innerHTML = `
+            <div class="empty-state text-danger">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                <p>Ma'lumotlarni yuklashda xatolik yuz berdi</p>
+            </div>
+        `;
+    }
+}
+
+// HELPER FUNCTIONS
+function getStatusBadge(status) {
+    switch(status.toLowerCase()) {
+        case 'tayyor': return 'bg-success';
+        case 'ishlab chiqarilmoqda': return 'bg-warning';
+        case 'omborda': return 'bg-info';
+        default: return 'bg-secondary';
+    }
+}
+
+function formatPrice(price) {
+    return parseFloat(price).toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }) + " so'm";
+}
+
+// ACTION FUNCTIONS
+function editMaterial() {
+    if (currentMaterialId) {
+        window.location.href = `/materials/${currentMaterialId}/edit/`;
+    }
+}
+
+function addReceipt() {
+    if (currentMaterialId) {
+        closeModal();
+        openQuickReceipt(currentMaterialId);
+    }
+}
+
+function printModal() {
+    window.print();
+}
+
+// QOLGAN FUNKSIYALAR
+function toggleAllFilters() {
+    const filters = document.getElementById('filtersAll');
+    if (filters) {
+        filters.style.display = filters.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function toggleIncomeFilters() {
+    const filters = document.getElementById('filtersIncome');
+    if (filters) {
+        filters.style.display = filters.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function toggleOutcomeFilters() {
+    const filters = document.getElementById('filtersOutcome');
+    if (filters) {
+        filters.style.display = filters.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function searchAll() {
+    const term = document.getElementById('searchAll').value;
+    // Qidiruv logikasi bu yerga
+    console.log('Searching for:', term);
+}
+
+
+
+// Global funksiyalar
+window.openMaterialModal = openMaterialModal;
+window.openIncomeModal = openIncomeModal;
+window.openOutcomeModal = openOutcomeModal;
+window.closeModal = closeModal;
+window.showTab = showTab;
+window.showStatsTab = showStatsTab;
+</script>
+{% endblock %}
