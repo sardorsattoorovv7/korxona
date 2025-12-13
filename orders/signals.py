@@ -41,3 +41,29 @@ def order_notification_handler(sender, instance, created, **kwargs):
                    f"Usta: {worker_name}\n"
                    f"Yakunlandi: {instance.worker_finished_at.strftime('%Y-%m-%d %H:%M')}")
         send_telegram_notification(message)
+
+# orders/signals.py
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db import transaction
+from .models import Material, MaterialTransaction
+
+@receiver(post_save, sender=MaterialTransaction)
+def update_material_stock(sender, instance, created, **kwargs):
+    """Yangi tranzaksiya yaratilganda Materialning qoldig'ini yangilaydi."""
+    if created:
+        material = instance.material
+        quantity_change = instance.quantity_change
+        transaction_type = instance.transaction_type
+
+        with transaction.atomic():
+            # Material ob'ektini DB dan qayta yuklaymiz (raqobatlarni oldini olish uchun)
+            material = Material.objects.select_for_update().get(pk=material.pk)
+            
+            if transaction_type == 'IN':
+                material.quantity += quantity_change
+            elif transaction_type == 'OUT':
+                material.quantity -= quantity_change
+                
+            material.save()
