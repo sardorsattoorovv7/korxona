@@ -9,19 +9,18 @@
     <style>
         /* Smooth Yashil va Neytral Ranglar Palitrasi */
         :root {
-            --primary-green: #10b981;         /* Asosiy yashil - soft va zamonaviy */
-            --primary-green-hover: #059669;   /* Hover holati uchun */
-            --primary-green-light: #d1fae5;   /* Och yashil fonlar uchun */
-            --primary-green-dark: #047857;    /* To'qroq yashil */
+            --primary-green: #10b981;
+            --primary-green-hover: #059669;
+            --primary-green-light: #d1fae5;
+            --primary-green-dark: #047857;
             
-            --background-light: #f8fbf9;      /* Juda ochiq yashil fon */
+            --background-light: #f8fbf9;
             --card-bg: #ffffff;
             --text-dark: #1f2937;
             --text-secondary: #6b7280;
             --border-color: #e5e7eb;
             --border-light: #f3f4f6;
             
-            /* Neytral ranglar */
             --neutral-50: #f9fafb;
             --neutral-100: #f3f4f6;
             --neutral-200: #e5e7eb;
@@ -30,88 +29,33 @@
             --neutral-700: #374151;
             --neutral-800: #1f2937;
             
-            /* Status ranglari */
             --status-success: #10b981;
             --status-warning: #f59e0b;
             --status-danger: #ef4444;
             --status-info: #3b82f6;
             
-            /* Gradientlar */
             --gradient-primary: linear-gradient(135deg, #10b981 0%, #059669 100%);
             --gradient-card: linear-gradient(135deg, #ffffff 0%, #f8fbf9 100%);
+            --gradient-store: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            --gradient-store-light: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
         }
 
         body { 
             background-color: var(--background-light);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        .actions-box {
-            display: flex;
-            gap: 15px; /* Tugmalar orasidagi masofa */
-            align-items: center;
-        }
-
-        .btn-primary-modern {
-            /* Buyurtma yaratish tugmasi stili */
-            background-color: var(--primary-action); /* #10b981 */
-            color: white;
-            padding: 0.6rem 1rem;
-            border-radius: 0.5rem;
-            text-decoration: none;
-            font-weight: 600;
-            transition: background-color 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            border: none;
-        }
-       
-        
-        /* Yangi hisobot tugmasi stili */
-        .btn-secondary-modern {
-            background-color: var(--secondary-color); /* #0ea5e9 */
-            color: var(--primary-green-dark);
-            padding: 0.6rem 1rem;
-            border-radius: 0.5rem;
-            text-decoration: none;
-            font-weight: 600;
-            transition: background-color 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background-color: var(--primary-green);
-            color: white;
-            border-radius: 5px;
-
-        }
-        
-        .header-box {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid var(--input-border);
-            padding-bottom: 1rem;
-        }
-        h1 {
-            color: var(--primary-green);
             margin: 0;
-            font-size: 2rem;
-            font-weight: 700;
+            padding: 0;
         }
-        
+
         .container-list-modern {
             width: 100%;
             max-width: 1400px;
-            margin: 20px auto;
-            padding: 2.5rem;
-            background: var(--card-bg);
-            border-radius: 1.5rem;
-            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-            border: 1px solid var(--border-light);
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
         }
 
-        /* Header va Chiqish */
+        /* Header */
         .top-header-flex {
             display: flex;
             justify-content: space-between;
@@ -162,6 +106,8 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            cursor: pointer;
+            font-family: inherit;
         }
 
         .logout-link-modern:hover {
@@ -182,366 +128,27 @@
             background-clip: text;
         }
 
-        h2.welcome-text {
+        .welcome-text {
             color: var(--text-secondary);
             font-size: 1.1rem;
             font-weight: 500;
-            margin-top: 0;
+            margin: 1rem 0 2rem 0;
             padding: 1rem 0;
             border-bottom: 1px solid var(--border-light);
         }
 
-        /* Kuzatuvchi banner */
-        .observer-banner {
-            background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%);
+        /* Debug Info */
+        .debug-info {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #6b7280;
             border: 1px solid var(--neutral-200);
-            color: var(--neutral-700);
-            padding: 1.25rem 1.5rem;
-            border-radius: 1rem;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 500;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
-        .observer-banner i {
-            font-size: 1.2rem;
-            color: var(--neutral-600);
-        }
-
-        /* Admin Harakatlari */
-        .admin-actions-card {
-            background: var(--gradient-card);
-            padding: 1.75rem;
-            border-radius: 1rem;
-            border: 1px solid var(--primary-green-light);
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
-        }
-
-        .admin-actions-card h3 {
-            color: var(--primary-green-dark);
-            margin-top: 0;
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .admin-actions-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        /* Action Tugmalari */
-        .action-link-btn { 
-            text-decoration: none; 
-            padding: 0.875rem 1.5rem; 
-            border-radius: 0.75rem; 
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border: 1px solid transparent;
-        }
-
-        .create-btn-modern { 
-            background: var(--gradient-primary);
-            color: white; 
-        }
-        .create-btn-modern:hover { 
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
-        }
-
-        .report-btn-modern, .audit-btn-modern { 
-            background-color: var(--neutral-600);
-            color: white; 
-        }
-        .report-btn-modern:hover, .audit-btn-modern:hover { 
-            background-color: var(--neutral-700);
-            transform: translateY(-2px);
-        }
-
-        .observer-btn-modern { 
-            background-color: var(--neutral-500); 
-            color: white; 
-        }
-        .observer-btn-modern:hover { 
-            background-color: var(--neutral-600);
-            transform: translateY(-2px);
-        }
-
-        /* Karta Ko'rinishi */
-        .orders-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-        
-        .order-card {
-            background: var(--gradient-card);
-            border-radius: 1.25rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-            border: 1px solid var(--border-light);
-            overflow: hidden;
-            transition: all 0.4s ease;
-            position: relative;
-        }
-        
-        .order-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-            border-color: var(--primary-green-light);
-        }
-        
-        /* USTALAR UCHUN: Boshqa ustalarning buyurtmalari */
-        .order-card.other-worker-order {
-            opacity: 0.6;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border: 1px dashed var(--neutral-300);
-        }
-        
-        .order-card.other-worker-order .order-number,
-        .order-card.other-worker-order .customer-name,
-        .order-card.other-worker-order .detail-value {
-            filter: blur(4px);
-            user-select: none;
-        }
-        
-        .order-card.other-worker-order .worker-info {
-            display: block !important;
-            background: var(--neutral-200);
-            color: var(--neutral-600);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-align: center;
-            margin-top: 10px;
-        }
-        
-        /* MUDDATI O'TGAN BUYURTMALAR - HAMMAGA KO'RINADI */
-        .order-card.expired {
-            border: 2px solid #fecaca;
-            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
-        }
-        
-        .order-card-header {
-            background: var(--gradient-primary);
-            color: white;
-            padding: 1.5rem;
-            position: relative;
-        }
-        
-        .order-number {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.5px;
-        }
-        
-        .customer-name {
-            font-size: 1.1rem;
-            font-weight: 600;
-            opacity: 0.95;
-        }
-        
-        .order-card-body {
-            padding: 1.5rem;
-        }
-        
-        .order-detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-light);
-        }
-        
-        .order-detail-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        
-        .detail-label {
-            color: var(--text-secondary);
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-        
-        .detail-value {
-            font-weight: 600;
-            color: var(--text-dark);
-            text-align: right;
-        }
-        
-        .price-value {
-            color: var(--primary-green);
-            font-size: 1.1rem;
-        }
-        
-        .deadline-value {
-            font-weight: 600;
-        }
-        
-        .deadline-overdue {
-            color: var(--status-danger);
-        }
-        
-        .order-card-footer {
-            padding: 1.5rem;
-            background-color: var(--neutral-50);
-            border-top: 1px solid var(--border-light);
-        }
-        
-        .status-section {
-            margin-bottom: 1rem;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-align: center;
-            white-space: nowrap;
-            border: 1px solid transparent;
-        }
-        
-        /* Status Ranglari */
-        .status-kiritildi { background-color: var(--primary-green-light); color: var(--primary-green-dark); } 
-        .status-tasdiqlandi { background: var(--gradient-primary); color: white; } 
-        .status-rad_etildi { background-color: #fef2f2; color: var(--status-danger); border-color: #fecaca; } 
-        .status-usta_qabul_qildi { background-color: #dbeafe; color: #1e40af; } 
-        .status-usta_boshla { background-color: #fef3c7; color: #92400e; } 
-        .status-ishda { background-color: #fef3c7; color: #92400e; } 
-        .status-usta_tugatdi { background-color: #d1fae5; color: #065f46; } 
-        .status-tayyor { background-color: #d1fae5; color: #065f46; } 
-        .status-bajarildi { background: var(--gradient-primary); color: white; } 
-        
-        .card-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        
-        .btn-small { 
-            padding: 8px 14px; 
-            font-size: 0.75rem;
-            font-weight: 600;
-            border-radius: 8px;
-            text-decoration: none;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            border: 1px solid transparent;
-        }
-        
-        .btn-small:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        
-        /* Harakat Tugmalari Ranglari */
-        .btn-edit { background-color: #fef3c7; color: #92400e; border-color: #fde68a; } 
-        .btn-delete { background-color: #fef2f2; color: var(--status-danger); border-color: #fecaca; } 
-        .btn-confirm { background: var(--gradient-primary); color: white; } 
-        .btn-reject { background-color: var(--neutral-100); color: var(--text-secondary); border: 1px solid var(--neutral-300); } 
-        .btn-start { background: var(--gradient-primary); color: white; } 
-        .btn-finish { background-color: var(--primary-green-light); color: var(--primary-green-dark); border-color: var(--primary-green); } 
-        .btn-complete { background: var(--gradient-primary); color: white; } 
-        .btn-usta-qabul { background-color: #1e40af; color: white; } 
-        .btn-usta-boshla { background-color: #92400e; color: white; } 
-        .btn-usta-tugat { background: var(--gradient-primary); color: white; } 
-        .btn-view { background-color: var(--neutral-500); color: white; } 
-        
-        .pdf-link-modern {
-            color: var(--primary-green);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: color 0.3s ease;
-        }
-        
-        .pdf-link-modern:hover {
-            color: var(--primary-green-dark);
-        }
-
-        /* Filtr Tugmalari - SONLARSIZ */
-        .filter-tabs {
-            margin-bottom: 2rem;
-        }
-        
-        .filter-tabs-container {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        
-        .filter-tab {
-            padding: 12px 20px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: 2px solid var(--border-color);
-            background: white;
-            color: var(--text-dark);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        }
-        
-        .filter-tab.active {
-            background: var(--gradient-primary);
-            color: white;
-            border-color: var(--primary-green);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-        }
-        
-        .filter-tab:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-        }
-        
-        /* USTALAR UCHUN: Filtr sonlarini yashirish */
-        {% if is_worker %}
-        .filter-count {
-            display: none !important;
-        }
-        {% else %}
-        .filter-count {
-            background: var(--primary-green);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-        
-        .filter-tab.active .filter-count {
-            background: white;
-            color: var(--primary-green);
-        }
-        {% endif %}
-
-        /* Django Messages */
+        /* Messages */
         .message {
             padding: 1.25rem;
             border-radius: 12px;
@@ -566,67 +173,503 @@
             border-color: #fde68a;
         }
 
-        /* 📱 MOBIL UCHUN ADAPTIV O'ZGARISHLAR */
-        @media (max-width: 900px) {
+        /* Observer Banner */
+        .observer-banner {
+            background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%);
+            border: 1px solid var(--neutral-200);
+            color: var(--neutral-700);
+            padding: 1.25rem 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Storekeeper Panel */
+        .storekeeper-actions-card {
+            background: var(--gradient-store-light);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            border: 1px solid #ddd6fe;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .storekeeper-actions-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-store);
+        }
+
+        .storekeeper-actions-card h3 {
+            color: #7c3aed;
+            margin-top: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .storekeeper-actions-card h3 i {
+            font-size: 1.3rem;
+        }
+
+        .admin-actions-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .action-link-btn { 
+            text-decoration: none; 
+            padding: 1rem 1.75rem; 
+            border-radius: 1rem; 
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .btn-store-modern {
+            background: var(--gradient-store);
+            color: white;
+            border-color: #7c3aed;
+        }
+        
+        .btn-store-modern:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Storekeeper Only Message */
+        .storekeeper-message {
+            background: linear-gradient(135deg, #f8fbf9 0%, #e8f5e9 100%);
+            padding: 3rem;
+            border-radius: 1.5rem;
+            text-align: center;
+            margin: 2rem 0;
+            border: 2px dashed #c8e6c9;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .storekeeper-message i {
+            font-size: 4rem;
+            color: #7c3aed;
+            margin-bottom: 1.5rem;
+        }
+
+        .storekeeper-message h3 {
+            color: #7c3aed;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .storekeeper-message p {
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        /* Admin Actions Card */
+        .admin-actions-card {
+            background: var(--gradient-card);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            border: 1px solid var(--primary-green-light);
+            margin-bottom: 2.5rem;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .admin-actions-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .admin-actions-card h3 {
+            color: var(--primary-green-dark);
+            margin-top: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .create-btn-modern { 
+            background: var(--gradient-primary);
+            color: white; 
+            border-color: var(--primary-green);
+        }
+        .create-btn-modern:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .report-btn-modern, .audit-btn-modern { 
+            background-color: var(--neutral-600);
+            color: white; 
+            border-color: var(--neutral-600);
+        }
+        .report-btn-modern:hover, .audit-btn-modern:hover { 
+            background-color: var(--neutral-700);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary-modern {
+            background-color: #0ea5e9;
+            color: white;
+            border-color: #0ea5e9;
+        }
+        
+        .btn-secondary-modern:hover {
+            background-color: #0284c7;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
+        }
+
+        /* Orders Section */
+        .orders-section {
+            margin-top: 3rem;
+        }
+
+        .section-title {
+            color: var(--neutral-800);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            margin-bottom: 2.5rem;
+        }
+        
+        .filter-tabs-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-tab {
+            padding: 1rem 1.75rem;
+            border-radius: 1rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid var(--border-color);
+            background: white;
+            color: var(--text-dark);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            font-size: 0.95rem;
+        }
+        
+        .filter-tab.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: var(--primary-green);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .filter-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .filter-count {
+            background: var(--primary-green);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            min-width: 28px;
+            text-align: center;
+        }
+        
+        .filter-tab.active .filter-count {
+            background: white;
+            color: var(--primary-green);
+        }
+
+        /* Orders Grid */
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .order-card {
+            background: var(--gradient-card);
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+        
+        .order-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary-green-light);
+        }
+        
+        /* Expired Orders */
+        .order-card.expired {
+            border: 2px solid #fecaca;
+            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+        }
+        
+        .order-card-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 1.75rem;
+            position: relative;
+        }
+        
+        .order-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+        
+        .customer-name {
+            font-size: 1.15rem;
+            font-weight: 600;
+            opacity: 0.95;
+        }
+        
+        .order-card-body {
+            padding: 1.75rem;
+        }
+        
+        .order-detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .order-detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .detail-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+        
+        .price-value {
+            color: var(--primary-green);
+            font-size: 1.1rem;
+        }
+        
+        .deadline-value {
+            font-weight: 600;
+        }
+        
+        .deadline-overdue {
+            color: var(--status-danger);
+        }
+        
+        .order-card-footer {
+            padding: 1.75rem;
+            background-color: var(--neutral-50);
+            border-top: 1px solid var(--border-light);
+        }
+        
+        .status-section {
+            margin-bottom: 1.25rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+            border: 1px solid transparent;
+        }
+        
+        /* Status Colors */
+        .status-kiritildi { background-color: var(--primary-green-light); color: var(--primary-green-dark); } 
+        .status-tasdiqlandi { background: var(--gradient-primary); color: white; } 
+        .status-rad_etildi { background-color: #fef2f2; color: var(--status-danger); border-color: #fecaca; } 
+        .status-usta_qabul_qildi { background-color: #dbeafe; color: #1e40af; } 
+        .status-usta_boshla { background-color: #fef3c7; color: #92400e; } 
+        .status-ishda { background-color: #fef3c7; color: #92400e; } 
+        .status-usta_tugatdi { background-color: #d1fae5; color: #065f46; } 
+        .status-tayyor { background-color: #d1fae5; color: #065f46; } 
+        .status-bajarildi { background: var(--gradient-primary); color: white; } 
+        
+        .card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        
+        .btn-small { 
+            padding: 10px 16px; 
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid transparent;
+        }
+        
+        .btn-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Button Colors */
+        .btn-edit { background-color: #fef3c7; color: #92400e; border-color: #fde68a; } 
+        .btn-delete { background-color: #fef2f2; color: var(--status-danger); border-color: #fecaca; } 
+        .btn-confirm { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
+        .btn-reject { background-color: var(--neutral-100); color: var(--text-secondary); border: 1px solid var(--neutral-300); } 
+        .btn-start { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
+        .btn-finish { background-color: var(--primary-green-light); color: var(--primary-green-dark); border-color: var(--primary-green); } 
+        .btn-complete { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
+        .btn-usta-qabul { background-color: #1e40af; color: white; border-color: #1e40af; } 
+        .btn-usta-boshla { background-color: #92400e; color: white; border-color: #92400e; } 
+        .btn-usta-tugat { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
+        .btn-view { background-color: var(--neutral-500); color: white; border-color: var(--neutral-500); } 
+        
+        .pdf-link-modern {
+            color: var(--primary-green);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.3s ease;
+        }
+        
+        .pdf-link-modern:hover {
+            color: var(--primary-green-dark);
+        }
+
+        /* No Orders Message */
+        .no-orders-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .no-orders-message i {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--neutral-300);
+        }
+
+        .no-orders-message h3 {
+            color: var(--neutral-600);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .no-orders-message p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .orders-grid {
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            }
+        }
+
+        @media (max-width: 992px) {
             .container-list-modern {
                 padding: 1.5rem;
-                margin: 10px auto;
-                border-radius: 1rem;
             }
             
+            .orders-grid {
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                gap: 1.5rem;
+            }
+            
+            .action-link-btn {
+                min-width: 160px;
+                padding: 0.875rem 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
             .top-header-flex {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 15px;
-            }
-            
-            .top-header-flex h1 {
-                font-size: 1.5rem;
-                order: 2;
-                margin-top: 0;
+                gap: 1.5rem;
             }
             
             .logout-link-modern {
-                align-self: flex-end;
-                order: 3;
-                margin-top: -50px;
-            }
-            
-            .logo-modern {
-                order: 1;
-                margin-bottom: 10px;
-            }
-            
-            h2.welcome-text {
-                font-size: 1rem;
-                padding-bottom: 0.75rem;
-            }
-            
-            .observer-banner {
-                padding: 1rem;
-                font-size: 0.9rem;
-            }
-            
-            .admin-actions-card {
-                padding: 1.25rem;
-                margin-bottom: 1.5rem;
+                align-self: stretch;
+                justify-content: center;
+                margin-top: 1rem;
             }
             
             .admin-actions-group {
                 flex-direction: column;
-                gap: 10px;
             }
             
             .action-link-btn {
+                width: 100%;
                 justify-content: center;
-                padding: 1rem;
-                font-size: 0.9rem;
-            }
-            
-            .orders-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-                margin-top: 1.5rem;
             }
             
             .filter-tabs-container {
@@ -636,18 +679,21 @@
             
             .filter-tab {
                 justify-content: center;
-                padding: 14px 15px;
+                padding: 1rem;
+            }
+            
+            .orders-grid {
+                grid-template-columns: 1fr;
             }
         }
-        
+
         @media (max-width: 480px) {
             .container-list-modern {
                 padding: 1rem;
-                margin: 5px;
             }
             
-            .top-header-flex h1 {
-                font-size: 1.3rem;
+            h1 {
+                font-size: 1.5rem;
             }
             
             .logo-icon {
@@ -660,39 +706,22 @@
                 font-size: 1.4rem;
             }
             
-            .logout-link-modern {
-                padding: 8px 14px;
-                font-size: 0.85rem;
-            }
-            
-            h2.welcome-text {
-                font-size: 0.9rem;
-            }
-            
-            .observer-banner {
-                padding: 0.75rem;
-                font-size: 0.8rem;
-            }
-            
-            .order-card-header {
+            .order-card-header,
+            .order-card-body,
+            .order-card-footer {
                 padding: 1.25rem;
             }
             
-            .order-card-body, .order-card-footer {
-                padding: 1.25rem;
+            .storekeeper-message {
+                padding: 2rem 1rem;
             }
             
-            .order-number {
-                font-size: 1.2rem;
+            .storekeeper-message i {
+                font-size: 3rem;
             }
             
-            .card-actions {
-                gap: 6px;
-            }
-            
-            .btn-small {
-                padding: 6px 10px;
-                font-size: 0.7rem;
+            .storekeeper-message h3 {
+                font-size: 1.5rem;
             }
         }
     </style>
@@ -707,24 +736,13 @@
             <h1>{{ request.user.get_full_name|default:request.user.username }} Boshqarish Paneli</h1>
             <form method="post" action="{% url 'logout' %}" style="margin: 0;">
                 {% csrf_token %} 
-                <button type="submit" class="logout-link-modern" style="border: none; background: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                <button type="submit" class="logout-link-modern">
                     <i class="fas fa-sign-out-alt"></i> Tizimdan Chiqish
                 </button>
             </form>
         </div>
 
         <h2 class="welcome-text">Xush kelibsiz, **{{ request.user.get_full_name|default:request.user.username }}**!</h2>
-
-        {# Kuzatuvchi uchun maxsus banner #}
-        {% if is_observer %}
-            <div class="observer-banner">
-                <i class="fas fa-eye"></i>
-                <div>
-                    <strong>Kuzatuvchi Rejimi</strong> - Siz faqat ma'lumotlarni ko'rish huquqiga egasiz. 
-                    Hech qanday o'zgartirish amallarini bajarolmaysiz.
-                </div>
-            </div>
-        {% endif %}
 
         {# Django Messages #}
         {% if messages %}
@@ -735,19 +753,62 @@
             {% endfor %}
         {% endif %}
 
-        {# Kuzatuvchi uchun hisobotlar paneli #}
+        <!-- {# Debug Info #}
+        <div class="debug-info">
+            <strong>DEBUG INFO:</strong><br>
+            Username: {{ request.user.username }}<br>
+            Groups: 
+            {% for group in request.user.groups.all %}
+                {{ group.name }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+                No groups
+            {% endfor %}<br>
+            Is Staff: {{ request.user.is_staff }}<br>
+            Is Superuser: {{ request.user.is_superuser }}
+        </div> -->
+
+        {# Observer Panel #}
         {% if is_observer %} 
-            <div class="admin-actions-card" style="background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%); border-color: var(--neutral-300);">
-                <h3 style="color: var(--neutral-700);">Hisobotlar va Monitoring</h3>
+            <div class="observer-banner">
+                <i class="fas fa-eye"></i>
+                <div>
+                    <strong>Kuzatuvchi Rejimi</strong> - Siz faqat ma'lumotlarni ko'rish huquqiga egasiz. 
+                    Hech qanday o'zgartirish amallarini bajarolmaysiz.
+                </div>
+            </div>
+            
+            <div class="admin-actions-card">
+                <h3>Hisobotlar va Monitoring</h3>
                 <div class="admin-actions-group">
-                    <a href="{% url 'sales_report_view' %}" class="action-link-btn observer-btn-modern">
+                    <a href="{% url 'sales_report_view' %}" class="action-link-btn report-btn-modern">
                         <i class="fas fa-chart-bar"></i> Sotuv Hisoboti
                     </a>
                 </div>
             </div>
         {% endif %}
 
-        {% if is_glavniy_admin and not is_observer %} 
+        {# Storekeeper Panel #}
+        {% if request.user.username == "Omborchi" or "omborchi" in request.user.username|lower or "store" in request.user.username|lower or "warehouse" in request.user.username|lower %}
+            <div class="storekeeper-actions-card">
+                <h3><i class="fas fa-warehouse"></i> Ombor Boshqaruvi</h3>
+                <div class="admin-actions-group">
+                    <a href="{% url 'material_transaction_create' %}" class="action-link-btn btn-store-modern">
+                        <i class="fas fa-exchange-alt"></i> Kirim / Chiqim
+                    </a>
+
+                    <a href="{% url 'material_list' %}" class="action-link-btn btn-store-modern">
+                        <i class="fas fa-boxes"></i> Ombor Katalogi
+                    </a>
+                    
+                    <!-- <a href="{% url 'material_report' %}" class="action-link-btn btn-store-modern">
+                        <i class="fas fa-clipboard-list"></i> List va Siryo Sarfi
+                    </a> -->
+                </div>
+            </div>
+        {% endif %}
+
+        {# Admin Panel #}
+        {% if is_glavniy_admin and not is_observer and request.user.username != "Omborchi" and "omborchi" not in request.user.username|lower %} 
             <div class="admin-actions-card">
                 <h3>Admin va Hisobot Harakatlari</h3>
                 <div class="admin-actions-group">
@@ -767,331 +828,311 @@
                         <i class="fas fa-chart-bar"></i> Ustalar Hisoboti
                     </a>
 
+                    <a href="{% url 'material_report' %}" class="action-link-btn btn-secondary-modern">
+                      <i class="fas fa-clipboard-list"></i> List va Siryo Sarfi
+                    </a>
 
-                    <a href="{% url 'material_report' %}" class="btn-secondary-modern">
-                      List va Siryo Sarfi
+                    <a href="{% url 'material_transaction_create' %}" class="action-link-btn btn-store-modern">
+                        <i class="fas fa-exchange-alt"></i> Kirim / Chiqim
+                    </a>
+
+                    <a href="{% url 'material_list' %}" class="action-link-btn btn-store-modern">
+                        <i class="fas fa-boxes"></i> Ombor Katalogi
                     </a>
                 </div>
             </div>
         {% endif %}
         
-        <h2 style="color: var(--neutral-800); font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Buyurtmalar Ro'yxati</h2>
+        {# Orders Section - Hidden for Storekeeper #}
+        {% if not request.user.username == "Omborchi" and "omborchi" not in request.user.username|lower %}
+        
+        <div class="orders-section">
+            <h2 class="section-title">Buyurtmalar Ro'yxati</h2>
 
-        {# Filtr Tugmalari - SONLARSIZ #}
-        <div class="filter-tabs">
-            <div class="filter-tabs-container">
-                <a href="?filter=all" class="filter-tab {% if filter_type == 'all' %}active{% endif %}">
-                    <i class="fas fa-list"></i> Barcha Buyurtmalar
-                    {% if not is_worker %}<span class="filter-count">{{ total_orders }}</span>{% endif %}
-                </a>
-                
-                <a href="?filter=completed" class="filter-tab {% if filter_type == 'completed' %}active{% endif %}">
-                    <i class="fas fa-check-circle"></i> Tayyor Buyurtmalar
-                    {% if not is_worker %}<span class="filter-count">{{ completed_orders }}</span>{% endif %}
-                </a>
-                
-                <a href="?filter=in_progress" class="filter-tab {% if filter_type == 'in_progress' %}active{% endif %}">
-                    <i class="fas fa-tasks"></i> Jarayondagi Buyurtmalar
-                    {% if not is_worker %}<span class="filter-count">{{ in_progress_orders }}</span>{% endif %}
-                </a>
-                
-                <a href="?filter=overdue" class="filter-tab {% if filter_type == 'overdue' %}active{% endif %}">
-                    <i class="fas fa-exclamation-triangle"></i> Muddati O'tgan
-                    {% if not is_worker %}<span class="filter-count">{{ overdue_orders_count }}</span>{% endif %}
-                </a>
+            {# Filter Tabs #}
+            <div class="filter-tabs">
+                <div class="filter-tabs-container">
+                    <a href="?filter=all" class="filter-tab {% if filter_type == 'all' %}active{% endif %}">
+                        <i class="fas fa-list"></i> Barcha Buyurtmalar
+                        {% if not is_worker %}<span class="filter-count">{{ total_orders }}</span>{% endif %}
+                    </a>
+                    
+                    <a href="?filter=completed" class="filter-tab {% if filter_type == 'completed' %}active{% endif %}">
+                        <i class="fas fa-check-circle"></i> Tayyor Buyurtmalar
+                        {% if not is_worker %}<span class="filter-count">{{ completed_orders }}</span>{% endif %}
+                    </a>
+                    
+                    <a href="?filter=in_progress" class="filter-tab {% if filter_type == 'in_progress' %}active{% endif %}">
+                        <i class="fas fa-tasks"></i> Jarayondagi Buyurtmalar
+                        {% if not is_worker %}<span class="filter-count">{{ in_progress_orders }}</span>{% endif %}
+                    </a>
+                    
+                    <a href="?filter=overdue" class="filter-tab {% if filter_type == 'overdue' %}active{% endif %}">
+                        <i class="fas fa-exclamation-triangle"></i> Muddati O'tgan
+                        {% if not is_worker %}<span class="filter-count">{{ overdue_orders_count }}</span>{% endif %}
+                    </a>
+                </div>
             </div>
-        </div>
 
-        {# Karta Ko'rinishi - MUDDATI O'TGANLAR HAMMAGA KO'RINADI #}
-        <div class="orders-grid">
-            {% for order in orders %}
-            {% with status_code=order.status|lower %}
-            
-            {# USTALAR UCHUN: Faqat o'ziga tegishli buyurtmalar va boshqalarni yashirish #}
-            {% if is_worker %}
-                {% if request.user.worker_profile in order.assigned_workers.all %}
-                <div class="order-card {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
-                {% else %}
-                <div class="order-card other-worker-order {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
-                {% endif %}
-            {% else %}
-                <div class="order-card {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
-            {% endif %}
-            
-                <div class="order-card-header">
-                    <div class="order-number">
-                        {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                            ***
-                        {% else %}
-                            № {{ order.order_number }}
-                        {% endif %}
-                    </div>
-                    <div class="customer-name">
-                        {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                            ***
-                        {% else %}
-                            {{ order.customer_name }}
-                        {% endif %}
-                    </div>
-                    
-                    {# Boshqa ustalarning buyurtmalari uchun ko'rsatkich #}
-                    {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                    <div class="worker-info">
-                        <i class="fas fa-user-shield"></i> Boshqa usta buyurtmasi
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="order-card-body">
-    
-    <div class="order-detail-row">
-        <span class="detail-label">Mahsulot Nomi</span>
-        <span class="detail-value">
-            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                ***
-            {% else %}
-                {{ order.product_name|default:"—" }}
-            {% endif %}
-        </span>
-    </div>
-    
-    <div class="order-detail-row">
-        <span class="detail-label">Panel Qalinligi (mm)</span>
-        <span class="detail-value">
-            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                ***
-            {% else %}
-                {% if order.panel_thickness %}
-                    {{ order.panel_thickness }}
-                {% else %}
-                    <span style="color: #9ca3af;">Aniqlanmagan</span>
-                {% endif %}
-            {% endif %}
-        </span>
-    </div>
-    
-    <div class="order-detail-row">
-        <span class="detail-label">Kvadrat (m²)</span>
-        <span class="detail-value">
-            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                ***
-            {% else %}
-                {{ order.panel_kvadrat|floatformat:2|intcomma }}
-            {% endif %}
-        </span>
-    </div>
-    
-    </div>
-                <div class="order-card-body">
-                    <div class="order-detail-row">
-                        <span class="detail-label">Kvadrat (m²)</span>
-                        <span class="detail-value">
-                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                                ***
-                            {% else %}
-                                {{ order.panel_kvadrat|floatformat:2|intcomma }}
-                            {% endif %}
-                        </span>
-                    </div>
-                    
-                    <div class="order-detail-row">
-                        <span class="detail-label">Summa</span>
-                        <span class="detail-value price-value">
-                            {% if is_worker %}
-                                ***
-                            {% else %}
-                                {{ order.total_price|floatformat:0|intcomma }} so'm
-                            {% endif %}
-                        </span>
-                    </div>
-                    
-                    <div class="order-detail-row">
-                        <span class="detail-label">Muddat</span>
-                        <span class="detail-value deadline-value 
-                            {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}deadline-overdue{% endif %}">
-                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                                ***
-                            {% else %}
-                                {% if order.deadline %}
-                                    {{ order.deadline|date:"Y-m-d H:i" }}
-                                    {% if order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}
-                                        <div style="font-size: 0.7rem; margin-top: 4px; color: var(--status-danger); font-weight: 700;">
-                                            <i class="fas fa-exclamation-circle"></i> MUDDAT O'TDI!
-                                        </div>
-                                    {% endif %}
-                                {% else %}
-                                    Belgilanmagan
-                                {% endif %}
-                            {% endif %}
-                        </span>
-                    </div>
-                    
-                    <div class="order-detail-row">
-                        <span class="detail-label">Chizma</span>
-                        <span class="detail-value">
-                            {% if order.pdf_file %}
-                                {% if order.status in 'USTA_QABUL_QILDI,USTA_BOSHLA,ISHDA,USTA_TUGATDI,TAYYOR,BAJARILDI' or not is_worker %}
-                                    {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                                        ***
-                                    {% else %}
-                                        <a href="{{ order.pdf_file.url }}" target="_blank" class="pdf-link-modern">
-                                            <i class="fas fa-file-pdf"></i> Ko'rish
-                                        </a>
-                                    {% endif %}
-                                {% else %}
-                                    <span style="color: var(--text-secondary); font-style: italic; font-size: 0.8rem;">
-                                        Qabul qilingach
-                                    </span>
-                                {% endif %}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </span>
-                    </div>
-                </div>
+            {# Orders Grid #}
+            <div class="orders-grid">
+                {% for order in orders %}
+                {% with status_code=order.status|lower %}
                 
-                <div class="order-card-footer">
-                    <div class="status-section">
-                        <span class="status-badge status-{{ status_code }}">
+                {# Worker Specific Logic #}
+                {% if is_worker %}
+                    {% if request.user.worker_profile in order.assigned_workers.all %}
+                    <div class="order-card {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
+                    {% else %}
+                    <div class="order-card other-worker-order {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
+                    {% endif %}
+                {% else %}
+                    <div class="order-card {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
+                {% endif %}
+                
+                    <div class="order-card-header">
+                        <div class="order-number">
                             {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
                                 ***
                             {% else %}
-                                {{ order.get_status_display }}
+                                № {{ order.order_number }}
                             {% endif %}
-                        </span>
+                        </div>
+                        <div class="customer-name">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {{ order.customer_name }}
+                            {% endif %}
+                        </div>
+                        
+                        {# Other Worker Indicator #}
+                        {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                        <div class="worker-info" style="background: var(--neutral-200); color: var(--neutral-600); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; text-align: center; margin-top: 10px;">
+                            <i class="fas fa-user-shield"></i> Boshqa usta buyurtmasi
+                        </div>
+                        {% endif %}
                     </div>
                     
-                    <div class="card-actions">
-                        {# KUZATUVCHI HARAKATLARI - FAQAT KO'RISH #}
-                        {% if is_observer %}
-                            <a href="{% url 'order_detail' order.pk %}" class="btn-small btn-view" title="Tafsilotlarni ko'rish">
-                                <i class="fas fa-eye"></i> Ko'rish
-                            </a>
-
-                        {# USTA HARAKATLARI - FAQAT O'Z BUYURTMALARI UCHUN #}
-                        {% elif is_worker and request.user.worker_profile in order.assigned_workers.all %}
-
-                            {# 1. QABUL QILISH tugmasi (Tovar olindi / Ishga tayyor) #}
-                            {% if status_code == 'tasdiqlandi' or status_code == 'kiritildi' %}
-                                <a href="{% url 'order_worker_accept' order.pk %}" class="btn-small btn-usta-qabul" title="Tovarni oldim"
-                                    onclick="return confirm('Tovarlarni qabul qilganingizni tasdiqlaysizmi? Status: USTA QABUL QILDI. ENDI CHIZMANI KOʻRA OLASIZ.')">
-                                    <i class="fas fa-check"></i> Qabul
-                                </a>
-                            
-                            {# 2. BOSHLASH tugmasi (Ishga kirishdi) - ENDI PDF KO'RISH MUMKIN #}
-                            {% elif status_code == 'usta_qabul_qildi' %}
-                                
-                                {% if order.start_image %} 
-                                    {# Rasm yuklangan bo'lsa, endi boshlashi mumkin #}
-                                    <a href="{% url 'order_worker_start' order.pk %}" class="btn-small btn-usta-boshla" title="Ishni Boshlash"
-                                        onclick="return confirm('Ishni boshlashni tasdiqlaysizmi? Status: USTA BOSHLADI.')">
-                                        <i class="fas fa-play"></i> Boshlash
-                                    </a>
+                    <div class="order-card-body">
+                        <div class="order-detail-row">
+                            <span class="detail-label">Mahsulot Nomi</span>
+                            <span class="detail-value">
+                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                    ***
                                 {% else %}
-                                    {# Rasm yuklanmagan bo'lsa, rasm yuklashga undash #}
-                                    <a href="{% url 'order_detail' order.pk %}" class="btn-small btn-edit" title="Boshlash Rasmi Yuklanmagan" style="background-color: #fca5a5; color: #991b1b;">
-                                        <i class="fas fa-camera"></i> Boshlash Rasmi
-                                    </a>
+                                    {{ order.product_name|default:"—" }}
                                 {% endif %}
-
-                                {# PDF ko'rish tugmasi - ENDI KO'RINADI #}
-                                {% if order.pdf_file %}
-                                    <a href="{{ order.pdf_file.url }}" target="_blank" class="btn-small" 
-                                       style="background-color: #3b82f6; color: white;" 
-                                       title="Chizmani ko'rish">
-                                        <i class="fas fa-file-pdf"></i> Chizma
-                                    </a>
-                                {% endif %}
-
-                            {# 3. TUGATISH tugmasi (Ishni yakunladi) - PDF HAMON KO'RINADI #}
-                            {% elif status_code == 'usta_boshla' or status_code == 'ishda' %}
-
-                                {% if order.finish_image %}
-                                    {# Rasm yuklangan bo'lsa, endi tugatishi mumkin #}
-                                    <a href="{% url 'order_worker_finish' order.pk %}" class="btn-small btn-usta-tugat" title="Ishni Tugatish"
-                                        onclick="return confirm('Ishni tugatganingizni tasdiqlaysizmi? Status: USTA YAKUNLADI.')">
-                                        <i class="fas fa-check-double"></i> Tugatdim
-                                    </a>
-                                {% else %}
-                                    {# Rasm yuklanmagan bo'lsa, rasm yuklashga undash #}
-                                    <a href="{% url 'order_detail' order.pk %}" class="btn-small btn-edit" title="Tugatish Rasmi Yuklanmagan" style="background-color: #fca5a5; color: #991b1b;">
-                                        <i class="fas fa-image"></i> Tugatish Rasmi
-                                    </a>
-                                {% endif %}
-
-                                {# PDF ko'rish tugmasi - ENDI KO'RINADI #}
-                                {% if order.pdf_file %}
-                                    <a href="{{ order.pdf_file.url }}" target="_blank" class="btn-small" 
-                                       style="background-color: #3b82f6; color: white;" 
-                                       title="Chizmani ko'rish">
-                                        <i class="fas fa-file-pdf"></i> Chizma
-                                    </a>
-                                {% endif %}
-                                    
-                            {% endif %}
-                                                
-                        {# ADMIN/MENEJER/BOSHLIQ HARAKATLARI #}
-                        {% elif is_manager or is_production_boss or is_glavniy_admin %}
+                            </span>
+                        </div>
                         
-                            {# GLAVNIY ADMIN uchun Tahrirlash/O'chirish #}
-                            {% if is_glavniy_admin %} 
-                                <a href="{% url 'order_edit' order.pk %}" class="btn-small btn-edit" title="Tahrirlash">
-                                    <i class="fas fa-edit"></i> Tahrir
+                        <div class="order-detail-row">
+                            <span class="detail-label">Panel Qalinligi (mm)</span>
+                            <span class="detail-value">
+                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                    ***
+                                {% else %}
+                                    {% if order.panel_thickness %}
+                                        {{ order.panel_thickness }}
+                                    {% else %}
+                                        <span style="color: #9ca3af;">Aniqlanmagan</span>
+                                    {% endif %}
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="order-detail-row">
+                            <span class="detail-label">Kvadrat (m²)</span>
+                            <span class="detail-value">
+                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                    ***
+                                {% else %}
+                                    {{ order.panel_kvadrat|floatformat:2|intcomma }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="order-detail-row">
+                            <span class="detail-label">Summa</span>
+                            <span class="detail-value price-value">
+                                {% if is_worker %}
+                                    ***
+                                {% else %}
+                                    {{ order.total_price|floatformat:0|intcomma }} so'm
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="order-detail-row">
+                            <span class="detail-label">Muddat</span>
+                            <span class="detail-value deadline-value 
+                                {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}deadline-overdue{% endif %}">
+                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                    ***
+                                {% else %}
+                                    {% if order.deadline %}
+                                        {{ order.deadline|date:"Y-m-d H:i" }}
+                                        {% if order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}
+                                            <div style="font-size: 0.7rem; margin-top: 4px; color: var(--status-danger); font-weight: 700;">
+                                                <i class="fas fa-exclamation-circle"></i> MUDDAT O'TDI!
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        Belgilanmagan
+                                    {% endif %}
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="order-detail-row">
+                            <span class="detail-label">Chizma</span>
+                            <span class="detail-value">
+                                {% if order.pdf_file %}
+                                    {% if order.status in 'USTA_QABUL_QILDI,USTA_BOSHLA,ISHDA,USTA_TUGATDI,TAYYOR,BAJARILDI' or not is_worker %}
+                                        {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                            ***
+                                        {% else %}
+                                            <a href="{{ order.pdf_file.url }}" target="_blank" class="pdf-link-modern">
+                                                <i class="fas fa-file-pdf"></i> Ko'rish
+                                            </a>
+                                        {% endif %}
+                                    {% else %}
+                                        <span style="color: var(--text-secondary); font-style: italic; font-size: 0.8rem;">
+                                            Qabul qilingach
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="order-card-footer">
+                        <div class="status-section">
+                            <span class="status-badge status-{{ status_code }}">
+                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                    ***
+                                {% else %}
+                                    {{ order.get_status_display }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="card-actions">
+                            {# Actions based on user role #}
+                            {% if is_observer %}
+                                <a href="{% url 'order_detail' order.pk %}" class="btn-small btn-view">
+                                    <i class="fas fa-eye"></i> Ko'rish
                                 </a>
-                                <a href="{% url 'order_delete' order.pk %}" class="btn-small btn-delete" title="O'chirish">
-                                    <i class="fas fa-trash"></i> O'chirish
-                                </a>
-                            {% endif %}
-                            
-                            {# MENEJER/TASDIQLOVCHI uchun Harakatlar #}
-                            {% if is_manager or is_glavniy_admin %}
-                                {% if status_code == 'kiritildi' %}
-                                    <a href="{% url 'order_confirm' order.pk %}" class="btn-small btn-confirm" title="Qabul qilish">
+                            {% elif is_worker and request.user.worker_profile in order.assigned_workers.all %}
+                                {# Worker actions #}
+                                {% if status_code == 'tasdiqlandi' or status_code == 'kiritildi' %}
+                                    <a href="{% url 'order_worker_accept' order.pk %}" class="btn-small btn-usta-qabul"
+                                        onclick="return confirm('Tovarlarni qabul qilganingizni tasdiqlaysizmi? Status: USTA QABUL QILDI. ENDI CHIZMANI KOʻRA OLASIZ.')">
                                         <i class="fas fa-check"></i> Qabul
                                     </a>
-                                    <a href="{% url 'order_reject' order.pk %}" class="btn-small btn-reject" title="Rad etish">
-                                        <i class="fas fa-times"></i> Rad
+                                {% elif status_code == 'usta_qabul_qildi' %}
+                                    {% if order.start_image %} 
+                                        <a href="{% url 'order_worker_start' order.pk %}" class="btn-small btn-usta-boshla"
+                                            onclick="return confirm('Ishni boshlashni tasdiqlaysizmi? Status: USTA BOSHLADI.')">
+                                            <i class="fas fa-play"></i> Boshlash
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'order_detail' order.pk %}" class="btn-small btn-edit" style="background-color: #fca5a5; color: #991b1b;">
+                                            <i class="fas fa-camera"></i> Boshlash Rasmi
+                                        </a>
+                                    {% endif %}
+                                    {% if order.pdf_file %}
+                                        <a href="{{ order.pdf_file.url }}" target="_blank" class="btn-small" style="background-color: #3b82f6; color: white;">
+                                            <i class="fas fa-file-pdf"></i> Chizma
+                                        </a>
+                                    {% endif %}
+                                {% elif status_code == 'usta_boshla' or status_code == 'ishda' %}
+                                    {% if order.finish_image %}
+                                        <a href="{% url 'order_worker_finish' order.pk %}" class="btn-small btn-usta-tugat"
+                                            onclick="return confirm('Ishni tugatganingizni tasdiqlaysizmi? Status: USTA YAKUNLADI.')">
+                                            <i class="fas fa-check-double"></i> Tugatdim
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'order_detail' order.pk %}" class="btn-small btn-edit" style="background-color: #fca5a5; color: #991b1b;">
+                                            <i class="fas fa-image"></i> Tugatish Rasmi
+                                        </a>
+                                    {% endif %}
+                                    {% if order.pdf_file %}
+                                        <a href="{{ order.pdf_file.url }}" target="_blank" class="btn-small" style="background-color: #3b82f6; color: white;">
+                                            <i class="fas fa-file-pdf"></i> Chizma
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            {% elif is_manager or is_production_boss or is_glavniy_admin %}
+                                {# Admin/Manager actions #}
+                                {% if is_glavniy_admin %} 
+                                    <a href="{% url 'order_edit' order.pk %}" class="btn-small btn-edit">
+                                        <i class="fas fa-edit"></i> Tahrir
                                     </a>
-                                {% elif status_code == 'tayyor' %}
-                                    <a href="{% url 'order_complete' order.pk %}" class="btn-small btn-complete" title="Bajarildi (Yakuniy)">
-                                        <i class="fas fa-check-double"></i> Bajarildi
+                                    <a href="{% url 'order_delete' order.pk %}" class="btn-small btn-delete">
+                                        <i class="fas fa-trash"></i> O'chirish
                                     </a>
                                 {% endif %}
-                            {% endif %}
-                            
-                            {# ISHLAB CHIQARISH BOSHLIG'I uchun Harakatlari #}
-                            {% if is_production_boss or is_glavniy_admin %}
-                                {% if status_code == 'tasdiqlandi' or status_code == 'usta_qabul_qildi' %}
-                                    <a href="{% url 'order_start_production' order.pk %}" class="btn-small btn-start" title="Ishlab chiqarishga berish">
-                                        <i class="fas fa-play"></i> Ishga Berish
-                                    </a>
-                                {% elif status_code == 'ishda' or status_code == 'usta_tugatdi' %}
-                                    <a href="{% url 'order_finish' order.pk %}" class="btn-small btn-finish" title="Tayyor Deb Belglash">
-                                        <i class="fas fa-check"></i> Tayyor
-                                    </a>
+                                {% if is_manager or is_glavniy_admin %}
+                                    {% if status_code == 'kiritildi' %}
+                                        <a href="{% url 'order_confirm' order.pk %}" class="btn-small btn-confirm">
+                                            <i class="fas fa-check"></i> Qabul
+                                        </a>
+                                        <a href="{% url 'order_reject' order.pk %}" class="btn-small btn-reject">
+                                            <i class="fas fa-times"></i> Rad
+                                        </a>
+                                    {% elif status_code == 'tayyor' %}
+                                        <a href="{% url 'order_complete' order.pk %}" class="btn-small btn-complete">
+                                            <i class="fas fa-check-double"></i> Bajarildi
+                                        </a>
+                                    {% endif %}
                                 {% endif %}
+                                {% if is_production_boss or is_glavniy_admin %}
+                                    {% if status_code == 'tasdiqlandi' or status_code == 'usta_qabul_qildi' %}
+                                        <a href="{% url 'order_start_production' order.pk %}" class="btn-small btn-start">
+                                            <i class="fas fa-play"></i> Ishga Berish
+                                        </a>
+                                    {% elif status_code == 'ishda' or status_code == 'usta_tugatdi' %}
+                                        <a href="{% url 'order_finish' order.pk %}" class="btn-small btn-finish">
+                                            <i class="fas fa-check"></i> Tayyor
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <span style="color: var(--text-secondary); font-style: italic; font-size: 11px;">Faoliyat yo'q</span>
                             {% endif %}
 
-                        {% else %}
-                            <span style="color: var(--text-secondary); font-style: italic; font-size: 11px;">Faoliyat yo'q</span>
-                        {% endif %}
-
-                        {# Buyurtma tafsilotlariga o'tish tugmasi (barchasi uchun, eng past ustun) #}
-                        {% if not is_observer %}
-                            <a href="{% url 'order_detail' order.pk %}" class="btn-small" style="background-color: #f5f5f5; color: var(--neutral-600);" title="Tafsilotlar">
-                                <i class="fas fa-info-circle"></i> Batafsil
-                            </a>
-                        {% endif %}
+                            {# Detail button for all non-observers #}
+                            {% if not is_observer %}
+                                <a href="{% url 'order_detail' order.pk %}" class="btn-small" style="background-color: #f5f5f5; color: var(--neutral-600);">
+                                    <i class="fas fa-info-circle"></i> Batafsil
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
+                {% endwith %}
+                {% empty %}
+                <div class="no-orders-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>Hozircha tizimda buyurtmalar mavjud emas</h3>
+                    <p>Yangi buyurtma qo'shish uchun yuqoridagi "Yangi Buyurtmani Kiritish" tugmasini bosing.</p>
+                </div>
+                {% endfor %}
             </div>
-            {% endwith %}
-            {% empty %}
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">
-                <i class="fas fa-exclamation-circle" style="font-size: 3rem; margin-bottom: 1rem; color: var(--neutral-300);"></i>
-                <h3 style="color: var(--neutral-600); margin-bottom: 0.5rem;">Hozircha tizimda buyurtmalar mavjud emas</h3>
-                <p style="color: var(--text-secondary);">Yangi buyurtma qo'shish uchun yuqoridagi "Yangi Buyurtmani Kiritish" tugmasini bosing.</p>
-            </div>
-            {% endfor %}
         </div>
+        
+        {% else %}
+        
+        {# Storekeeper Only Message #}
+        <div class="storekeeper-message">
+            <i class="fas fa-warehouse"></i>
+            <h3>Ombor Boshqaruv Paneli</h3>
+        </div>
+        
+        {% endif %}
+        
     </div>
 {% endblock %}
