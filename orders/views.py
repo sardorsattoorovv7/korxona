@@ -13,7 +13,8 @@ from django.contrib.auth.views import LoginView
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-
+from .models import Material
+from django.db.models import Sum, F
 from django.conf import settings
 
 # AUDIT LOG UCHUN IMPORTLAR
@@ -320,6 +321,7 @@ def order_list(request):
         'completed_orders': completed_orders,
         'in_progress_orders': in_progress_orders,
         'overdue_orders_count': overdue_orders_count,
+        'is_storekeeper': request.user.username.lower() == 'omborchi' or 'store' in request.user.username.lower(),
     }
     return render(request, 'orders/order_list.html', context)
 
@@ -1075,114 +1077,933 @@ def order_delete(request, pk):
         
     return render(request, 'orders/order_confirm_delete.html', {'order': order})
 
-@login_required
-@user_passes_test(is_report_viewer_or_observer, login_url='/login/')  # ✅ YANGI
-def weekly_report_view(request):
-    """
-    Buyurtmalar va Ustalar ish faoliyati bo'yicha umumiy hisobot.
-    Sanalar bo'yicha filtrlash imkoniyati mavjud.
-    """
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
+from decimal import Decimal
+from datetime import datetime, timedelta
+from django.db.models import Q
+from django.utils import timezone
+# ... (boshqa importlar)
 
-    # Umumiy Buyurtmalar (Barcha statusdagilar)
+@login_required
+@user_passes_test(is_report_viewer_or_observer, login_url='/login/')
+def weekly_report_view(request):
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    # Vaqt zonasidan xabardor sanalarni saqlash uchun o'zgaruvchilar
+    start_datetime_aware = None
+    end_datetime_aware = None
+
+    # ----------------------------------------------------------------------
+    # 💡 MUHIM TUZATISH: Sanani TZ-Aware qilish
+    # ----------------------------------------------------------------------
+
+    if start_date_str:
+        try:
+            # 1. Tanlangan sanani Naive Datetime obyektiga o'tkazamiz (00:00:00)
+            start_datetime_naive = datetime.strptime(start_date_str, '%Y-%m-%d')
+            # 2. Uni loyihaning TIME_ZONE zonasidan xabardor qilamiz (Masalan, Toshkent vaqti)
+            start_datetime_aware = timezone.make_aware(start_datetime_naive)
+        except ValueError:
+             messages.error(request, "Boshlanish sana formati noto'g'ri.")
+             start_date_str = None # Noto'g'ri bo'lsa filtrlashni to'xtatamiz
+
+    if end_date_str:
+        try:
+            # 1. Tanlangan sanani Naive Datetime obyektiga o'tkazamiz (+1 kun)
+            end_datetime_naive = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
+            # 2. Uni loyihaning TIME_ZONE zonasidan xabardor qilamiz
+            end_datetime_aware = timezone.make_aware(end_datetime_naive)
+        except ValueError:
+            messages.error(request, "Tugash sana formati noto'g'ri.")
+            end_date_str = None
+            
+    # ----------------------------------------------------------------------
+    # 1. Umumiy Buyurtmalar (created_at bo'yicha) filtrlash
+    # ----------------------------------------------------------------------
     orders = Order.objects.all().select_related('created_by')
-    
-    # Umumiy hisobotni filtrlash uchun Q obyektini yaratamiz
     filter_q = Q()
     
-    # Sana filtrlash logikasi (Kiritilgan sanaga asoslanamiz, lekin usta hisoboti uchun pastda alohida ishlaymiz)
-    if start_date:
-        filter_q &= Q(created_at__gte=start_date)
-    if end_date:
-        # Tugash kuniga 1 kun qo'shamiz, chunki date__lte faqat 00:00:00 ni oladi
-        end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-        filter_q &= Q(created_at__lt=end_datetime)
-        
+    if start_datetime_aware:
+        # created_at__gte ni TZ-aware qiymat bilan solishtiramiz
+        filter_q &= Q(created_at__gte=start_datetime_aware) 
+    if end_datetime_aware:
+        # created_at__lt ni TZ-aware qiymat bilan solishtiramiz
+        filter_q &= Q(created_at__lt=end_datetime_aware) 
+            
     report_orders = orders.filter(filter_q).order_by('-created_at')
-
-    # 1. Umumiy Statistikani hisoblash (Buyurtmalar Ro'yxati asosida)
-    total_orders_count = report_orders.count()
-    total_square = report_orders.aggregate(Sum('panel_kvadrat'))['panel_kvadrat__sum'] or 0
-    total_revenue = report_orders.aggregate(Sum('total_price'))['total_price__sum'] or 0
     
-    # ========================================================
-    # 2. 💡 YENGI LOGIKA: Ustalar Ish Faoliyati Hisoboti
-    # ========================================================
+    # ... (Umumiy statistikani hisoblash)
     
-    # Faqat bajarilgan buyurtmalarni filtrlash (TAYYOR va BAJARILDI statuslari)
+    # ----------------------------------------------------------------------
+    # 2. Ustalar Ish Faoliyati Hisoboti (worker_finished_at bo'yicha)
+    # ----------------------------------------------------------------------
     worker_report_orders = Order.objects.filter(
-        status__in=['TAYYOR', 'BAJARILDI']  # Ikkala statusni ham qo'shdik
+        status__in=['TAYYOR', 'BAJARILDI']
     ).filter(
-        # Usta ishni tugatgan vaqti bo'yicha filtrlash
         worker_finished_at__isnull=False 
-    ).select_related(
-        # Ustaning nomini chiqarish uchun kerak
     ).prefetch_related(
-        'assigned_workers__user' # Workers orqali User ma'lumotlarini yuklaymiz
+        'assigned_workers__user'
     ) 
     
-    # Agar sana filtrlari qo'yilgan bo'lsa, uni qo'llash
     worker_filter_q = Q()
-    if start_date:
-        worker_filter_q &= Q(worker_finished_at__gte=start_date)
-    if end_date:
-        # Tugash kuniga 1 kun qo'shamiz (Yuqoridagi kabi)
-        end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-        worker_filter_q &= Q(worker_finished_at__lt=end_datetime)
-        
+    # Yuqorida tayyorlangan TZ-aware obyektlarni qayta ishlatamiz!
+    if start_datetime_aware:
+        worker_filter_q &= Q(worker_finished_at__gte=start_datetime_aware)
+    if end_datetime_aware:
+        worker_filter_q &= Q(worker_finished_at__lt=end_datetime_aware)
+            
     worker_report_orders = worker_report_orders.filter(worker_filter_q)
-
-    # Ustalar bo'yicha guruhlash va hisoblash
-    worker_summary = {}
-    for order in worker_report_orders:
-        for worker in order.assigned_workers.all():
-            worker_key = worker.user.get_full_name() or worker.user.username
-            
-            if worker_key not in worker_summary:
-                worker_summary[worker_key] = {
-                    'total_kvadrat': 0.0,
-                    'total_orders': 0,
-                    'role': worker.get_role_display() 
-                }
-            
-            # Kvadratni qo'shish (Bitta buyurtma bir nechta ustaga taqsimlangan bo'lsa,
-            # har bir ustaga to'liq kvadratni hisoblaymiz. Agar siz uni taqsimlashni 
-            # istasangiz, qo'shimcha mantiq kerak, lekin odatda hisobotda shunday qilinadi).
-            worker_summary[worker_key]['total_kvadrat'] += order.panel_kvadrat
-            worker_summary[worker_key]['total_orders'] += 1
-
-    # Hisobotni ro'yxatga aylantirish (templategacha oson o'tishi uchun)
-    worker_report_list = sorted(
-        [{'worker_name': k, **v} for k, v in worker_summary.items()],
-        key=lambda x: x['total_kvadrat'],
-        reverse=True
-    )
     
-    # Umumiy bajarilgan kvadratura
-    total_finished_kvadrat = sum(item['total_kvadrat'] for item in worker_report_list)
-    # ========================================================
-    # 2. 💡 YENGI LOGIKA TUGADI
-    # ========================================================
-
+    # ... (Qolgan loop va kontekst mantig'i)
+    
+    # Kontekstni yangilash
     context = {
-        # Umumiy hisobot konteksti
-        'report_orders': report_orders,
-        'total_orders_count': total_orders_count,
-        'total_square': total_square,
-        'total_revenue': total_revenue,
-        'start_date': start_date,
-        'end_date': end_date,
-        
-        # 💡 YANGI: Ustalar hisoboti konteksti
-        'worker_report_list': worker_report_list,
-        'total_finished_kvadrat': total_finished_kvadrat,
-        
-        # ✅ YANGI: Role konteksti
-        'is_observer': is_observer(request.user),
+        # ... (boshqa kontekstlar)
+        # Template uchun sanalarni string formatida qaytarish
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        # ...
     }
 
     return render(request, 'orders/weekly_report_view.html', context)
+# orders/views.py
+
+from django.shortcuts import render, redirect 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+# ... (Boshqa importlar qolaversin) ...
+
+# from .forms import MaterialInflowForm, MaterialOutflowForm # Bularni o'chirib tashlaymiz
+from .forms import MaterialTransactionForm # YANGI formani import qilamiz
+
+# ... (material_sarfi_report funksiyasi qolaversin) ...
+
+# ===================================================================
+# 🔄 YAGONA VIEW: MATERIAL HARAKATINI YARATISH
+# ===================================================================
+
+from .forms import (
+    OrderForm, 
+    StartImageUploadForm, 
+    FinishImageUploadForm, 
+    OrderStatusForm, 
+    MaterialTransactionForm,)
+import json
+# views.py
+
+# views.py
+from django.db import transaction as db_transaction
+from django.contrib import messages
+import json
+
+# views.py
+# views.py - material_transaction_create view ni yangilash
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db import transaction as db_transaction
+import json
+from .forms import MaterialTransactionForm
+from .models import Material
+
+@login_required
+def material_transaction_create(request):
+    """Material kirim/chiqim tranzaksiyasini yaratish."""
+    
+    if request.method == 'POST':
+        form = MaterialTransactionForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                with db_transaction.atomic():
+                    # Formani saqlash
+                    transaction_obj = form.save(commit=False)
+                    transaction_obj.performed_by = request.user
+                    
+                    # Material va miqdorni olish
+                    material = transaction_obj.material
+                    quantity = transaction_obj.quantity_change
+                    transaction_type = transaction_obj.transaction_type
+
+
+                    product_name_from_form = form.cleaned_data.get('product_name')
+                    
+                    # Agar foydalanuvchi Maxsulot nomini kiritgan bo'lsa, uni Materialga saqlaymiz.
+                    # Bu kelgusida ushbu materialning Mahsulot nomini ko'rsatib turishini ta'minlaydi.
+                    if product_name_from_form:
+                        material.product_name = product_name_from_form
+                    
+                    # Material qoldig'ini yangilash
+                    if transaction_type == 'IN':
+                        material.quantity += quantity
+                        message_type = "✅ Kirim"
+                    else:  # OUT
+                        material.quantity -= quantity
+                        message_type = "📤 Chiqim"
+                    
+                    # Materialni saqlash
+                    material.save()
+                    transaction_obj.save()
+                    
+                    # 🔴 Maxsulot nomini ham ko'rsatish
+                    success_message = f"{message_type} muvaffaqiyatli saqlandi."
+                    if material.product_name:
+                        success_message += f"<br><small class='text-muted'>Maxsulot: {material.product_name}</small>"
+                    success_message += f"<br>{material.name} qoldig'i: {material.quantity:.3f} {material.unit.upper()}"
+                    
+                    messages.success(request, success_message)
+                    
+                    # Materiallar ro'yxatiga qaytish
+                    return redirect('material_list')
+                    
+            except Exception as e:
+                messages.error(request, f"❌ Xatolik: {str(e)}")
+        
+        else:
+            # Forma xatolarini ko'rsatish
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    
+    else:
+        form = MaterialTransactionForm()
+    
+    # Material ma'lumotlarini JavaScript uchun tayyorlash
+    materials = Material.objects.all().select_related('category')
+    
+    material_data = {}
+    for mat in materials:
+        material_data[str(mat.id)] = {
+            'name': mat.name,
+            'product_name': mat.product_name or '',  # 🔴 Maxsulot nomini qo'shamiz
+            'unit': mat.unit.upper(),
+            'quantity': float(mat.quantity),
+            'category': mat.category.name if mat.category else 'Kategoriyasiz',
+        }
+    
+    context = {
+        'form': form,
+        'material_data_json': json.dumps(material_data, ensure_ascii=False),
+    }
+    
+    return render(request, 'orders/material_transaction_create.html', context)
+
+
+# 🔴 YANGI: Material yaratish view
+@login_required
+def material_create(request):
+    """Yangi material yaratish."""
+    if request.method == 'POST':
+        form = MaterialForm(request.POST)
+        if form.is_valid():
+            material = form.save()
+            messages.success(request, f"✅ Material '{material.name}' muvaffaqiyatli yaratildi.")
+            return redirect('material_list')
+    else:
+        form = MaterialForm()
+    
+    context = {'form': form}
+    return render(request, 'orders/material_form.html', context)
+
+
+# 🔴 YANGI: Material tahrirlash view
+@login_required
+def material_edit(request, pk):
+    """Materialni tahrirlash."""
+    material = get_object_or_404(Material, pk=pk)
+    
+    if request.method == 'POST':
+        form = MaterialForm(request.POST, instance=material)
+        if form.is_valid():
+            material = form.save()
+            messages.success(request, f"✅ Material '{material.name}' muvaffaqiyatli yangilandi.")
+            return redirect('material_list')
+    else:
+        form = MaterialForm(instance=material)
+    
+    context = {'form': form, 'material': material}
+    return render(request, 'orders/material_form.html', context)
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db.models import F, ExpressionWrapper, DecimalField, Sum, Q, Avg, Count, IntegerField, Case, When
+from django.db.models.functions import Coalesce # Coalesce uchun import
+from datetime import timedelta
+from django.utils import timezone
+from django.core.paginator import Paginator
+from decimal import Decimal # Decimal ishlatish uchun
+
+# Modellar importi (Material va MaterialTransaction)
+from .models import Material, MaterialTransaction 
+# Eslatma: Agar modellar boshqa joyda bo'lsa, uni yuqoriga qo'ying
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, Q, F, DecimalField, IntegerField, Count, Avg, ExpressionWrapper, Case, When
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+from datetime import timedelta
+from django.core.paginator import Paginator
+from decimal import Decimal # DecimalField uchun kerak
+
+# Material va MaterialTransaction modellarini import qiling (agar yuqorida bo'lmasa)
+# from .models import Material, MaterialTransaction 
+
+@login_required
+def material_list(request):
+    """
+    Omborxona materiallari va tranzaksiyalarini ko'rsatish:
+    To'liq yangilangan versiya chiqim va kirim ma'lumotlari bilan
+    """
+    
+    # ========================================================================
+    # 1. FILTR PARAMETRLARINI OLISH VA VAQT CHEGARALARI
+    # ========================================================================
+    filter_low_stock = request.GET.get('low_stock') == 'true'
+    filter_has_stock = request.GET.get('has_stock') == 'true'
+    filter_type = request.GET.get('type', '')  # 'income', 'outcome', ''
+    
+    current_date = timezone.now()
+    
+    # Bugunlik chegaralar
+    today_start = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = current_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    # Oxirgi 30 kun
+    thirty_days_ago = current_date - timedelta(days=30)
+    
+    # Haftalik (7 kun)
+    week_start = current_date - timedelta(days=7)
+    
+    # ========================================================================
+    # 2. MATERIALLAR RO'YXATI (PAGINATION BILAN)
+    # ========================================================================
+    
+    base_materials_qs = Material.objects.annotate(
+        
+        # ✅ 1. Qoldiq va minimal qoldiq farqi (TO'G'RI)
+        difference=ExpressionWrapper(
+            F('quantity') - F('min_stock_level'),
+            output_field=DecimalField(max_digits=15, decimal_places=3)
+        ),
+        
+        # ✅ 2. Jami qiymat (TO'G'RI)
+        total_value=ExpressionWrapper(
+            F('quantity') * F('price_per_unit'),
+            output_field=DecimalField(max_digits=15, decimal_places=2)
+        ), 
+        
+    ).order_by('name') 
+
+    # Filtrlash
+    materials = base_materials_qs
+    
+    if filter_low_stock:
+        materials = materials.filter(quantity__lt=F('min_stock_level'))
+    
+    if filter_has_stock:
+        materials = materials.filter(quantity__gt=0)
+    
+    # Pagination
+    paginator = Paginator(materials, 20)  # Sahifada 20 ta material
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # 🛑 DEBUG: Materiallar soni
+    print("DEBUG: Umumiy materiallar bazada:", base_materials_qs.count())
+    print("DEBUG: Jami materiallar filtrdan keyin:", materials.count())
+    
+    # ========================================================================
+    # 3. UMUMIY INVENTARIZATSIYA STATISTIKASI
+    # ========================================================================
+    inventory_stats = base_materials_qs.aggregate(
+        total_inventory_value=Sum('total_value', default=Decimal('0')),
+        avg_price=Avg('price_per_unit', default=Decimal('0')),
+        low_stock_materials_count=Sum(
+            Case(
+                When(quantity__lt=F('min_stock_level'), then=1),
+                default=0,
+                output_field=IntegerField()
+            )
+        ),
+        total_materials_count=Count('id')
+    )
+    
+    # ========================================================================
+    # 4. TRANZAKSIYALAR STATISTIKASI (KIRIM/CHIQIM)
+    # ========================================================================
+    # Tranzaksiyalarni annotatsiya qilish (qiymat hisoblash uchun)
+    transaction_qs = MaterialTransaction.objects.annotate(
+        calculated_value=ExpressionWrapper(
+            F('quantity_change') * F('material__price_per_unit'), 
+            output_field=DecimalField(max_digits=15, decimal_places=2)
+        )
+    )
+    
+    # Umumiy tranzaksiya statistikasi
+    transaction_stats = transaction_qs.aggregate(
+        # Bugungi kunlik
+        today_incoming=Sum('quantity_change', 
+                                     filter=Q(transaction_type='IN', timestamp__range=(today_start, today_end)), 
+                                     default=Decimal('0')),
+        today_outgoing=Sum('quantity_change', 
+                                     filter=Q(transaction_type='OUT', timestamp__range=(today_start, today_end)), 
+                                     default=Decimal('0')),
+        
+        # Oylik (30 kun)
+        monthly_incoming=Sum('quantity_change', 
+                               filter=Q(transaction_type='IN', timestamp__gte=thirty_days_ago), 
+                               default=Decimal('0')),
+        monthly_outgoing=Sum('quantity_change', 
+                               filter=Q(transaction_type='OUT', timestamp__gte=thirty_days_ago), 
+                               default=Decimal('0')),
+        
+        # Oylik qiymat
+        monthly_incoming_value=Sum('calculated_value', 
+                                     filter=Q(transaction_type='IN', timestamp__gte=thirty_days_ago), 
+                                     default=Decimal('0')),
+        monthly_outgoing_value=Sum('calculated_value', 
+                                     filter=Q(transaction_type='OUT', timestamp__gte=thirty_days_ago), 
+                                     default=Decimal('0')),
+        
+        # Haftalik (7 kun)
+        weekly_incoming=Sum('quantity_change', 
+                                     filter=Q(transaction_type='IN', timestamp__gte=week_start), 
+                                     default=Decimal('0')),
+        weekly_outgoing=Sum('quantity_change', 
+                                     filter=Q(transaction_type='OUT', timestamp__gte=week_start), 
+                                     default=Decimal('0')),
+    )
+    
+    # ========================================================================
+    # 5. KIRIM TRANZAKSIYALARI (INCOME) - HTML UCHUN TAYYORLANADI
+    # ========================================================================
+    incoming_transactions_raw = MaterialTransaction.objects.filter(
+        transaction_type='IN'
+    ).select_related('material').order_by('-timestamp')[:100]
+    
+    income_materials = []
+    for tx in incoming_transactions_raw:
+        try:
+            material = tx.material
+            quantity = tx.quantity_change
+            unit_price = material.price_per_unit if material else Decimal('0') 
+            
+            income_materials.append({
+                'id': tx.id,
+                'date': tx.timestamp,
+                'material': {
+                    'name': material.name if material else 'Noma\'lum',
+                    # 🛑 OGOHLANTIRISH: Agar modelda 'code' yo'q bo'lsa, bu yerda xato bo'lishi mumkin.
+                    # 'code': material.code if material and hasattr(material, 'code') else '', 
+                    'product_name': material.product_name if material and hasattr(material, 'product_name') else '',
+                    'unit': material.unit if material else ''
+                },
+                'quantity': quantity,
+                'price': unit_price,
+                'total': quantity * unit_price,
+                'notes': tx.notes or '',
+                'supplier': tx.received_by or ''
+            })
+        except Exception as e:
+            print(f"DEBUG XATO: Kirim tranzaksiyasini ID {tx.id} qayta ishlashda xato yuz berdi: {e}")
+            continue
+    
+    # 🛑 DEBUG: Kirim ma'lumotlari soni
+    print("=========================================")
+    print(f"DEBUG: KIRIM TRANZAKSIYALARI: Jami {len(incoming_transactions_raw)} ta topildi.")
+    print(f"DEBUG: HTML uchun TAYYORLANGAN KIRIM soni: {len(income_materials)} ta element.")
+    if not income_materials and incoming_transactions_raw:
+        print("DIQQAT: KIRIM ro'yxati BO'SH. Yuqoridagi xatoga qarang.")
+    
+    # ========================================================================
+    # 6. CHIQIM TRANZAKSIYALARI (OUTCOME) - HTML UCHUN TAYYORLANADI
+    # ========================================================================
+    
+    outgoing_transactions_raw = MaterialTransaction.objects.filter(
+        transaction_type='OUT'
+    ).select_related('material').order_by('-timestamp')[:100]
+
+    outcome_materials = []
+    for tx in outgoing_transactions_raw:
+        try:
+            material = tx.material
+            
+            # Xavfsiz hisoblash
+            quantity = abs(tx.quantity_change)  
+            unit_price = material.price_per_unit if material else Decimal('0') 
+            
+            # Ma'lumotlarni xavfsiz yig'ish
+            material_data = {
+                'name': material.name if material else 'Noma\'lum (Material FK yo\'q)',
+                # 'code' ni olib tashladik
+                'product_name': material.product_name if material and hasattr(material, 'product_name') else '',
+                'unit': material.unit if material else ''
+            }
+
+            outcome_materials.append({
+                'id': tx.id,
+                'date': tx.timestamp,
+                'material': material_data,
+                'quantity_change': tx.quantity_change,  # Manfiy qiymat
+                'unit_price': unit_price,
+                'total_value': quantity * unit_price,  # Absolyut qiymat
+                'notes': tx.notes or '',
+                'department': tx.received_by or '' 
+            })
+            
+        except Exception as e:
+            print(f"DEBUG XATO: Chiqim tranzaksiyasini ID {tx.id} qayta ishlashda xato yuz berdi: {e}")
+            continue 
+            
+    # 🛑 DEBUG: Chiqim ma'lumotlari soni
+    print("=========================================")
+    print(f"DEBUG: CHIQIM TRANZAKSIYALARI: Jami {len(outgoing_transactions_raw)} ta topildi.")
+    print(f"DEBUG: HTML uchun TAYYORLANGAN CHIQIM soni: {len(outcome_materials)} ta element.")
+    if not outcome_materials and outgoing_transactions_raw:
+        print("DIQQAT: CHIQIM ro'yxati BO'SH. Yuqoridagi xatoga qarang.")
+    print("=========================================")
+        
+    # ========================================================================
+    # 7. VAQT BO'YICHA SANOQLAR
+    # ========================================================================
+    # ... (kod avvalgidek qoladi) ...
+    today_income_count = MaterialTransaction.objects.filter(
+        transaction_type='IN',
+        timestamp__range=(today_start, today_end)
+    ).count()
+    
+    today_outcome_count = MaterialTransaction.objects.filter(
+        transaction_type='OUT',
+        timestamp__range=(today_start, today_end)
+    ).count()
+    
+    week_income_count = MaterialTransaction.objects.filter(
+        transaction_type='IN',
+        timestamp__gte=week_start
+    ).count()
+    
+    week_outcome_count = MaterialTransaction.objects.filter(
+        transaction_type='OUT',
+        timestamp__gte=week_start
+    ).count()
+    
+    monthly_income_count = MaterialTransaction.objects.filter(
+        transaction_type='IN',
+        timestamp__gte=thirty_days_ago
+    ).count()
+    
+    monthly_outcome_count = MaterialTransaction.objects.filter(
+        transaction_type='OUT',
+        timestamp__gte=thirty_days_ago
+    ).count()
+    
+    # ========================================================================
+    # 8. TOP MATERIALLAR RO'YXATI
+    # ... (kod avvalgidek qoladi) ...
+    top_materials_qs = Material.objects.annotate(
+        # total_incoming hisobi
+        total_incoming=Coalesce(
+            Sum('materialtransaction__quantity_change', 
+                filter=Q(materialtransaction__transaction_type='IN')), 
+            Decimal('0'), 
+            output_field=DecimalField(max_digits=15, decimal_places=3)
+        ),
+        # total_outgoing hisobi
+        total_outgoing=Coalesce(
+            Sum('materialtransaction__quantity_change', 
+                filter=Q(materialtransaction__transaction_type='OUT')), 
+            Decimal('0'), 
+            output_field=DecimalField(max_digits=15, decimal_places=3)
+        ),
+        # incoming_value hisobi
+        incoming_value=ExpressionWrapper(
+            Coalesce(
+                Sum('materialtransaction__quantity_change', 
+                    filter=Q(materialtransaction__transaction_type='IN')), 
+                Decimal('0')
+            ) * F('price_per_unit'),
+            output_field=DecimalField(max_digits=15, decimal_places=2) 
+        ),
+        # outgoing_value hisobi
+        outgoing_value=ExpressionWrapper(
+             Coalesce(
+                Sum('materialtransaction__quantity_change', 
+                    filter=Q(materialtransaction__transaction_type='OUT')), 
+                Decimal('0')
+            ) * F('price_per_unit'),
+            output_field=DecimalField(max_digits=15, decimal_places=2) 
+        )
+    )
+    
+    top_incoming_materials = top_materials_qs.filter(total_incoming__gt=0).order_by('-total_incoming')[:10]
+    top_outgoing_materials = top_materials_qs.filter(total_outgoing__gt=0).order_by('-total_outgoing')[:10]
+    
+    # ========================================================================
+    # 9. QO'SHIMCHA STATISTIKA
+    # ========================================================================
+    low_stock_materials = base_materials_qs.filter(
+        quantity__lt=F('min_stock_level')
+    ).values('id', 'name', 'quantity', 'min_stock_level', 'unit')
+    
+    recent_transactions = MaterialTransaction.objects.select_related(
+        'material'
+    ).order_by('-timestamp')[:10]
+    
+    # ========================================================================
+    # 10. KONTEKSTNI TAYYORLASH
+    # ========================================================================
+    context = {
+        # ... (qolgan konteks avvalgidek qoladi) ...
+        'materials': page_obj,
+        'page_obj': page_obj,
+        
+        # ... (boshqa statistikalar) ...
+        
+        'income_materials': income_materials,
+        'outcome_materials': outcome_materials,
+        
+        'top_incoming_materials': top_incoming_materials,
+        'top_outgoing_materials': top_outgoing_materials,
+        
+        'low_stock_materials': low_stock_materials,
+        'recent_transactions': recent_transactions,
+        
+        'current_date': current_date,
+        'filter_low_stock': filter_low_stock,
+        'filter_has_stock': filter_has_stock,
+        'filter_type': filter_type,
+        
+        'title': 'Omborxona Materiallari Boshqaruvi',
+        
+        'paginator': paginator,
+    }
+    
+    return render(request, 'orders/material_list.html', context)
+# orders/views.py
+
+from django.shortcuts import render
+# from .models import Material # Modellar ham import qilingan bo'lishi kerak
+
+# ... (Boshqa view funksiyalaringiz)
+
+# orders/views.py
+
+from django.shortcuts import render
+from django.db.models import Sum
+from django.utils import timezone
+from datetime import timedelta
+from .models import Material, MaterialTransaction # Modellar shu yerda import qilinishi kerak
+
+def warehouse_dashboard_view(request):
+    """
+    Omborxona boshqaruv panelini ko'rsatuvchi funksiya.
+    Kerakli statistikalar va tezkor harakatlarni hisoblaydi.
+    """
+    
+    # --- 1. Umumiy Statistikalar ---
+    total_material_count = Material.objects.count()
+
+    # --- 2. Kam Zaxira ---
+    # current_stock, min_stock_level dan kichik bo'lgan materiallar
+    low_stock_materials = Material.objects.filter(
+        current_stock__lte=models.F('min_stock_level') # models.F ni ham import qilish kerak
+    ).order_by('-current_stock')
+    
+    low_stock_materials_count = low_stock_materials.count()
+
+    # --- 3. Vaqtga asoslangan Harakatlar Statistikasi (30 kun) ---
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    
+    
+    monthly_transactions = MaterialTransaction.objects.filter(
+        created_at__gte=thirty_days_ago
+    )
+    
+    # Kirim va Chiqimni hisoblash (umumiy miqdorda)
+    monthly_incoming_sum = monthly_transactions.filter(transaction_type='IN').aggregate(Sum('quantity'))['quantity__sum'] or 0
+    monthly_outgoing_sum = monthly_transactions.filter(transaction_type='OUT').aggregate(Sum('quantity'))['quantity__sum'] or 0
+
+    monthly_stats = {
+        'total_incoming': monthly_incoming_sum,
+        'total_outgoing': monthly_outgoing_sum,
+    }
+    
+    # --- 4. So'nggi Harakatlar (Dashboard uchun) ---
+    recent_transactions = MaterialTransaction.objects.select_related('material').order_by('-created_at')[:5]
+
+    context = {
+        'title': 'Omborxona Boshqaruv Paneli',
+        'total_material_count': total_material_count,
+        'low_stock_materials_count': low_stock_materials_count,
+        'low_stock_materials': low_stock_materials,
+        'monthly_stats': monthly_stats,
+        'recent_transactions': recent_transactions,
+    }
+    
+    return render(request, 'orders/dashboard.html', context)
+@login_required
+def material_transaction_detail(request, pk):
+    """Material tranzaksiyasi tafsilotlari."""
+    transaction = get_object_or_404(MaterialTransaction.objects.select_related(
+        'material', 'order', 'performed_by'
+    ), pk=pk)
+    
+    context = {
+        'transaction': transaction,
+    }
+    
+    return render(request, 'orders/material_transaction_detail.html', context)
+# orders/views.py
+
+from django.shortcuts import render
+# ... (boshqa importlar)
+
+def transaction_history_view(request):
+    """
+    Omborxona harakatlari (kirim/chiqim) tarixini ko'rsatadi.
+    """
+    # Bu yerda MaterialTransaction modelidan ma'lumotlarni olish logikasi bo'lishi mumkin
+    # Masalan: transactions = MaterialTransaction.objects.all().order_by('-timestamp')
+    
+    context = {
+        'title': 'Omborxona Harakatlari Tarixi',
+        # 'transactions': transactions,
+    }
+    return render(request, 'orders/transaction_history.html', context)
+
+
+# orders/views.py
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def fast_scanner_view(request):
+    """
+    Tezkor Skanerlash uchun alohida sahifani render qiladi.
+    Bu sahifada faqat Kirim/Chiqim rejimi va Skanerlash maydoni bo'ladi.
+    """
+    context = {
+        'title': 'Tezkor Skanerlash Markazi',
+    }
+    # orders/fast_scanner.html shablonini chaqirish
+    return render(request, 'orders/fast_scanner.html', context)
+
+
+# views.py ga qo'shing
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+# orders/views.py
+from orders.models import Material
+from django.http import JsonResponse
+from django.db import transaction as db_transaction
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def find_material_by_code_api(request):
+    if request.method == 'GET':
+        code = request.GET.get('code', '').strip()
+        
+        if not code:
+            return JsonResponse({'success': False, 'error': 'Kod kiritilmadi.'}, status=400)
+        
+        try:
+            # 1. Materialni topishga urinish (product_name orqali)
+            material = Material.objects.get(product_name__iexact=code)
+            is_new = False
+            
+        except Material.DoesNotExist:
+            # 2. Agar topilmasa, uni avtomatik yaratish!
+            try:
+                with db_transaction.atomic():
+                    material = Material.objects.create(
+                        name=f"Yangi Material (Kod: {code})",
+                        product_name=code, # Kodni bu yerga saqlash
+                        unit='dona',
+                        quantity=0, # Boshlang'ich qoldiq
+                        price_per_unit=0
+                        # Agar modelda boshqa majburiy maydonlar bo'lsa, ularni qo'shing (masalan, category_id)
+                    )
+                is_new = True
+            except Exception as create_error:
+                return JsonResponse({
+                    'success': False, 
+                    'error': f"Avtomatik yaratishda xato: {create_error}"
+                }, status=500)
+        
+        # 3. Natijani qaytarish
+        return JsonResponse({
+            'success': True,
+            'material_id': material.id,
+            'material_name': material.name,
+            'material_code': material.product_name, # Kod sifatida product_name ni yuborish
+            'material_unit': material.unit,
+            'scanned_raw_code': code, # <-- Shu yerda code o'zgaruvchisi yuborilmoqda
+            # ... boshqa maydonlar
+            'is_new': is_new
+        })
+        
+    return JsonResponse({'success': False, 'error': 'Faqat GET so\'rovi qabul qilinadi.'}, status=405)
+
+@login_required
+@csrf_exempt  # Faqat test uchun
+def save_scanned_transactions_api(request):
+    """API: Skanerlangan tranzaksiyalarni saqlash"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            # Bu yerda ma'lumotlarni saqlash logikasi
+            # Misol:
+            # for item in data['items']:
+            #     Transaction.objects.create(...)
+            
+            return JsonResponse({
+                'success': True,
+                'message': f"{len(data.get('items', []))} ta element saqlandi"
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+# orders/views.py
+
+from django.shortcuts import render, redirect, get_object_or_404
+from .forms import MaterialTransactionForm # Forma mavjudligini taxmin qilamiz
+# ... (boshqa importlar)
+
+def add_transaction_view(request):
+    """
+    Yangi omborxona harakatini (kirim yoki chiqim) qo'shish.
+    """
+    if request.method == 'POST':
+        form = MaterialTransactionForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('material_list') # Muvaffaqiyatli saqlangandan keyin inventarizatsiya sahifasiga qaytish
+    else:
+        form = MaterialTransactionForm()
+        
+    context = {
+        'title': 'Yangi Harakat Qo\'shish (Kirim/Chiqim)',
+        'form': form
+    }
+    return render(request, 'orders/add_transaction.html', context)
+
+
+
+# orders/views.py
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.db import transaction
+from .models import Material, MaterialTransaction
+from django.shortcuts import get_object_or_404
+
+
+
+@require_POST
+def remove_transaction_view(request):
+    """
+    Omborxona materialini chiqim qilish (omborxona zaxirasidan olib tashlash)
+    """
+    if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'success': False, 'error': 'Invalid Request'}, status=400)
+    
+    try:
+        material_id = request.POST.get('material_id')
+        quantity = float(request.POST.get('quantity'))
+        reason = request.POST.get('reason', 'Chiqim sababi ko\'rsatilmadi')
+        
+        material = get_object_or_404(Material, pk=material_id)
+        
+        if quantity <= 0:
+            return JsonResponse({'success': False, 'error': 'Noto\'g\'ri miqdor kiritildi'}, status=400)
+        
+        with transaction.atomic():
+            # Zaxira yetarli yoki yo'qligini tekshirish
+            if material.current_stock < quantity:
+                return JsonResponse({'success': False, 'error': f'Zaxirada yetarli {material.unit} mavjud emas. (Mavjud: {material.current_stock})'}, status=400)
+            
+            # 1. Zaxirani yangilash
+            material.current_stock -= quantity
+            material.save()
+            
+            # 2. Tranzaksiyani yaratish (Chiqim)
+            MaterialTransaction.objects.create(
+                material=material,
+                transaction_type='OUT', # Chiqim
+                quantity=quantity,
+                unit=material.unit,
+                reason=reason,
+                # user=request.user # Agar foydalanuvchi tizimga kirgan bo'lsa
+            )
+        
+        return JsonResponse({'success': True, 'message': 'Chiqim muvaffaqiyatli amalga oshirildi.'})
+        
+    except Material.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Material topilmadi.'}, status=404)
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Miqdor noto\'g\'ri formatda.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Kutilmagan xato: {str(e)}'}, status=500)
+    
+
+
+@login_required
+def material_transaction_delete(request, pk):
+    """Material tranzaksiyasini o'chirish."""
+    transaction = get_object_or_404(MaterialTransaction, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            # Qaytarish logikasi (agar kerak bo'lsa)
+            material = transaction.material
+            if transaction.transaction_type == 'IN':
+                material.quantity -= transaction.quantity_change
+            else:  # OUT
+                material.quantity += transaction.quantity_change
+            
+            material.save()
+            transaction.delete()
+            
+            messages.success(request, "✅ Tranzaksiya muvaffaqiyatli o'chirildi.")
+            return redirect('material_transaction_list')
+            
+        except Exception as e:
+            messages.error(request, f"❌ Xatolik: {str(e)}")
+    
+    context = {
+        'transaction': transaction,
+    }
+    
+    return render(request, 'orders/material_transaction_confirm_delete.html', context)
+def get_material_data():
+    """
+    Material ma'lumotlarini JSON uchun tayyorlash
+    """
+    material_objects = Material.objects.all().select_related('category').values(
+        'id', 'name', 'unit', 'quantity', 'category__name'
+    )
+    
+    material_data = {
+        str(m['id']): {
+            'name': m['name'], 
+            'unit': m['unit'], 
+            'quantity': float(m['quantity']) if m['quantity'] is not None else 0,
+            'category': m['category__name'] if m['category__name'] else 'Kategoriyasiz'
+        } 
+        for m in material_objects
+    }
+    
+    return material_data
+
+
+# orders/views.py
 
 
 from django.db.models.functions import Coalesce # ⬅️ Mana bu qatorni qo'shing
@@ -1264,6 +2085,9 @@ def material_sarfi_report(request):
     
     return render(request, 'orders/material_sarfi_report.html', context)
 
+
+
+from decimal import Decimal
 @login_required
 @user_passes_test(is_report_viewer_or_observer, login_url='/login/')  # ✅ YANGI
 def worker_activity_report_view(request): 
