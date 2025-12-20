@@ -235,7 +235,10 @@ class MaterialTransactionForm(forms.ModelForm):
         })
 
 
+
     )
+    create_batch_barcode = forms.BooleanField(required=False, label="Partiya Barcode yaratish")
+
 
     # ✅ TO'G'RI: Custom fieldni to'g'ri ishlatish
     material = MaterialChoiceField(
