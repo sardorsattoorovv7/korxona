@@ -1,6 +1,6 @@
 # orders/models.py
 # Bu fayl korxonaning asosiy ma'lumotlar strukturasini (modellarini) belgilaydi.
-
+import uuid
 from django.db import models
 from django.contrib.auth import get_user_model 
 from django.conf import settings
@@ -134,7 +134,6 @@ class Material(models.Model):
     
 
 
-
 # =======================================================================
 # 4. ORDER MODELI (MaterialTransaction va Notification uchun baza)
 # Worker modeliga bog'langan
@@ -227,6 +226,10 @@ class Order(models.Model):
 # =======================================================================
 # 5. MATERIAL TRANSACTION MODELI (Material va Orderga bog'langan)
 # =======================================================================
+
+# =======================================================================
+# 5. MATERIAL TRANSACTION MODELI (Material va Orderga bog'langan)
+# =======================================================================
 class MaterialTransaction(models.Model):
     """Omborxona materiallarining kirim-chiqim harakatlarini qayd etadi."""
     
@@ -236,8 +239,9 @@ class MaterialTransaction(models.Model):
     ]
 
     material = models.ForeignKey(
-        Material, # Material modeliga bog'landi
+        Material, 
         on_delete=models.PROTECT, 
+        # related_name='transactions', # Bog'lanish nomi
         verbose_name="Material nomi"
     )
     
@@ -252,6 +256,15 @@ class MaterialTransaction(models.Model):
         decimal_places=3, 
         verbose_name="Miqdordagi o'zgarish"
     )
+
+    # 🔴 YANGI QO'SHILGAN MAYDON: Partiya uchun unikal barcode
+    transaction_barcode = models.CharField(
+        max_length=100, 
+        unique=True, 
+        null=True, 
+        blank=True, 
+        verbose_name="Partiya Barcode"
+    )
     
     received_by = models.CharField(
         max_length=255,
@@ -259,8 +272,9 @@ class MaterialTransaction(models.Model):
         blank=True,
         verbose_name="Qabul qiluvchi shaxs/ustaxona"
     )
+    
     order = models.ForeignKey(
-        Order, # Order modeliga bog'landi
+        Order, 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
@@ -268,12 +282,20 @@ class MaterialTransaction(models.Model):
     )
     
     performed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
+        User, # settings.AUTH_USER_MODEL o'rniga tepada import qilingan User
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
         verbose_name="Amalga oshirdi"
     )
+
+    def save(self, *args, **kwargs):
+        if not self.transaction_barcode:
+            # Material kodining birinchi 3 harfi + tasodifiy 6 ta belgi
+            prefix = self.material.name[:3].upper() if self.material else "MTR"
+            unique_id = uuid.uuid4().hex[:6].upper()
+            self.transaction_barcode = f"{prefix}-{unique_id}"
+        super().save(*args, **kwargs)
     
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Vaqti")
     
@@ -289,8 +311,7 @@ class MaterialTransaction(models.Model):
         ordering = ['-timestamp']
 
     def __str__(self):
-        return f"[{self.get_transaction_type_display()}] {self.material.name}: {self.quantity_change} {self.material.unit}"
-
+        return f"[{self.get_transaction_type_display()}] {self.material.name}: {self.quantity_change}"
 
 # =======================================================================
 # 6. NOTIFICATION MODELI (User va Orderga bog'langan)
