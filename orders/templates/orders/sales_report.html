@@ -6,381 +6,839 @@
 
 {% block content %}
     <style>
-        /* Zamonaviy Uslublar Palitrasi */
+        /* Yangi Zamonaviy Stil */
         :root {
-            --primary-color: #0d9488; /* To'q Yashil (Teal) - Professional rang */
-            --secondary-color: #0ea5e9; /* Moviy (Info/Aksiya) */
-            --background-light: #f9fafb; /* Juda ochiq kulrang fon */
-            --card-border: #e5e7eb;
-            --text-dark: #1f2937; /* To'q matn */
-            --input-border: #d1d5db;
+            --primary: #4f46e5;      /* Indigo - asosiy rang */
+            --primary-light: #e0e7ff;
+            --secondary: #10b981;    /* Emerald - yashil */
+            --accent: #f59e0b;       /* Amber - sariq */
+            --danger: #ef4444;       /* Qizil */
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-600: #4b5563;
+            --white: #ffffff;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
-        /* Umumiy Konteyner */
-        .container-modern {
-            max-width: 1400px;
+        /* Container */
+        .report-container {
+            max-width: 1600px;
             margin: 0 auto;
-            padding: 2rem;
-            background: var(--background-light);
-            min-height: 80vh;
+            padding: 1.5rem;
+            min-height: calc(100vh - 70px);
         }
 
-        /* Header va Navigatsiya */
-        .report-header-flex {
+        /* Header */
+        .report-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 1rem;
+            padding: 1.5rem;
             margin-bottom: 2rem;
-            border-bottom: 2px solid var(--card-border);
+            background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+            border-radius: 1rem;
+            color: white;
+            box-shadow: var(--shadow-xl);
         }
-        .report-header-flex h1 { 
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 2.25rem; /* Katta sarlavha */
+        
+        .header-content h1 {
+            font-size: 2rem;
             font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .header-content p {
+            margin: 0.5rem 0 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
         }
 
         /* Tugmalar */
-        .btn-modern {
-            text-decoration: none; 
-            padding: 0.6rem 1.25rem; 
-            border-radius: 0.5rem; 
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
+        .btn {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .btn-secondary-dark {
-            background-color: #6b7280; 
-            color: white; 
-        }
-        .btn-secondary-dark:hover { background-color: #4b5563; }
-        .btn-export-light {
-            background-color: var(--secondary-color);
-            color: white; 
-        }
-        .btn-export-light:hover { background-color: #0284c7; }
-
-        /* Filtrlash Bo'limi */
-        .filter-card {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 2.5rem;
-            border-left: 5px solid var(--secondary-color);
-        }
-        .filter-form-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr) auto auto; /* 4 ta input + 2 ta button */
-            gap: 1rem;
-            align-items: flex-end;
-        }
-        .filter-group label {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-            color: var(--text-dark);
-            display: block;
-        }
-        .filter-group input {
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--input-border);
-            border-radius: 0.5rem;
-            width: 100%;
-            transition: border-color 0.2s;
-        }
-        .filter-group input:focus {
-            border-color: var(--secondary-color);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
-        }
-        .btn-filter-action {
+            justify-content: center;
+            gap: 0.5rem;
             padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
             cursor: pointer;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            white-space: nowrap;
         }
-        .btn-apply {
-            background-color: var(--primary-color);
+        
+        .btn i {
+            font-size: 1.1rem;
+        }
+        
+        .btn-primary {
+            background: var(--white);
+            color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background: var(--gray-100);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .btn-export {
+            background: var(--accent);
             color: white;
         }
-        .btn-apply:hover { background-color: #0f766e; }
-        .btn-reset-filter {
-            background-color: #e5e7eb;
-            color: var(--text-dark);
+        
+        .btn-export:hover {
+            background: #e69500;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
         }
-        .btn-reset-filter:hover { background-color: #d1d5db; }
 
-        /* Summary Kartalari */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-        .summary-card-modern {
-            background: white;
+        /* Filter Section */
+        .filter-section {
+            background: var(--white);
             padding: 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .filter-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+        
+        .filter-title h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+        
+        .filter-input {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-200);
             border-radius: 0.75rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s ease;
-            border-top: 5px solid;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-filter {
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        
+        .btn-apply-filter {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-reset-filter {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+        
+        .filter-info {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        .stat-card.orders::before { background: linear-gradient(90deg, #4f46e5, #6366f1); }
+        .stat-card.square::before { background: linear-gradient(90deg, #10b981, #34d399); }
+        .stat-card.revenue::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        
+        .stat-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .summary-card-modern:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        }
-        .summary-card-modern h3 {
-            font-size: 0.8rem;
-            color: #6b7280;
+        
+        .stat-info h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-600);
             text-transform: uppercase;
-            font-weight: 700;
+            letter-spacing: 0.5px;
             margin-bottom: 0.5rem;
         }
-        .summary-card-modern p {
+        
+        .stat-value {
             font-size: 2rem;
-            font-weight: 800;
-            margin: 0;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
         }
-        .card-orders { border-top-color: var(--secondary-color); }
-        .card-square { border-top-color: var(--primary-color); }
-        .card-revenue { border-top-color: #f59e0b; /* To'q sariq tushum uchun */ }
-
-        .icon-box {
-            background: var(--background-light);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
+        
+        .stat-meta {
+            font-size: 0.85rem;
+            color: var(--gray-400);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #d1d5db; /* Icon rangi */
-        }
-        .icon-box i { font-size: 1.5rem; }
-
-        /* Jadval Stili */
-        .table-wrapper-modern {
-            border-radius: 0.75rem;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            background: white;
-        }
-        .table-modern { 
-            width: 100%; 
-            border-collapse: collapse;
-        }
-        .table-modern thead th {
-            background-color: var(--primary-color);
+            font-size: 1.75rem;
             color: white;
+        }
+        
+        .stat-icon.orders { background: linear-gradient(135deg, #4f46e5, #6366f1); }
+        .stat-icon.square { background: linear-gradient(135deg, #10b981, #34d399); }
+        .stat-icon.revenue { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+
+        /* Table */
+        .table-container {
+            background: var(--white);
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+        
+        .table-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .table-header h2 {
+            margin: 0;
+            color: var(--dark);
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .table thead th {
+            background: var(--gray-100);
+            padding: 1rem 1.5rem;
+            text-align: left;
             font-weight: 600;
-            padding: 1rem;
-            font-size: 0.9rem;
+            color: var(--gray-600);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .table tbody td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-600);
+        }
+        
+        .table tbody tr:hover {
+            background: var(--gray-100);
+        }
+        
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .table-modern tbody td { 
-            padding: 1rem; 
-            border-bottom: 1px solid var(--card-border);
-            color: var(--text-dark);
-            font-size: 0.95rem;
-        }
-        .table-modern tbody tr:last-child td {
-            border-bottom: none;
-        }
-        .table-modern tbody tr:hover {
-            background-color: #f3f4f6;
+        
+        .badge-primary {
+            background: var(--primary-light);
+            color: var(--primary);
         }
         
-        .text-end-table { text-align: right !important; }
-        .text-center-table { text-align: center !important; }
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
         
-        /* Status Badge'lar */
-        .status-badge {
-            display: inline-block;
-            padding: 0.4rem 0.8rem;
-            border-radius: 1.5rem;
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* Child Orders */
+        .child-section {
+            background: var(--gray-100);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .child-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .child-header h3 {
+            margin: 0;
+            color: var(--gray-600);
+            font-size: 1rem;
+        }
+        
+        .child-badge {
+            background: var(--gray-300);
+            color: var(--gray-600);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
             font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            min-width: 100px;
-            text-align: center;
+            font-weight: 600;
         }
-        .status-kiritildi { background-color: #bfdbfe; color: #1e40af; } 
-        .status-tasdiqlandi { background-color: #d1e7dd; color: #0f5132; } 
-        .status-rad_etildi { background-color: #fecaca; color: #b91c1c; } 
-        .status-ishda { background-color: #fef08a; color: #a16207; } 
-        .status-tayyor { background-color: #ddd6fe; color: #6d28d9; } 
-        .status-bajarildi { background-color: #ccfbf1; color: #0f766e; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--gray-300);
+            margin-bottom: 1.5rem;
+        }
+        
+        .empty-state h4 {
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+        
+        .empty-state p {
+            color: var(--gray-400);
+            margin: 0;
+        }
+
+        /* Footer */
+        .report-footer {
+            margin-top: 2rem;
+            padding: 1rem;
+            text-align: center;
+            color: var(--gray-400);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .report-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 
-    <div class="container-modern">
+    <div class="report-container">
         
-        {# --- HEADER VA QAYTISH TUGMASI --- #}
-        <div class="report-header-flex">
-            <h1>📊 Buyurtmalar Hisoboti</h1>
-            <div style="display: flex; gap: 10px;">
-                <a href="{% url 'order_list' %}" class="btn-modern btn-secondary-dark">
-                    <i class="fas fa-arrow-left"></i> Buyurtmalar Ro'yxatiga Qaytish
+        <!-- Header -->
+        <div class="report-header">
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-chart-line"></i>
+                    Buyurtmalar Hisoboti
+                </h1>
+                <p>Asosiy buyurtmalar statistikasi va tahlili</p>
+            </div>
+            
+            <div class="header-actions">
+                <a href="{% url 'order_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Ortga
                 </a>
-                {# Export tugmasi, filtrlarni qo'shish bilan #}
-                <a href="{% url 'export_orders_csv' %}?start_date={{ start_date|default:'' }}&end_date={{ end_date|default:'' }}" class="btn-modern btn-export-light">
-                    <i class="fas fa-download"></i> CSV Yuklab Olish
+                
+                {% if is_glavniy_admin or not is_observer %}
+                <a href="{% url 'export_orders_csv' %}?start_date={{ start_date|default:'' }}&end_date={{ end_date|default:'' }}" 
+                   class="btn btn-export">
+                    <i class="fas fa-file-export"></i>
+                    Eksport
                 </a>
+                {% endif %}
             </div>
         </div>
 
-        {# --- FILTRLASH QISMI --- #}
-        <div class="filter-card">
-            <h3 style="font-size: 1.25rem; color: var(--secondary-color); margin-bottom: 1rem; font-weight: 700;">
-                <i class="fas fa-sliders-h me-2"></i> Hisobotni Sanalar Bo'yicha Filtrlash
-            </h3>
-            <form method="GET" action="{% url 'weekly_report_view' %}" class="filter-form-grid">
-                
-                <div class="filter-group" style="grid-column: span 2;">
-                    <label for="start_date">Boshlanish Sanasi:</label>
-                    <input type="date" id="start_date" name="start_date" value="{{ start_date|default:'' }}">
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-title">
+                <i class="fas fa-filter"></i>
+                <h2>Hisobotni Filtrlash</h2>
+            </div>
+            
+            <form method="GET" action="{% url 'sales_report_view' %}">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="start_date">
+                            <i class="far fa-calendar-alt"></i>
+                            Boshlanish sanasi
+                        </label>
+                        <input type="date" 
+                               id="start_date" 
+                               name="start_date" 
+                               value="{{ start_date|default:'' }}"
+                               class="filter-input"
+                               max="{{ end_date|default:today|date:'Y-m-d' }}">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="end_date">
+                            <i class="far fa-calendar-check"></i>
+                            Tugash sanasi
+                        </label>
+                        <input type="date" 
+                               id="end_date" 
+                               name="end_date" 
+                               value="{{ end_date|default:'' }}"
+                               class="filter-input"
+                               min="{{ start_date|default:'' }}">
+                    </div>
                 </div>
                 
-                <div class="filter-group" style="grid-column: span 2;">
-                    <label for="end_date">Tugash Sanasi:</label>
-                    <input type="date" id="end_date" name="end_date" value="{{ end_date|default:'' }}">
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-filter btn-apply-filter">
+                        <i class="fas fa-search"></i>
+                        Filtrlash
+                    </button>
+                    
+                    <a href="{% url 'sales_report_view' %}" class="btn btn-filter btn-reset-filter">
+                        <i class="fas fa-redo"></i>
+                        Tozalash
+                    </a>
                 </div>
                 
-                <!-- <button type="submit" class="btn-filter-action btn-apply">
-                    <i class="fas fa-search"></i> Filtrlash
-                </button>
-                <a href="{% url 'weekly_report_view' %}" class="btn-filter-action btn-reset-filter">
-                    <i class="fas fa-sync-alt"></i> Reset
-                </a> -->
+                <div class="filter-info">
+                    <p>
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Filtr oralig'i:</strong> 
+                        {{ start_date|default:'Barcha vaqt' }} dan 
+                        {{ end_date|default:'Hozirgacha' }} gacha
+                        
+                        {% if child_orders_count %}
+                        <br>
+                        <span style="color: var(--primary);">
+                            <i class="fas fa-layer-group"></i>
+                            {{ child_orders_count }} ta bo'lim buyurtmasi hisoblanmadi
+                        </span>
+                        {% endif %}
+                    </p>
+                </div>
             </form>
-            
-            <p style="margin-top: 1.5rem; font-size: 0.9rem; color: #6b7280; padding-top: 1rem; border-top: 1px solid var(--card-border);">
-                Filtr oralig'i: 
-                <strong style="color: var(--text-dark);">{{ start_date|default:'Barcha vaqt' }}</strong> dan 
-                <strong style="color: var(--text-dark);">{{ end_date|default:'Hozirgacha' }}</strong> gacha
-            </p>
-        </div>
-        
-        {# --- UMUMIY HISOBLAR QISMI --- #}
-        <div class="summary-grid">
-            <div class="summary-card-modern card-orders">
-                <div>
-                    <h3>Buyurtmalar Soni</h3>
-                    <p style="color: var(--secondary-color);">{{ total_orders_count|intcomma }}</p>
-                </div>
-                <div class="icon-box" style="background: #e0f7fa; color: var(--secondary-color);"><i class="fas fa-shopping-cart"></i></div>
-            </div>
-
-            <div class="summary-card-modern card-square">
-                <div>
-                    <h3>Umumiy Kvadratura (m²)</h3>
-                    <p style="color: var(--primary-color);">{{ total_square|floatformat:2|intcomma }}</p>
-                </div>
-                <div class="icon-box" style="background: #e0f2f1; color: var(--primary-color);"><i class="fas fa-ruler-combined"></i></div>
-            </div>
-            
-            <div class="summary-card-modern card-revenue">
-                <div>
-                    <h3>Umumiy Tushum (So'm)</h3>
-                    <p style="color: #f59e0b;">{{ total_revenue|floatformat:0|intcomma }}</p>
-                </div>
-                <div class="icon-box" style="background: #fff7ed; color: #f59e0b;"><i class="fas fa-money-bill-wave"></i></div>
-            </div>
         </div>
 
-       
-<!-- 
-        <div class="table-wrapper-modern">
-            <table class="table-modern">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card orders">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <h3>Asosiy Buyurtmalar</h3>
+                        <div class="stat-value">{{ total_orders_count|intcomma }}</div>
+                        {% if child_orders_count %}
+                        <div class="stat-meta">
+                            <i class="fas fa-plus-circle"></i>
+                            {{ child_orders_count }} ta bo'lim buyurtmasi
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon orders">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card square">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <h3>Umumiy Kvadratura</h3>
+                        <div class="stat-value">{{ total_square|floatformat:2|intcomma }} m²</div>
+                        {% if total_orders_count > 0 %}
+                        <div class="stat-meta">
+                            <i class="fas fa-calculator"></i>
+                            O'rtacha: {{ total_square|divisibleby:total_orders_count|floatformat:2 }} m²
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon square">
+                        <i class="fas fa-ruler-combined"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card revenue">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <h3>Umumiy Daromad</h3>
+                        <div class="stat-value">{{ total_revenue|floatformat:0|intcomma }} usd</div>
+                        {% if total_orders_count > 0 %}
+                        <div class="stat-meta">
+                            <i class="fas fa-calculator"></i>
+                            O'rtacha: {{ total_revenue|divisibleby:total_orders_count|floatformat:0 }} usd
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon revenue">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Orders Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h2>
+                    <i class="fas fa-list-ol"></i>
+                    Asosiy Buyurtmalar Ro'yxati
+                </h2>
+            </div>
+            
+            {% if report_orders %}
+            <table class="table">
                 <thead>
                     <tr>
-                        <th style="width: 5%;">№</th>
-                        <th style="width: 30%;">Usta Nomi</th>
-                        <th style="width: 25%;">Usta Roli</th>
-                        <th style="width: 20%;" class="text-end-table">Bajarilgan Kvadrat (m²)</th>
-                        <th style="width: 20%;" class="text-end-table">Bajarilgan Buyurtmalar Soni</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in worker_report_list %}
-                    <tr>
-                        <td><strong style="color: var(--primary-color);">{{ forloop.counter }}</strong></td>
-                        <td>{{ item.worker_name }}</td>
-                        <td>
-                            <span class="status-badge" style="background-color: #f0f9ff; color: #075985; min-width: 80px;">
-                                {{ item.role }}
-                            </span>
-                        </td>
-                        <td class="text-end-table">
-                            <strong style="color: var(--primary-color);">{{ item.total_kvadrat|floatformat:2|intcomma }}</strong>
-                        </td>
-                        <td class="text-end-table">
-                            <strong style="color: var(--secondary-color);">{{ item.total_orders|intcomma }}</strong>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center-table" style="padding: 20px; color: #6b7280; font-weight: 600; background-color: #f9fafb;">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Filtrlangan davr uchun bajarilgan buyurtmalar mavjud emas.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div> -->
-        
-        {# --- BUYURTMALAR RO'YXATI JADVALI --- #}
-        <h2 style="font-size: 1.5rem; color: var(--primary-color); margin-top: 3rem; margin-bottom: 1rem; font-weight: 700;">
-            <i class="fas fa-table me-2"></i> Buyurtmalar Ro'yxati
-        </h2>
-        
-        <div class="table-wrapper-modern">
-            <table class="table-modern">
-                <thead>
-                    <tr>
-                        <th style="width: 5%;">#</th>
-                        <th style="width: 20%;">Xaridor Nomi</th>
-                        <th style="width: 15%;" class="text-end-table">Kvadrat (m²)</th>
-                        <th style="width: 15%;" class="text-end-table">Summa (so'm)</th>
-                        <th style="width: 15%;" class="text-center-table">Status</th>
-                        <th style="width: 15%;">Kiritilgan Sana</th>
-                        <th style="width: 15%;">Xodim</th>
+                        <th>#</th>
+                        <th>Buyurtma Raqami</th>
+                        <th>Xaridor</th>
+                        <th class="text-center">Ish Turi</th>
+                        <th class="text-right">Kvadrat</th>
+                        <th class="text-right">Summa</th>
+                        <th class="text-center">Holat</th>
+                        <th>Sana</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for order in report_orders %}
                     <tr>
-                        <td><strong style="color: var(--primary-color);">{{ forloop.counter }}</strong></td>
-                        <td>{{ order.customer_name }}</td>
-                        <td class="text-end-table"><strong style="color: #0d6efd;">{{ order.panel_kvadrat|floatformat:2 }}</strong></td>
-                        <td class="text-end-table"><strong style="color: #f59e0b;">{{ order.total_price|floatformat:0|intcomma }}</strong></td>
-                        <td class="text-center-table">
-                            <span class="status-badge status-{{ order.get_status_display|slugify|lower }}">{{ order.get_status_display }}</span>
+                        <td><strong>{{ forloop.counter }}</strong></td>
+                        <td>
+                            <div style="font-weight: 600; color: var(--primary);">
+                                {{ order.order_number }}
+                            </div>
+                            {% if order.child_orders.exists %}
+                            <div style="font-size: 0.75rem; color: var(--gray-400);">
+                                {{ order.child_orders.count }} ta bo'lim
+                            </div>
+                            {% endif %}
                         </td>
-                        <td><small class="text-muted">{{ order.created_at|date:"Y-m-d H:i" }}</small></td>
-                        <td>{{ order.created_by.get_full_name|default:order.created_by.username }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" class="text-center-table" style="padding: 20px; color: #dc2626; font-weight: 600; background-color: #fef2f2;">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Ko'rsatilgan davr uchun buyurtmalar mavjud emas.
+                        <td>
+                            <div style="font-weight: 500;">{{ order.customer_name }}</div>
+                            <div style="font-size: 0.85rem; color: var(--gray-400);">
+                                {{ order.product_name|truncatechars:30 }}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge badge-primary">
+                                {{ order.get_worker_type_display }}
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            <div style="font-weight: 600; color: var(--secondary);">
+                                {{ order.panel_kvadrat|floatformat:2 }} m²
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <div style="font-weight: 700; color: var(--accent);">
+                                {{ order.total_price|floatformat:0|intcomma }}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            {% with status=order.status %}
+                            {% if status == 'KIRITILDI' %}
+                                <span class="badge badge-info">{{ order.get_status_display }}</span>
+                            {% elif status == 'TASDIQLANDI' %}
+                                <span class="badge badge-success">{{ order.get_status_display }}</span>
+                            {% elif status == 'RAD_ETILDI' %}
+                                <span class="badge badge-danger">{{ order.get_status_display }}</span>
+                            {% elif 'USTA' in status %}
+                                <span class="badge badge-warning">{{ order.get_status_display }}</span>
+                            {% elif status == 'ISHDA' %}
+                                <span class="badge badge-warning">{{ order.get_status_display }}</span>
+                            {% elif status == 'TAYYOR' %}
+                                <span class="badge badge-primary">{{ order.get_status_display }}</span>
+                            {% elif status == 'BAJARILDI' %}
+                                <span class="badge badge-success">{{ order.get_status_display }}</span>
+                            {% else %}
+                                <span class="badge">{{ order.get_status_display }}</span>
+                            {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            <div style="font-size: 0.9rem;">
+                                {{ order.created_at|date:"Y-m-d" }}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--gray-400);">
+                                {{ order.created_at|date:"H:i" }}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
+                <tfoot>
+                    <tr style="background: var(--gray-100);">
+                        <td colspan="4" class="text-right" style="font-weight: 600; color: var(--dark);">
+                            JAMI:
+                        </td>
+                        <td class="text-right" style="font-weight: 700; color: var(--secondary);">
+                            {{ total_square|floatformat:2|intcomma }} m²
+                        </td>
+                        <td class="text-right" style="font-weight: 700; color: var(--accent);">
+                            {{ total_revenue|floatformat:0|intcomma }} usd
+                        </td>
+                        <td colspan="2" class="text-center" style="color: var(--primary);">
+                            {{ total_orders_count }} ta buyurtma
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-chart-bar"></i>
+                <h4>Hech qanday ma'lumot topilmadi</h4>
+                <p>Tanlangan davr uchun buyurtmalar mavjud emas</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Child Orders Section -->
+        {% if child_orders and child_orders.count > 0 %}
+        <div class="child-section">
+            <div class="child-header">
+                <i class="fas fa-sitemap"></i>
+                <h3>Bo'lim Buyurtmalari</h3>
+                <span class="child-badge">{{ child_orders.count }} ta</span>
+            </div>
+            
+            <p style="color: var(--gray-600); font-size: 0.9rem; margin-bottom: 1rem;">
+                <i class="fas fa-info-circle"></i>
+                Ushbu buyurtmalar asosiy buyurtmalardan avtomatik yaratilgan va umumiy hisobotda hisoblanmaydi.
+            </p>
+            
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Buyurtma Raqami</th>
+                            <th>Asosiy Buyurtma</th>
+                            <th>Ish Turi</th>
+                            <th class="text-center">Holat</th>
+                            <th>Sana</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in child_orders|slice:":5" %}
+                        <tr>
+                            <td style="color: var(--gray-600);">{{ order.order_number }}</td>
+                            <td>
+                                <div style="color: var(--primary); font-weight: 500;">
+                                    {{ order.parent_order.order_number }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: var(--gray-200); color: var(--gray-600);">
+                                    {{ order.get_worker_type_display }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-info" style="font-size: 0.7rem;">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td style="font-size: 0.85rem; color: var(--gray-400);">
+                                {{ order.created_at|date:"Y-m-d H:i" }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <p>
+                <i class="far fa-lightbulb"></i>
+                Hisobotda faqat admin tomonidan kiritilgan asosiy buyurtmalar ko'rsatiladi.
+                {% now "Y-m-d H:i" %}
+            </p>
         </div>
     </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const startDate = document.getElementById('start_date');
+            const endDate = document.getElementById('end_date');
+            
+            // Date validation
+            if (startDate && endDate) {
+                startDate.addEventListener('change', function() {
+                    if (this.value && endDate) {
+                        endDate.min = this.value;
+                    }
+                });
+                
+                endDate.addEventListener('change', function() {
+                    if (this.value && startDate) {
+                        startDate.max = this.value;
+                    }
+                });
+            }
+            
+            // Auto set end date to today if empty
+            if (endDate && !endDate.value) {
+                const today = new Date().toISOString().split('T')[0];
+                endDate.value = today;
+            }
+            
+            // Auto set start date to 30 days ago if empty
+            if (startDate && !startDate.value) {
+                const date = new Date();
+                date.setDate(date.getDate() - 30);
+                startDate.value = date.toISOString().split('T')[0];
+            }
+        });
+    </script>
 {% endblock %}
