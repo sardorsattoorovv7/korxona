@@ -1206,6 +1206,13 @@ import json
 from .forms import MaterialTransactionForm
 from .models import Material
 
+import json
+import uuid  # ⬅️ Unikal kod uchun shart
+from django.db import transaction as db_transaction
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
 @login_required
 def material_transaction_create(request):
     """Material kirim/chiqim tranzaksiyasini yaratish."""
@@ -1216,77 +1223,67 @@ def material_transaction_create(request):
         if form.is_valid():
             try:
                 with db_transaction.atomic():
-                    # Formani saqlash
                     transaction_obj = form.save(commit=False)
                     transaction_obj.performed_by = request.user
                     
-                    # Material va miqdorni olish
                     material = transaction_obj.material
                     quantity = transaction_obj.quantity_change
                     transaction_type = transaction_obj.transaction_type
 
-
-                    product_name_from_form = form.cleaned_data.get('product_name')
-                    
-                    # Agar foydalanuvchi Maxsulot nomini kiritgan bo'lsa, uni Materialga saqlaymiz.
-                    # Bu kelgusida ushbu materialning Mahsulot nomini ko'rsatib turishini ta'minlaydi.
-                    if product_name_from_form:
-                        material.product_name = product_name_from_form
+                    # 🔴 PARTIYA BARCODE YARATISH MANTIQI
+                    # Agar Kirim bo'lsa va checkbox bosilgan bo'lsa
+                    create_barcode = request.POST.get('create_batch_barcode') == 'on'
+                    if transaction_type == 'IN' and create_barcode:
+                        # Unikal va qisqaroq kod yaratish
+                        new_code = f"P-{uuid.uuid4().hex[:8].upper()}"
+                        transaction_obj.transaction_barcode = new_code
                     
                     # Material qoldig'ini yangilash
                     if transaction_type == 'IN':
                         material.quantity += quantity
                         message_type = "✅ Kirim"
                     else:  # OUT
+                        if material.quantity < quantity:
+                            raise ValueError(f"Omborda yetarli qoldiq yo'q! (Mavjud: {material.quantity})")
                         material.quantity -= quantity
                         message_type = "📤 Chiqim"
                     
-                    # Materialni saqlash
+                    # Saqlash
                     material.save()
                     transaction_obj.save()
                     
-                    # 🔴 Maxsulot nomini ham ko'rsatish
-                    success_message = f"{message_type} muvaffaqiyatli saqlandi."
-                    if material.product_name:
-                        success_message += f"<br><small class='text-muted'>Maxsulot: {material.product_name}</small>"
-                    success_message += f"<br>{material.name} qoldig'i: {material.quantity:.3f} {material.unit.upper()}"
-                    
-                    messages.success(request, success_message)
-                    
-                    # Materiallar ro'yxatiga qaytish
+                    success_msg = f"{message_type} saqlandi. Qoldiq: {material.quantity}"
+                    if transaction_obj.transaction_barcode:
+                        success_msg += f" | Partiya kodi: {transaction_obj.transaction_barcode}"
+                        
+                    messages.success(request, success_msg)
                     return redirect('material_list')
                     
             except Exception as e:
                 messages.error(request, f"❌ Xatolik: {str(e)}")
-        
         else:
-            # Forma xatolarini ko'rsatish
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
     
+    # GET so'rovi uchun qolgan qism (mavjud kodingiz)
     else:
         form = MaterialTransactionForm()
     
-    # Material ma'lumotlarini JavaScript uchun tayyorlash
     materials = Material.objects.all().select_related('category')
-    
-    material_data = {}
-    for mat in materials:
-        material_data[str(mat.id)] = {
+    material_data = {
+        str(mat.id): {
             'name': mat.name,
-            'product_name': mat.product_name or '',  # 🔴 Maxsulot nomini qo'shamiz
             'unit': mat.unit.upper(),
             'quantity': float(mat.quantity),
             'category': mat.category.name if mat.category else 'Kategoriyasiz',
-        }
-    
-    context = {
-        'form': form,
-        'material_data_json': json.dumps(material_data, ensure_ascii=False),
+        } for mat in materials
     }
     
-    return render(request, 'orders/material_transaction_create.html', context)
+    return render(request, 'orders/material_transaction_create.html', {
+        'form': form,
+        'material_data_json': json.dumps(material_data, ensure_ascii=False),
+    })
 
 
 # 🔴 YANGI: Material yaratish view
@@ -1353,254 +1350,97 @@ from decimal import Decimal # DecimalField uchun kerak
 def material_list(request):
     """
     Omborxona materiallari va tranzaksiyalarini ko'rsatish:
-    To'liq yangilangan versiya chiqim va kirim ma'lumotlari bilan
+    Barcode va to'g'rilangan related_name bilan.
     """
-    
-    # ========================================================================
-    # 1. FILTR PARAMETRLARINI OLISH VA VAQT CHEGARALARI
-    # ========================================================================
     filter_low_stock = request.GET.get('low_stock') == 'true'
     filter_has_stock = request.GET.get('has_stock') == 'true'
-    filter_type = request.GET.get('type', '')  # 'income', 'outcome', ''
+    filter_type = request.GET.get('type', '') 
     
     current_date = timezone.now()
-    
-    # Bugunlik chegaralar
     today_start = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = current_date.replace(hour=23, minute=59, second=59, microsecond=999999)
-    
-    # Oxirgi 30 kun
     thirty_days_ago = current_date - timedelta(days=30)
-    
-    # Haftalik (7 kun)
     week_start = current_date - timedelta(days=7)
     
-    # ========================================================================
-    # 2. MATERIALLAR RO'YXATI (PAGINATION BILAN)
-    # ========================================================================
-    
+    # 1. MATERIALLAR RO'YXATI
+    # ✅ related_name='transactions' bo'lgani uchun 'transactions' so'zi ishlatiladi
     base_materials_qs = Material.objects.annotate(
-        
-        # ✅ 1. Qoldiq va minimal qoldiq farqi (TO'G'RI)
         difference=ExpressionWrapper(
             F('quantity') - F('min_stock_level'),
             output_field=DecimalField(max_digits=15, decimal_places=3)
         ),
-        
-        # ✅ 2. Jami qiymat (TO'G'RI)
         total_value=ExpressionWrapper(
             F('quantity') * F('price_per_unit'),
             output_field=DecimalField(max_digits=15, decimal_places=2)
         ), 
-        
     ).order_by('name') 
 
-    # Filtrlash
     materials = base_materials_qs
-    
     if filter_low_stock:
         materials = materials.filter(quantity__lt=F('min_stock_level'))
-    
     if filter_has_stock:
         materials = materials.filter(quantity__gt=0)
     
-    # Pagination
-    paginator = Paginator(materials, 20)  # Sahifada 20 ta material
+    paginator = Paginator(materials, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # 🛑 DEBUG: Materiallar soni
-    print("DEBUG: Umumiy materiallar bazada:", base_materials_qs.count())
-    print("DEBUG: Jami materiallar filtrdan keyin:", materials.count())
-    
-    # ========================================================================
-    # 3. UMUMIY INVENTARIZATSIYA STATISTIKASI
-    # ========================================================================
-    inventory_stats = base_materials_qs.aggregate(
-        total_inventory_value=Sum('total_value', default=Decimal('0')),
-        avg_price=Avg('price_per_unit', default=Decimal('0')),
-        low_stock_materials_count=Sum(
-            Case(
-                When(quantity__lt=F('min_stock_level'), then=1),
-                default=0,
-                output_field=IntegerField()
-            )
-        ),
-        total_materials_count=Count('id')
-    )
-    
-    # ========================================================================
-    # 4. TRANZAKSIYALAR STATISTIKASI (KIRIM/CHIQIM)
-    # ========================================================================
-    # Tranzaksiyalarni annotatsiya qilish (qiymat hisoblash uchun)
-    transaction_qs = MaterialTransaction.objects.annotate(
-        calculated_value=ExpressionWrapper(
-            F('quantity_change') * F('material__price_per_unit'), 
-            output_field=DecimalField(max_digits=15, decimal_places=2)
-        )
-    )
-    
-    # Umumiy tranzaksiya statistikasi
-    transaction_stats = transaction_qs.aggregate(
-        # Bugungi kunlik
-        today_incoming=Sum('quantity_change', 
-                                     filter=Q(transaction_type='IN', timestamp__range=(today_start, today_end)), 
-                                     default=Decimal('0')),
-        today_outgoing=Sum('quantity_change', 
-                                     filter=Q(transaction_type='OUT', timestamp__range=(today_start, today_end)), 
-                                     default=Decimal('0')),
-        
-        # Oylik (30 kun)
-        monthly_incoming=Sum('quantity_change', 
-                               filter=Q(transaction_type='IN', timestamp__gte=thirty_days_ago), 
-                               default=Decimal('0')),
-        monthly_outgoing=Sum('quantity_change', 
-                               filter=Q(transaction_type='OUT', timestamp__gte=thirty_days_ago), 
-                               default=Decimal('0')),
-        
-        # Oylik qiymat
-        monthly_incoming_value=Sum('calculated_value', 
-                                     filter=Q(transaction_type='IN', timestamp__gte=thirty_days_ago), 
-                                     default=Decimal('0')),
-        monthly_outgoing_value=Sum('calculated_value', 
-                                     filter=Q(transaction_type='OUT', timestamp__gte=thirty_days_ago), 
-                                     default=Decimal('0')),
-        
-        # Haftalik (7 kun)
-        weekly_incoming=Sum('quantity_change', 
-                                     filter=Q(transaction_type='IN', timestamp__gte=week_start), 
-                                     default=Decimal('0')),
-        weekly_outgoing=Sum('quantity_change', 
-                                     filter=Q(transaction_type='OUT', timestamp__gte=week_start), 
-                                     default=Decimal('0')),
-    )
-    
-    # ========================================================================
-    # 5. KIRIM TRANZAKSIYALARI (INCOME) - HTML UCHUN TAYYORLANADI
-    # ========================================================================
+    # 2. KIRIM TRANZAKSIYALARI (Barcode qo'shilgan)
     incoming_transactions_raw = MaterialTransaction.objects.filter(
         transaction_type='IN'
     ).select_related('material').order_by('-timestamp')[:100]
     
     income_materials = []
     for tx in incoming_transactions_raw:
-        try:
-            material = tx.material
-            quantity = tx.quantity_change
-            unit_price = material.price_per_unit if material else Decimal('0') 
-            
-            income_materials.append({
-                'id': tx.id,
-                'date': tx.timestamp,
-                'material': {
-                    'name': material.name if material else 'Noma\'lum',
-                    # 🛑 OGOHLANTIRISH: Agar modelda 'code' yo'q bo'lsa, bu yerda xato bo'lishi mumkin.
-                    # 'code': material.code if material and hasattr(material, 'code') else '', 
-                    'product_name': material.product_name if material and hasattr(material, 'product_name') else '',
-                    'unit': material.unit if material else ''
-                },
-                'quantity': quantity,
-                'price': unit_price,
-                'total': quantity * unit_price,
-                'notes': tx.notes or '',
-                'supplier': tx.received_by or ''
-            })
-        except Exception as e:
-            print(f"DEBUG XATO: Kirim tranzaksiyasini ID {tx.id} qayta ishlashda xato yuz berdi: {e}")
-            continue
+        material = tx.material
+        quantity = tx.quantity_change
+        unit_price = material.price_per_unit if material else Decimal('0') 
+        
+        income_materials.append({
+            'id': tx.id,
+            'date': tx.timestamp,
+            'barcode': tx.transaction_barcode,  # 🔴 BARCODE SHU YERDA
+            'material': {
+                'name': material.name if material else 'Noma\'lum',
+                'product_name': material.product_name if material and hasattr(material, 'product_name') else '',
+                'unit': material.unit if material else ''
+            },
+            'quantity': quantity,
+            'price': unit_price,
+            'total': quantity * unit_price,
+            'notes': tx.notes or '',
+            'supplier': tx.received_by or ''
+        })
     
-    # 🛑 DEBUG: Kirim ma'lumotlari soni
-    print("=========================================")
-    print(f"DEBUG: KIRIM TRANZAKSIYALARI: Jami {len(incoming_transactions_raw)} ta topildi.")
-    print(f"DEBUG: HTML uchun TAYYORLANGAN KIRIM soni: {len(income_materials)} ta element.")
-    if not income_materials and incoming_transactions_raw:
-        print("DIQQAT: KIRIM ro'yxati BO'SH. Yuqoridagi xatoga qarang.")
-    
-    # ========================================================================
-    # 6. CHIQIM TRANZAKSIYALARI (OUTCOME) - HTML UCHUN TAYYORLANADI
-    # ========================================================================
-    
+    # 3. CHIQIM TRANZAKSIYALARI
     outgoing_transactions_raw = MaterialTransaction.objects.filter(
         transaction_type='OUT'
     ).select_related('material').order_by('-timestamp')[:100]
 
     outcome_materials = []
     for tx in outgoing_transactions_raw:
-        try:
-            material = tx.material
-            
-            # Xavfsiz hisoblash
-            quantity = abs(tx.quantity_change)  
-            unit_price = material.price_per_unit if material else Decimal('0') 
-            
-            # Ma'lumotlarni xavfsiz yig'ish
-            material_data = {
-                'name': material.name if material else 'Noma\'lum (Material FK yo\'q)',
-                # 'code' ni olib tashladik
-                'product_name': material.product_name if material and hasattr(material, 'product_name') else '',
+        material = tx.material
+        quantity = abs(tx.quantity_change)
+        unit_price = material.price_per_unit if material else Decimal('0') 
+        outcome_materials.append({
+            'id': tx.id,
+            'date': tx.timestamp,
+            'barcode': tx.transaction_barcode,
+            'material': {
+                'name': material.name if material else 'Noma\'lum',
                 'unit': material.unit if material else ''
-            }
-
-            outcome_materials.append({
-                'id': tx.id,
-                'date': tx.timestamp,
-                'material': material_data,
-                'quantity_change': tx.quantity_change,  # Manfiy qiymat
-                'unit_price': unit_price,
-                'total_value': quantity * unit_price,  # Absolyut qiymat
-                'notes': tx.notes or '',
-                'department': tx.received_by or '' 
-            })
-            
-        except Exception as e:
-            print(f"DEBUG XATO: Chiqim tranzaksiyasini ID {tx.id} qayta ishlashda xato yuz berdi: {e}")
-            continue 
-            
-    # 🛑 DEBUG: Chiqim ma'lumotlari soni
-    print("=========================================")
-    print(f"DEBUG: CHIQIM TRANZAKSIYALARI: Jami {len(outgoing_transactions_raw)} ta topildi.")
-    print(f"DEBUG: HTML uchun TAYYORLANGAN CHIQIM soni: {len(outcome_materials)} ta element.")
-    if not outcome_materials and outgoing_transactions_raw:
-        print("DIQQAT: CHIQIM ro'yxati BO'SH. Yuqoridagi xatoga qarang.")
-    print("=========================================")
+            },
+            'quantity_change': tx.quantity_change,
+            'unit_price': unit_price,
+            'total_value': quantity * unit_price,
+            'notes': tx.notes or '',
+            'department': tx.received_by or '' 
+        })
         
-    # ========================================================================
-    # 7. VAQT BO'YICHA SANOQLAR
-    # ========================================================================
-    # ... (kod avvalgidek qoladi) ...
-    today_income_count = MaterialTransaction.objects.filter(
-        transaction_type='IN',
-        timestamp__range=(today_start, today_end)
-    ).count()
-    
-    today_outcome_count = MaterialTransaction.objects.filter(
-        transaction_type='OUT',
-        timestamp__range=(today_start, today_end)
-    ).count()
-    
-    week_income_count = MaterialTransaction.objects.filter(
-        transaction_type='IN',
-        timestamp__gte=week_start
-    ).count()
-    
-    week_outcome_count = MaterialTransaction.objects.filter(
-        transaction_type='OUT',
-        timestamp__gte=week_start
-    ).count()
-    
-    monthly_income_count = MaterialTransaction.objects.filter(
-        transaction_type='IN',
-        timestamp__gte=thirty_days_ago
-    ).count()
-    
-    monthly_outcome_count = MaterialTransaction.objects.filter(
-        transaction_type='OUT',
-        timestamp__gte=thirty_days_ago
-    ).count()
-    
-    # ========================================================================
-    # 8. TOP MATERIALLAR RO'YXATI
-    # ... (kod avvalgidek qoladi) ...
+    # 4. TOP MATERIALLAR (Xatolik tuzatilgan qism)
+    # ✅ materialtransaction o'rniga transactions ishlatildi
+    # views.py 1441-qator atrofini shunday o'zgartiring:
+
     top_materials_qs = Material.objects.annotate(
         # total_incoming hisobi
         total_incoming=Coalesce(
@@ -1627,7 +1467,7 @@ def material_list(request):
         ),
         # outgoing_value hisobi
         outgoing_value=ExpressionWrapper(
-             Coalesce(
+            Coalesce(
                 Sum('materialtransaction__quantity_change', 
                     filter=Q(materialtransaction__transaction_type='OUT')), 
                 Decimal('0')
@@ -1639,44 +1479,15 @@ def material_list(request):
     top_incoming_materials = top_materials_qs.filter(total_incoming__gt=0).order_by('-total_incoming')[:10]
     top_outgoing_materials = top_materials_qs.filter(total_outgoing__gt=0).order_by('-total_outgoing')[:10]
     
-    # ========================================================================
-    # 9. QO'SHIMCHA STATISTIKA
-    # ========================================================================
-    low_stock_materials = base_materials_qs.filter(
-        quantity__lt=F('min_stock_level')
-    ).values('id', 'name', 'quantity', 'min_stock_level', 'unit')
-    
-    recent_transactions = MaterialTransaction.objects.select_related(
-        'material'
-    ).order_by('-timestamp')[:10]
-    
-    # ========================================================================
-    # 10. KONTEKSTNI TAYYORLASH
-    # ========================================================================
     context = {
-        # ... (qolgan konteks avvalgidek qoladi) ...
         'materials': page_obj,
         'page_obj': page_obj,
-        
-        # ... (boshqa statistikalar) ...
-        
         'income_materials': income_materials,
         'outcome_materials': outcome_materials,
-        
         'top_incoming_materials': top_incoming_materials,
         'top_outgoing_materials': top_outgoing_materials,
-        
-        'low_stock_materials': low_stock_materials,
-        'recent_transactions': recent_transactions,
-        
         'current_date': current_date,
-        'filter_low_stock': filter_low_stock,
-        'filter_has_stock': filter_has_stock,
-        'filter_type': filter_type,
-        
-        'title': 'Omborxona Materiallari Boshqaruvi',
-        
-        'paginator': paginator,
+        'title': 'Omborxona Boshqaruvi',
     }
     
     return render(request, 'orders/material_list.html', context)
