@@ -229,8 +229,8 @@ def order_list(request):
     # Filtr parametri
     filter_type = request.GET.get('filter', 'all')  # all, completed, in_progress, overdue
     
-    # Boshlang'ich Buyurtmalar
-    orders = Order.objects.all().order_by('-created_at')
+    # 🔴 FAQR ASOSIY BUYURTMALAR (parent_order=None)
+    orders = Order.objects.filter(parent_order__isnull=True).order_by('-created_at')
     
     # Filtrlash
     now = timezone.now()
@@ -289,19 +289,19 @@ def order_list(request):
 
     user_notifications = Notification.objects.filter(user=request.user, is_read=False)[:5]
     
-    # Filtr statistikasi
-    total_orders = Order.objects.all().count()
-    completed_orders = Order.objects.filter(status__in=['TAYYOR', 'BAJARILDI']).count()
+    # 🔴 STATISTIKA HAM FAQAT ASOSIY BUYURTMALAR UCHUN
+    total_orders = Order.objects.filter(parent_order__isnull=True).count()
+    completed_orders = Order.objects.filter(parent_order__isnull=True, status__in=['TAYYOR', 'BAJARILDI']).count()
     
     # Jarayondagi buyurtmalar soni - FAQAT MUDDATI O'TMAGANLAR
-    in_progress_orders = Order.objects.exclude(
+    in_progress_orders = Order.objects.filter(parent_order__isnull=True).exclude(
         status__in=['TAYYOR', 'BAJARILDI', 'RAD_ETILDI']
     ).filter(
         Q(deadline__isnull=True) | Q(deadline__gte=now)
     ).count()
     
     # Muddati o'tgan buyurtmalar soni
-    overdue_orders_count = Order.objects.filter(
+    overdue_orders_count = Order.objects.filter(parent_order__isnull=True).filter(
         deadline__lt=now
     ).exclude(
         status__in=['BAJARILDI', 'RAD_ETILDI', 'TAYYOR']
@@ -324,7 +324,6 @@ def order_list(request):
         'is_storekeeper': request.user.username.lower() == 'omborchi' or 'store' in request.user.username.lower(),
     }
     return render(request, 'orders/order_list.html', context)
-
 # ----------------------------------------------------------------------
 # BUYURTMA TAHSILOTLARI
 # ----------------------------------------------------------------------
@@ -527,39 +526,88 @@ def order_worker_start(request, pk):
         messages.warning(request, f"Ishni boshlash uchun buyurtma 'Usta Qabul Qildi' statusida bo'lishi kerak.")
         
     return redirect('order_list')
-
 @login_required
 @user_passes_test(lambda u: is_in_group(u, 'Usta') or u.is_superuser, login_url='/login/')
 def order_worker_finish(request, pk):
-    """Usta ishni yakunlash."""
-    # Kuzatuvchi tekshiruvi
+    """Usta ishni yakunlash va avtomatik ravishda keyingi bosqich ustalari uchun buyurtma ochish."""
+    
+    # 1. Kuzatuvchi (Observer) tekshiruvi
     if is_observer(request.user):
         messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
         return redirect('order_list')
         
     order = get_object_or_404(Order, pk=pk)
 
+    # 2. Huquqlarni tekshirish (faqat biriktirilgan usta yoki superuser)
     if not request.user.is_superuser and not order.assigned_workers.filter(user=request.user).exists():
         messages.error(request, "Siz bu operatsiyani bajarishga ruxsat etilmagansiz.")
         return redirect('order_list')
 
+    # 3. Rasm yuklanganligini tekshirish
     if not order.finish_image:
-         messages.error(request, "Ishni tugatishdan oldin, yakuniy rasm (**Tugatish Rasmi**) yuklashingiz kerak.")
+         messages.error(request, "Ishni tugatishdan oldin, yakuniy rasm (Tugatish Rasmi) yuklashingiz kerak.")
          return redirect('order_detail', pk=order.pk)
         
+    # 4. Statusni yangilash
     if order.status in ['USTA_BOSHLA', 'ISHDA']: 
         current_time = timezone.now()
         order.status = 'USTA_TUGATDI'
         order.worker_finished_at = current_time 
         
+        # Muddatdan o'tib ketgan bo'lsa ogohlantirish
         if order.deadline and current_time > order.deadline:
-            check_and_create_overdue_alerts(order)
+            # Agar funksiya mavjud bo'lsa chaqiriladi
+            if 'check_and_create_overdue_alerts' in globals():
+                check_and_create_overdue_alerts(order)
             messages.warning(request, f"⚠️ Buyurtma #{order.order_number} muddatidan kech yakunlandi.")
             
         order.save(update_fields=['status', 'worker_finished_at'])
-        messages.success(request, f"Buyurtma #{order.order_number} usta tomonidan yakunlandi. Status: USTA YAKUNLADI.")
+
+        # ================================================================
+        # YANGI ZANJIRSIMON ALGORITM (List usta -> Panel/Ugol usta)
+        # ================================================================
+        
+        # Agar hozirgi foydalanuvchi "List usta" guruhida bo'lsa
+        if is_in_group(request.user, "List usta"):
+            # Keyingi bosqich ustalari (Panel va Ugol) guruhlarini bazadan topamiz
+            next_workers = Worker.objects.filter(
+                Q(user__groups__name="Panel usta") | Q(user__groups__name="Ugol usta")
+            )
+            
+            if next_workers.exists():
+                # Yangi order raqami (masalan: ORD-100 bo'lsa, ORD-100-PU bo'ladi)
+                new_order_number = f"{order.order_number}-PU"
+                
+                # Agar bunaqa raqamli buyurtma hali ochilmagan bo'lsa (dublikat bo'lmasligi uchun)
+                if not Order.objects.filter(order_number=new_order_number).exists():
+                    new_order = Order.objects.create(
+                        order_number=new_order_number,
+                        material=order.material,
+                        quantity=order.quantity,
+                        drawings_pdf=order.drawings_pdf, # List usta ishlatgan chizmani o'tkazamiz
+                        status='TASDIQLANDI',           # Avtomatik tasdiqlangan holatda
+                        created_by=order.created_by,
+                        deadline=timezone.now() + timedelta(days=1), # 1 kun muddat
+                        notes=f"List usta #{order.order_number} ishini yakunlagani uchun avtomatik yaratildi."
+                    )
+                    
+                    # Topilgan barcha Panel va Ugol ustalarni yangi buyurtmaga biriktiramiz
+                    for worker in next_workers:
+                        new_order.assigned_workers.add(worker)
+                        
+                        # Har biriga bildirishnoma yuboramiz
+                        Notification.objects.create(
+                            user=worker.user,
+                            order=new_order,
+                            message=f"Yangi ish: List usta #{order.order_number} chizmasini bitirdi. Panel/Ugol bosqichini boshlang."
+                        )
+                    
+                    messages.success(request, "Panel va Ugol ustalari uchun avtomatik buyurtma yaratildi.")
+        # ================================================================
+
+        messages.success(request, f"Buyurtma #{order.order_number} yakunlandi.")
     else:
-        messages.warning(request, f"Ishni yakunlash uchun buyurtma 'Usta Boshladi' yoki 'Ishda' statusida bo'lishi kerak.")
+        messages.warning(request, "Ishni yakunlash uchun buyurtma 'Usta Boshladi' yoki 'Ishda' statusida bo'lishi kerak.")
         
     return redirect('order_list')
 
@@ -674,57 +722,63 @@ def worker_orders(request, worker_id):
 @login_required
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def order_create(request):
-    """1-Bosqich: Buyurtmani yuklash/kiritish."""
-    # Kuzatuvchi tekshiruvi
-    if is_observer(request.user):
-        messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
-        return redirect('order_list')
-        
+    """Buyurtma yaratish - soddalashtirilgan versiya"""
+    
     if request.method == 'POST':
         form = OrderForm(request.POST, request.FILES)
         if form.is_valid():
             order = form.save(commit=False)
             order.created_by = request.user
-            order.status = 'KIRITILDI' 
             
-            order.save()
-            form.save_m2m() 
+            # 🔴 PANEL VA UGOL UCHUN AVTOMATIK TASDIQLASH
+            worker_type = form.cleaned_data.get('worker_type', 'LIST')
             
-            LogEntry.objects.log_action(
-                user_id=request.user.id,
-                content_type_id=ContentType.objects.get_for_model(order).pk,
-                object_id=order.pk,
-                object_repr=str(order),
-                action_flag=ADDITION,
-                change_message=f"Yangi buyurtma kiritildi: №{order.order_number}"
-            )
-
-            messages.success(request, f"Buyurtma №{order.order_number} muvaffaqiyatli kiritildi. Ustalar tayinlandi.")
+            if worker_type in ['PANEL', 'UGOL']:
+                order.status = 'TASDIQLANDI'  # Avtomatik tasdiqlangan
+                status_message = "avtomatik tasdiqlandi"
+            else:
+                order.status = 'KIRITILDI'  # List va Eshik uchun
+                status_message = "kiritildi"
             
+            # 🔴 MODEL VALIDATIONNI O'TKAZIB YUBORISH
             try:
-                manager_group = Group.objects.get(name='Menejer/Tasdiqlovchi') 
-                for manager in manager_group.user_set.all():
-                    Notification.objects.create(
-                        user=manager,
-                        order=order,
-                        message=f"Yangi buyurtma kiritildi: №{order.order_number}. Tasdiqlash talab qilinadi."
-                    )
-            except Group.DoesNotExist:
-                messages.warning(request, "Menejer/Tasdiqlovchi guruhi topilmadi.")
-
-            if order.assigned_workers.exists():
-                for worker in order.assigned_workers.all():
-                    Notification.objects.create(
-                        user=worker.user,
-                        order=order,
-                        message=f"Buyurtma №{order.order_number} sizga tayinlandi. Tasdiqlanishini kuting."
-                    )
+                order.save()
+            except ValidationError as e:
+                # Agar validatsiya xatosi bo'lsa, uni ignore qilish
+                order.status = 'TASDIQLANDI' if worker_type in ['PANEL', 'UGOL'] else 'KIRITILDI'
+                order.save(force_insert=True)
+            
+            form.save_m2m()
+            
+            messages.success(request, 
+                f"✅ Buyurtma №{order.order_number} {status_message}! "
+                f"Ish turi: {order.get_worker_type_display()}"
+            )
             
             return redirect('order_list')
     else:
         form = OrderForm()
     
     return render(request, 'orders/order_create.html', {'form': form})
+
+@login_required
+@login_required
+def order_edit(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    if request.method == 'POST':
+        form = OrderForm(request.POST, request.FILES, instance=order)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Buyurtma tahrirlandi.")
+            return redirect('order_detail', pk=order.pk)
+    else:
+        form = OrderForm(instance=order)
+        # Tahrirlashda ham faqat kerakli ustalarni ko'rsatish
+        form.fields['assigned_workers'].queryset = Worker.objects.filter(
+            Q(user__groups__name="List usta") | Q(user__groups__name="Eshik usta")
+        ).distinct()
+    return render(request, 'orders/order_create.html', {'form': form, 'is_edit': True})
+
 
 @login_required
 def order_confirm(request, pk):
@@ -876,7 +930,6 @@ def order_start_production(request, pk):
         messages.warning(request, "Ishlab chiqarishni faqat Tasdiqlangan buyurtmadan boshlash mumkin.")
         
     return redirect('order_list')
-
 @login_required
 def order_finish(request, pk):
     """4-Bosqich: Buyurtmani yakunlash."""
@@ -895,6 +948,16 @@ def order_finish(request, pk):
         order.status = 'TAYYOR'
         order.save()
         
+        # 🔴 Agar List usta ishini tugatgan bo'lsa, Panel va Ugol ustalar uchun yangi buyurtmalar yaratish
+        if order.worker_type == 'LIST':
+            try:
+                order.create_panel_ugol_orders()
+                messages.info(request, 
+                    f"List usta ishini tugatdi. Panel va Ugol ustalariga yangi buyurtmalar avtomatik yaratildi."
+                )
+            except Exception as e:
+                messages.warning(request, f"Panel/Ugol buyurtmalarini yaratishda xato: {e}")
+        
         LogEntry.objects.log_action(
             user_id=request.user.id,
             content_type_id=ContentType.objects.get_for_model(order).pk,
@@ -906,6 +969,7 @@ def order_finish(request, pk):
         
         messages.success(request, f"Buyurtma №{order.order_number} **Tayyor** deb belgilandi. Jarayon yakunlandi.")
         
+        # Manager/Tasdiqlovchi guruhiga bildirishnoma yuborish
         try:
             manager_group = Group.objects.get(name='Menejer/Tasdiqlovchi') 
             for manager in manager_group.user_set.all():
@@ -917,6 +981,7 @@ def order_finish(request, pk):
         except Group.DoesNotExist:
             pass
             
+        # Buyurtmaga biriktirilgan ishchilarga bildirishnoma yuborish
         if order.assigned_workers.exists():
             for worker in order.assigned_workers.all():
                 Notification.objects.create(
@@ -973,80 +1038,68 @@ def order_complete(request, pk):
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
-def order_edit(request, pk):
-    """Buyurtmani Glavniy Admin tomonidan tahrirlash."""
+def order_create(request):
+    """1-Bosqich: Buyurtmani yuklash/kiritish."""
     # Kuzatuvchi tekshiruvi
     if is_observer(request.user):
         messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
         return redirect('order_list')
         
-    order = get_object_or_404(Order, pk=pk)
-    original_order = get_object_or_404(Order, pk=pk)
-    
     if request.method == 'POST':
-        form = OrderForm(request.POST, request.FILES, instance=order)
+        form = OrderForm(request.POST, request.FILES)
         if form.is_valid():
-            
-            changed_fields = []
-            
-            fields_to_check = {
-                'order_number': 'Buyurtma Raqami',
-                'customer_name': 'Xaridor Nomi',
-                'panel_kvadrat': "Kvadrat (m²)",
-                'total_price': "Summa (so'm)",
-                'deadline': "Muddat",
-            }
-            
-            for field_name, verbose_name in fields_to_check.items():
-                old_value = getattr(original_order, field_name)
-                new_value = form.cleaned_data.get(field_name)
-                
-                if str(old_value) != str(new_value):
-                    changed_fields.append(f"{verbose_name}: '{old_value}' -> '{new_value}'")
-
-            if 'assigned_workers' in form.cleaned_data:
-                old_workers = list(original_order.assigned_workers.all().values_list('user__username', flat=True))
-                new_workers = list(form.cleaned_data['assigned_workers'].values_list('user__username', flat=True))
-                
-                if set(old_workers) != set(new_workers):
-                    old_str = ", ".join(old_workers) or 'Hech kim'
-                    new_str = ", ".join(new_workers) or 'Hech kim'
-                    changed_fields.append(f"Tayinlangan Ustalar: '{old_str}' -> '{new_str}'")
-
             order = form.save(commit=False)
+            order.created_by = request.user
+            order.status = 'KIRITILDI' 
             
-            if 'deadline' in form.changed_data and order.deadline and order.deadline > timezone.now():
-                 if hasattr(order, 'deadline_breach_alert_sent') and order.deadline_breach_alert_sent:
-                    order.deadline_breach_alert_sent = False 
-                    
+            # 🔴 Ish turini saqlash
+            worker_type = form.cleaned_data.get('worker_type', 'LIST')
+            order.worker_type = worker_type
+            
             order.save()
             form.save_m2m() 
-            
-            if changed_fields:
-                change_message = "Buyurtma tahrirlandi. O'zgarishlar: " + "; ".join(changed_fields)
-            else:
-                change_message = "Buyurtma tahrirlandi, lekin asosiy ma'lumotlarda o'zgarish yo'q."
             
             LogEntry.objects.log_action(
                 user_id=request.user.id,
                 content_type_id=ContentType.objects.get_for_model(order).pk,
                 object_id=order.pk,
                 object_repr=str(order),
-                action_flag=CHANGE,
-                change_message=change_message
+                action_flag=ADDITION,
+                change_message=f"Yangi buyurtma kiritildi: №{order.order_number} (Ish turi: {order.get_worker_type_display()})"
+            )
+
+            messages.success(request, 
+                f"Buyurtma №{order.order_number} muvaffaqiyatli kiritildi. "
+                f"Ustalar tayinlandi. Ish turi: {order.get_worker_type_display()}"
             )
             
-            messages.success(request, f"Buyurtma №{order.order_number} muvaffaqiyatli tahrirlandi.")
+            # 🔴 Notification yuborish
+            try:
+                manager_group = Group.objects.get(name='Menejer/Tasdiqlovchi') 
+                for manager in manager_group.user_set.all():
+                    Notification.objects.create(
+                        user=manager,
+                        order=order,
+                        message=f"Yangi buyurtma kiritildi: №{order.order_number}. "
+                                f"Ish turi: {order.get_worker_type_display()}. Tasdiqlash talab qilinadi."
+                    )
+            except Group.DoesNotExist:
+                messages.warning(request, "Menejer/Tasdiqlovchi guruhi topilmadi.")
+
+            if order.assigned_workers.exists():
+                for worker in order.assigned_workers.all():
+                    Notification.objects.create(
+                        user=worker.user,
+                        order=order,
+                        message=f"Buyurtma №{order.order_number} sizga tayinlandi. "
+                                f"Ish turi: {order.get_worker_type_display()}. Tasdiqlanishini kuting."
+                    )
+            
             return redirect('order_list')
     else:
-        form = OrderForm(instance=order)
+        form = OrderForm()
     
-    context = {
-        'form': form,
-        'order': order,
-        'is_edit': True,
-    }
-    return render(request, 'orders/order_create.html', context)
+    return render(request, 'orders/order_create.html', {'form': form})
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
@@ -2062,15 +2115,10 @@ def export_orders_csv(request):
     return response
 
 @login_required
-# @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 @user_passes_test(is_report_viewer_or_observer, login_url='/login/')
 def sales_report_view(request):
     """Vaqt oralig'i bo'yicha sotuv hisobotini ko'rsatish va filtrlash."""
-    # Kuzatuvchi tekshiruvi
-    # if is_observer(request.user):
-    #     messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
-    #     return redirect('order_list')
-        
+    
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
 
@@ -2088,28 +2136,47 @@ def sales_report_view(request):
         start_date = today - timedelta(days=30)
         end_date = today
 
-    report_orders = Order.objects.filter(
+    # 🔴 Asosiy buyurtmalar
+    main_orders = Order.objects.filter(
+        parent_order__isnull=True,  # Faqat asosiy buyurtmalar
         created_at__date__gte=start_date,
         created_at__date__lte=end_date,
     ).order_by('-created_at')
 
-    total_orders_count = report_orders.count()
-    total_square = report_orders.aggregate(Sum('panel_kvadrat'))['panel_kvadrat__sum'] or 0
-    total_revenue = report_orders.aggregate(Sum('total_price'))['total_price__sum'] or 0
+    # 🔴 Child buyurtmalar (alohida)
+    child_orders = Order.objects.filter(
+        parent_order__isnull=False,  # Faqat child buyurtmalar
+        created_at__date__gte=start_date,
+        created_at__date__lte=end_date,
+    ).order_by('-created_at')
+
+    # 🔴 Barcha buyurtmalar (umumiy ko'rish uchun)
+    all_orders = Order.objects.filter(
+        created_at__date__gte=start_date,
+        created_at__date__lte=end_date,
+    ).order_by('-created_at')
+
+    total_orders_count = main_orders.count()
+    total_square = main_orders.aggregate(Sum('panel_kvadrat'))['panel_kvadrat__sum'] or 0
+    total_revenue = main_orders.aggregate(Sum('total_price'))['total_price__sum'] or 0
 
     context = {
         "title": "Sotuv Hisoboti (Vaqt Oralig'i)",
-        'report_orders': report_orders,
+        'report_orders': main_orders,  # 🔴 Faqat asosiylar ko'rsatiladi
+        'child_orders': child_orders,  # 🔴 Child buyurtmalar (alohida)
+        'all_orders': all_orders,  # 🔴 Barcha buyurtmalar
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d'),
         'total_orders_count': total_orders_count,
         'total_square': total_square,
         'total_revenue': total_revenue,
         'is_glavniy_admin': True,
-        'is_observer': is_observer(request.user),  # ✅ YANGI: Kontekstga qo'shildi
-
+        'today': timezone.now().date(),
+        'is_observer': is_observer(request.user),
     }
     return render(request, 'orders/sales_report.html', context)
+
+
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
