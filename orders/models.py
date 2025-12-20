@@ -1,20 +1,17 @@
 # orders/models.py
-# Bu fayl korxonaning asosiy ma'lumotlar strukturasini (modellarini) belgilaydi.
 import uuid
 from django.db import models
 from django.contrib.auth import get_user_model 
 from django.conf import settings
 from decimal import Decimal
-from django.utils import timezone # Order.save() funksiyasida kerak
+from django.utils import timezone
 
 User = get_user_model() 
-# User modelini settings.AUTH_USER_MODEL orqali ham ishlatsa bo'ladi
 
 # =======================================================================
-# 1. KATEGORIYA MODELI (Material uchun baza)
+# 1. KATEGORIYA MODELI
 # =======================================================================
 class Category(models.Model):
-    """Ombordagi materiallar uchun kategoriya."""
     name = models.CharField(max_length=100, unique=True, verbose_name="Kategoriya Nomi")
     description = models.TextField(blank=True, verbose_name="Izoh")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -28,10 +25,9 @@ class Category(models.Model):
         return self.name
 
 # =======================================================================
-# 2. WORKER/USTA MODELI (Order uchun baza)
+# 2. WORKER/USTA MODELI
 # =======================================================================
 class Worker(models.Model):
-    """Foydalanuvchini ustaxona rollari bilan bog'laydi."""
     ROLE_CHOICES = [
         ('PANEL', "Panel Ustasi"),
         ('LIST', "List Ustasi"),
@@ -55,15 +51,10 @@ class Worker(models.Model):
         username = getattr(self.user, 'username', 'Nomaʼlum foydalanuvchi')
         return f"{username} - {self.get_role_display()}"
 
-
 # =======================================================================
-# 3. MATERIAL (OMBORXONA KATALOGI) MODELI (Transaction uchun baza)
-# Category ga bog'langan
+# 3. MATERIAL MODELI
 # =======================================================================
-# models.py - Material modelini yangilash
 class Material(models.Model):
-    """Omborxonadagi har bir material yoki xomashyo haqida ma'lumot."""
-    
     UNIT_CHOICES = [
         ('kg', 'Kilogramm (kg)'),
         ('m2', 'Kvadrat Metr (m²)'),
@@ -71,13 +62,8 @@ class Material(models.Model):
         ('m', 'Metr (m)'),
         ('litr', 'Litr'),
     ]
-    min_stock_level = models.DecimalField(max_digits=10, decimal_places=3, default=0)
-    max_stock_level = models.DecimalField(max_digits=10, decimal_places=3, default=0, null=True, blank=True)
-    code = models.CharField(max_length=50, unique=True, null=True, blank=True, verbose_name="QR/Shtrix Kod")
     
     name = models.CharField(max_length=255, verbose_name="Material nomi", unique=True)
-    
-    # 🔴 YANGI: Maxsulot nomi uchun maydon
     product_name = models.CharField(
         max_length=255,
         blank=True,
@@ -85,7 +71,6 @@ class Material(models.Model):
         verbose_name="Maxsulot nomi",
         help_text="Ushbu materialdan tayyorlanadigan yoki bog'liq maxsulot nomi"
     )
-    
     category = models.ForeignKey(
         Category, 
         on_delete=models.SET_NULL, 
@@ -93,14 +78,12 @@ class Material(models.Model):
         blank=True, 
         verbose_name="Material Kategoriyasi"
     )
-    
     unit = models.CharField(
         max_length=10, 
         choices=UNIT_CHOICES, 
         default='son', 
         verbose_name="O'lchov birligi"
     )
-    
     quantity = models.DecimalField(
         max_digits=10, 
         decimal_places=3, 
@@ -119,6 +102,15 @@ class Material(models.Model):
         default=Decimal('0.000'), 
         verbose_name="Minimal qoldiq"
     )
+    max_stock_level = models.DecimalField(
+        max_digits=10, 
+        decimal_places=3, 
+        default=0, 
+        null=True, 
+        blank=True,
+        verbose_name="Maksimal qoldiq"
+    )
+    code = models.CharField(max_length=50, unique=True, null=True, blank=True, verbose_name="QR/Shtrix Kod")
     last_updated = models.DateTimeField(auto_now=True, verbose_name="Oxirgi yangilanish")
 
     class Meta:
@@ -131,16 +123,11 @@ class Material(models.Model):
         if self.product_name:
             base_str += f" → {self.product_name}"
         return f"{base_str} (Qoldiq: {self.quantity:,.3f} {self.unit.upper()})"
-    
-
 
 # =======================================================================
-# 4. ORDER MODELI (MaterialTransaction va Notification uchun baza)
-# Worker modeliga bog'langan
+# 4. ORDER MODELI
 # =======================================================================
 class Order(models.Model):
-    """Buyurtma va ishlab chiqarish jarayonidagi uning holati."""
-    
     STATUS_CHOICES = [
         ('KIRITILDI', "1. Kiritildi (Admin)"),
         ('TASDIQLANDI', "2. Tasdiqlandi (Menejer)"),
@@ -153,6 +140,13 @@ class Order(models.Model):
         ('BAJARILDI', "8. Bajarildi (Yakuniy)") 
     ]
 
+    WORKER_TYPE_CHOICES = [
+        ('LIST', 'List Ustasi'),
+        ('PANEL', 'Panel Ustasi'),
+        ('UGOL', 'Ugol Ustasi'),
+        ('ESHIK', 'Eshik Ustasi'),
+    ]
+    
     order_number = models.CharField(max_length=50, unique=True, verbose_name="Buyurtma Raqami")
     pdf_file = models.FileField(upload_to='order_pdfs/', verbose_name="PDF Fayl")
     customer_name = models.CharField(max_length=100, verbose_name="Xaridor Nomi")
@@ -160,7 +154,28 @@ class Order(models.Model):
         max_length=255, 
         verbose_name="Mahsulot Nomi",
         help_text="Buyurtma berilgan mahsulot yoki kategoriya nomi"
-    ) 
+    )
+    worker_type = models.CharField(
+        max_length=10,
+        choices=WORKER_TYPE_CHOICES,
+        default='LIST',
+        verbose_name="Ish Turi (Qaysi Ustalar Uchun)",
+        help_text="Bu ish qaysi turdagi ustalar uchun ekanligini belgilaydi"
+    )
+
+    needs_manager_approval = models.BooleanField(
+        default=True,
+        verbose_name="Menejer Tasdiqlashi Kerak",
+        help_text="Agar False bo'lsa, usta to'g'ridan-to'g'ri qabul qilishi mumkin"
+    )
+    parent_order = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='child_orders',
+        verbose_name="Asosiy Buyurtma"
+    )
     comment = models.TextField(
         blank=True, 
         null=True, 
@@ -171,28 +186,22 @@ class Order(models.Model):
         null=True, 
         verbose_name="Usta Izohlari"
     )
-    
     panel_kvadrat = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Panel Kvadrat Metri (m²)")
     total_price = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Umumiy Narx (Summa)")
-    
     assigned_workers = models.ManyToManyField(
         Worker, 
         related_name='assigned_orders', 
         verbose_name="Belgilangan Ustalar",
         blank=True
     )
-    
     deadline = models.DateTimeField(
         null=True, 
         blank=True, 
         verbose_name="Belgilangan Muddat (Deadline)",
         help_text="Usta bu muddatgacha ishni tugatishi kerak."
     )
-    
     worker_started_at = models.DateTimeField(null=True, blank=True, verbose_name="Usta Boshlagan Vaqti")
     worker_finished_at = models.DateTimeField(null=True, blank=True, verbose_name="Usta Tugatgan Vaqti")
-
-    # ... (Rasm maydonlari va tegishli status flaglari) ...
     start_image = models.ImageField(upload_to='order_photos/start/', null=True, blank=True, verbose_name="Ish Boshlash Rasmi")
     finish_image = models.ImageField(upload_to='order_photos/finish/', null=True, blank=True, verbose_name="Ish Yakunlash Rasmi")
     start_image_uploaded_at = models.DateTimeField(null=True, blank=True, verbose_name="Boshlash Rasmi Yuklangan Vaqt")
@@ -201,7 +210,6 @@ class Order(models.Model):
     delayed_assignment_alert_sent = models.BooleanField(default=False, verbose_name="Ishga Berish Kechikkanligi Ogohlantirish Yuborildi")
     telegram_notified_overdue = models.BooleanField(default=False, verbose_name="Telegramga muddat haqida xabar berilgan")
     panel_thickness = models.CharField(max_length=50, blank=True, null=True, verbose_name="Panel Qalinligi (mm)")
-    
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='KIRITILDI', verbose_name="Hozirgi Status")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_orders', verbose_name="Kirituvchi")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Kiritilgan vaqt")
@@ -214,25 +222,70 @@ class Order(models.Model):
     def __str__(self):
         return f"Buyurtma #{self.order_number} - {self.get_status_display()}"
 
-    def save(self, *args, **kwargs):
-        # Rasm yuklangan vaqtlarni avtomatik yangilash
-        if self.start_image and not self.start_image_uploaded_at:
-            self.start_image_uploaded_at = timezone.now()
-        if self.finish_image and not self.finish_image_uploaded_at:
-            self.finish_image_uploaded_at = timezone.now()
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.start_image and not self.start_image_uploaded_at:
+    #         self.start_image_uploaded_at = timezone.now()
+    #     if self.finish_image and not self.finish_image_uploaded_at:
+    #         self.finish_image_uploaded_at = timezone.now()
+    #     super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     # 🔴 Panel va Ugol ustalari uchun menejer tasdiqlash kerak emas
+    #     if self.worker_type in ['PANEL', 'UGOL']:
+    #         self.needs_manager_approval = False
+    #         # Agar yangi buyurtma bo'lsa va parent_order dan kelgan bo'lsa
+    #         if not self.pk and self.parent_order:
+    #             self.status = 'TASDIQLANDI'  # Avtomatik tasdiqlangan
+        
+    #     super().save(*args, **kwargs)
+    
+    def create_panel_ugol_orders(self):
+        """List usta tugatganidan keyin Panel va Ugol ustalari uchun buyurtmalar yaratish"""
+        # Faqat List usta tugatgandagina ishlaydi
+        if self.worker_type == 'LIST':
+            
+            # Yaratish kerak bo'lgan turlar
+            next_steps = [
+                ('PANEL', 'Panel ishlari'),
+                ('UGOL', 'Ugol ishlari')
+            ]
 
+            for w_type, label in next_steps:
+                # Dublikat bo'lmasligi uchun tekshiramiz
+                new_order_number = f"{self.order_number}-{w_type}"
+                if not Order.objects.filter(order_number=new_order_number).exists():
+                    
+                    new_order = Order.objects.create(
+                        order_number=new_order_number,
+                        pdf_file=self.pdf_file,
+                        customer_name=self.customer_name,
+                        product_name=f"{self.product_name} ({label})",
+                        worker_type=w_type,
+                        parent_order=self,
+                        comment=f"Avtomatik: List usta #{self.order_number} buyurtmasidan nusxalandi.",
+                        panel_kvadrat=self.panel_kvadrat,
+                        total_price=self.total_price,
+                        panel_thickness=self.panel_thickness,
+                        status='TASDIQLANDI', # List usta bitirgan bo'lsa, bu allaqachon tasdiqlangan
+                        created_by=self.created_by,
+                        needs_manager_approval=False
+                    )
 
+                    # O'sha roldagi barcha ustalarni topib biriktiramiz
+                    workers = Worker.objects.filter(role=w_type)
+                    if workers.exists():
+                        new_order.assigned_workers.set(workers)
+                        
+                        # Har bir ustaga bildirishnoma
+                        for w in workers:
+                            Notification.objects.create(
+                                user=w.user,
+                                order=new_order,
+                                message=f"Yangi ish keldi: {new_order.order_number}. List usta jarayonni bitirdi."
+                            )
 # =======================================================================
-# 5. MATERIAL TRANSACTION MODELI (Material va Orderga bog'langan)
-# =======================================================================
-
-# =======================================================================
-# 5. MATERIAL TRANSACTION MODELI (Material va Orderga bog'langan)
+# 5. MATERIAL TRANSACTION MODELI
 # =======================================================================
 class MaterialTransaction(models.Model):
-    """Omborxona materiallarining kirim-chiqim harakatlarini qayd etadi."""
-    
     TRANSACTION_TYPES = [
         ('IN', 'Kirim (Omborga kirish)'),
         ('OUT', 'Chiqim (Ombordan chiqish/Sarflanish)'),
@@ -241,23 +294,18 @@ class MaterialTransaction(models.Model):
     material = models.ForeignKey(
         Material, 
         on_delete=models.PROTECT, 
-        # related_name='transactions', # Bog'lanish nomi
         verbose_name="Material nomi"
     )
-    
     transaction_type = models.CharField(
         max_length=3, 
         choices=TRANSACTION_TYPES, 
         verbose_name="Harakat turi"
     )
-    
     quantity_change = models.DecimalField(
         max_digits=10, 
         decimal_places=3, 
         verbose_name="Miqdordagi o'zgarish"
     )
-
-    # 🔴 YANGI QO'SHILGAN MAYDON: Partiya uchun unikal barcode
     transaction_barcode = models.CharField(
         max_length=100, 
         unique=True, 
@@ -265,14 +313,12 @@ class MaterialTransaction(models.Model):
         blank=True, 
         verbose_name="Partiya Barcode"
     )
-    
     received_by = models.CharField(
         max_length=255,
         null=True,
         blank=True,
         verbose_name="Qabul qiluvchi shaxs/ustaxona"
     )
-    
     order = models.ForeignKey(
         Order, 
         on_delete=models.SET_NULL, 
@@ -280,25 +326,14 @@ class MaterialTransaction(models.Model):
         blank=True,
         verbose_name="Bog'liq buyurtma"
     )
-    
     performed_by = models.ForeignKey(
-        User, # settings.AUTH_USER_MODEL o'rniga tepada import qilingan User
+        User,
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
         verbose_name="Amalga oshirdi"
     )
-
-    def save(self, *args, **kwargs):
-        if not self.transaction_barcode:
-            # Material kodining birinchi 3 harfi + tasodifiy 6 ta belgi
-            prefix = self.material.name[:3].upper() if self.material else "MTR"
-            unique_id = uuid.uuid4().hex[:6].upper()
-            self.transaction_barcode = f"{prefix}-{unique_id}"
-        super().save(*args, **kwargs)
-    
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Vaqti")
-    
     notes = models.TextField(
         null=True, 
         blank=True, 
@@ -310,14 +345,20 @@ class MaterialTransaction(models.Model):
         verbose_name_plural = "Material harakatlari (Tranzaksiyalar)"
         ordering = ['-timestamp']
 
+    def save(self, *args, **kwargs):
+        if not self.transaction_barcode:
+            prefix = self.material.name[:3].upper() if self.material else "MTR"
+            unique_id = uuid.uuid4().hex[:6].upper()
+            self.transaction_barcode = f"{prefix}-{unique_id}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"[{self.get_transaction_type_display()}] {self.material.name}: {self.quantity_change}"
 
 # =======================================================================
-# 6. NOTIFICATION MODELI (User va Orderga bog'langan)
+# 6. NOTIFICATION MODELI
 # =======================================================================
 class Notification(models.Model):
-    """Foydalanuvchilarga yuboriladigan tizim xabarlari."""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', verbose_name="Qabul qiluvchi foydalanuvchi")
     order = models.ForeignKey(Order, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Tegishli buyurtma")
     message = models.CharField(max_length=255, verbose_name="Xabar matni")
@@ -331,5 +372,3 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.user.username}: {self.message[:30]}..."
-
-# Fayl oxiri
