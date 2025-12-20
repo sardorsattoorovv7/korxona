@@ -5,8 +5,7 @@ import os
 from decimal import Decimal 
 
 # Barcha modellar bitta joydan import qilindi
-from .models import Order, MaterialTransaction, Material, Category 
-
+from .models import Order, MaterialTransaction, Material, Category, Worker 
 
 # -----------------------------------
 # 1. BUYURTMA (ORDER) FORMALARI
@@ -30,12 +29,24 @@ class OrderForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     
+    # 🔴 YANGI: Ish turi uchun maydon
+    worker_type = forms.ChoiceField(
+        choices=[
+            ('', '--- Ish Turini Tanlang ---'),
+            ('LIST', 'List Ustasi uchun'),
+            ('ESHIK', 'Eshik Ustasi uchun'),
+        ],
+        required=True,
+        label="Ish Turi",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
     class Meta:
         model = Order
         fields = [
             'order_number', 'pdf_file', 'customer_name', 'product_name', 
             'comment', 'worker_comment', 'panel_kvadrat', 'total_price',
-            'panel_thickness',
+            'panel_thickness', 'worker_type',
             'assigned_workers', 'deadline', 'status',
             'worker_started_at', 'worker_finished_at',
             'start_image', 'finish_image',
@@ -53,11 +64,57 @@ class OrderForm(forms.ModelForm):
             'customer_name': forms.TextInput(attrs={'placeholder': 'Xaridor nomi...', 'class': 'form-control'}),
             'product_name': forms.TextInput(attrs={'placeholder': 'Mahsulot nomi...', 'class': 'form-control'}),
             'panel_kvadrat': forms.NumberInput(attrs={'step': '0.01', 'min': '0', 'class': 'form-control'}),
-            'total_price': forms.NumberInput(attrs={'step': '1000', 'min': '0', 'class': 'form-control'}),
+            'total_price': forms.NumberInput(attrs={'step': '0.01', 'min': '0', 'class': 'form-control'}),
             'pdf_file': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf'}),
             'start_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'finish_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'worker_type': forms.Select(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Avval barcha ustalarni ko'rsatmaymiz
+        self.fields['assigned_workers'].queryset = Worker.objects.none()
+        self.fields['assigned_workers'].label = "Ustalarni Tanlang"
+        self.fields['assigned_workers'].required = True
+        
+        # 🔴 1. Agar forma tahrirlash uchun ochilgan bo'lsa (instance mavjud)
+        if 'instance' in kwargs and kwargs['instance']:
+            instance = kwargs['instance']
+            if instance.worker_type:
+                if instance.worker_type == 'LIST':
+                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='LIST')
+                    self.fields['assigned_workers'].label = "List Ustalarini Tanlang"
+                elif instance.worker_type == 'ESHIK':
+                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='ESHIK')
+                    self.fields['assigned_workers'].label = "Eshik Ustalarini Tanlang"
+                elif instance.worker_type == 'PANEL':
+                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='PANEL')
+                    self.fields['assigned_workers'].label = "Panel Ustalarini Tanlang"
+                elif instance.worker_type == 'UGOL':
+                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='UGOL')
+                    self.fields['assigned_workers'].label = "Ugol Ustalarini Tanlang"
+        # 🔴 2. Agar POST so'rov bo'lsa
+        elif 'data' in kwargs:
+            worker_type = kwargs['data'].get('worker_type')
+            if worker_type:
+                if worker_type == 'LIST':
+                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='LIST')
+                    self.fields['assigned_workers'].label = "List Ustalarini Tanlang"
+                elif worker_type == 'ESHIK':
+                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='ESHIK')
+                    self.fields['assigned_workers'].label = "Eshik Ustalarini Tanlang"
+                elif worker_type == 'PANEL':
+                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='PANEL')
+                    self.fields['assigned_workers'].label = "Panel Ustalarini Tanlang"
+                elif worker_type == 'UGOL':
+                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='UGOL')
+                    self.fields['assigned_workers'].label = "Ugol Ustalarini Tanlang"
+        else:
+            # Ish turi tanlanmagan bo'lsa, barcha ustalarni ko'rsatish
+            self.fields['assigned_workers'].queryset = Worker.objects.all()
+            self.fields['assigned_workers'].label = "Ustalarni Tanlang"
     
     def clean_order_number(self):
         order_number = self.cleaned_data.get('order_number')
@@ -96,18 +153,57 @@ class OrderForm(forms.ModelForm):
                 raise ValidationError("Faqat PDF fayllarni yuklash mumkin")
         return pdf_file
 
+    def clean_assigned_workers(self):
+        workers = self.cleaned_data.get('assigned_workers')
+        worker_type = self.cleaned_data.get('worker_type')
+        
+        if not worker_type:
+            raise ValidationError("Iltimos, avval ish turini tanlang!")
+        
+        # 🔴 Ish turiga mos ustalarni tekshirish
+        for worker in workers:
+            if worker_type == 'LIST' and worker.role != 'LIST':
+                raise ValidationError(f"{worker.get_full_name()} - List usta emas! Faqat List ustalarini tanlang.")
+            elif worker_type == 'ESHIK' and worker.role != 'ESHIK':
+                raise ValidationError(f"{worker.get_full_name()} - Eshik usta emas! Faqat Eshik ustalarini tanlang.")
+        
+        return workers
+    
     def clean(self):
         cleaned_data = super().clean()
         deadline = cleaned_data.get('deadline')
+        worker_type = cleaned_data.get('worker_type')
+        assigned_workers = cleaned_data.get('assigned_workers')
+        
         if deadline and deadline < timezone.now():
             self.add_error('deadline', "Muddat o'tgan sana bo'lishi mumkin emas")
+        
+        # Ish turi majburiy
+        if not worker_type:
+            self.add_error('worker_type', "Ish turini tanlash majburiy!")
+        
+        if worker_type and assigned_workers:
+            # 🔴 Ish turiga mos ustalar tanlanganligini tekshirish
+            valid_roles = []
+            if worker_type == 'LIST':
+                valid_roles = ['LIST']
+            elif worker_type == 'ESHIK':
+                valid_roles = ['ESHIK']
+            
+            for worker in assigned_workers:
+                if worker.role not in valid_roles:
+                    self.add_error('assigned_workers', 
+                        f"{worker.get_full_name()} - {worker.get_role_display()} bu ish turiga mos emas. "
+                        f"Faqat {worker_type} ishlari uchun ustalar tanlanishi kerak.")
+        
         worker_started_at = cleaned_data.get('worker_started_at')
         worker_finished_at = cleaned_data.get('worker_finished_at')
         if worker_started_at and worker_finished_at:
             if worker_finished_at < worker_started_at:
                 self.add_error('worker_finished_at', "Tugatish vaqti boshlash vaqtidan oldin bo'lishi mumkin emas")
+        
         return cleaned_data
-    
+
 class StartImageUploadForm(forms.ModelForm):
     class Meta:
         model = Order
@@ -214,13 +310,12 @@ class MaterialTransactionForm(forms.ModelForm):
     )
 
     product_name = forms.CharField(
-        label="Maxsulot nomi",  # Labelni "Maxsulot nomi" ga o'zgartirdik
-        max_length=255,         # Matnning maksimal uzunligi
-        required=False,         # Agar bu nom majburiy bo'lmasa
+        label="Maxsulot nomi",
+        max_length=255,
+        required=False,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Mahsulot nomi...', # Placeholder matnni o'zgartirdik
-            # Qoldiq kiritish uchun step, min_value kabi Decimal atributlar o'chirildi.
+            'placeholder': 'Mahsulot nomi...',
         })
     )
     quantity_change = forms.DecimalField(
@@ -233,9 +328,6 @@ class MaterialTransactionForm(forms.ModelForm):
             'class': 'form-control',
             'placeholder': '0.000'
         })
-
-
-
     )
     create_batch_barcode = forms.BooleanField(required=False, label="Partiya Barcode yaratish")
 
@@ -372,7 +464,7 @@ class MaterialForm(forms.ModelForm):
             }),
             'price_per_unit': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'step': '1000',
+                'step': '0.01',
                 'min': '0'
             }),
             'min_stock_level': forms.NumberInput(attrs={
@@ -393,6 +485,7 @@ class MaterialForm(forms.ModelForm):
         if qs.exists():
             raise ValidationError("Bu material nomi allaqachon mavjud")
         return name
+
 # -----------------------------------
 # 3. FILTRLASH FORMALARI
 # -----------------------------------
@@ -438,4 +531,16 @@ class OrderFilterForm(forms.Form):
             'type': 'date',
             'class': 'form-control'
         })
+    )
+    
+    # 🔴 YANGI: Ish turi uchun filtr
+    worker_type = forms.ChoiceField(
+        choices=[
+            ('', 'Barcha ish turlari'),
+            ('LIST', 'List Ustasi uchun'),
+            ('ESHIK', 'Eshik Ustasi uchun'),
+        ],
+        required=False,
+        label="Ish Turi",
+        widget=forms.Select(attrs={'class': 'form-control'})
     )
