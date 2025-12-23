@@ -7,12 +7,20 @@
 
 {% block content %}
     <style>
-        /* Smooth Yashil va Neytral Ranglar Palitrasi */
+        /* Modern Design System */
         :root {
             --primary-green: #10b981;
             --primary-green-hover: #059669;
             --primary-green-light: #d1fae5;
             --primary-green-dark: #047857;
+            
+            --secondary-blue: #3b82f6;
+            --secondary-blue-light: #dbeafe;
+            --secondary-blue-dark: #1d4ed8;
+            
+            --accent-purple: #8b5cf6;
+            --accent-purple-light: #ede9fe;
+            --accent-purple-dark: #7c3aed;
             
             --background-light: #f8fbf9;
             --card-bg: #ffffff;
@@ -25,101 +33,343 @@
             --neutral-100: #f3f4f6;
             --neutral-200: #e5e7eb;
             --neutral-300: #d1d5db;
+            --neutral-400: #9ca3af;
+            --neutral-500: #6b7280;
             --neutral-600: #4b5563;
             --neutral-700: #374151;
             --neutral-800: #1f2937;
+            --neutral-900: #111827;
             
             --status-success: #10b981;
             --status-warning: #f59e0b;
             --status-danger: #ef4444;
             --status-info: #3b82f6;
+            --status-purple: #8b5cf6;
             
-            --gradient-primary: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-primary: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            --gradient-secondary: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            --gradient-accent: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
             --gradient-card: linear-gradient(135deg, #ffffff 0%, #f8fbf9 100%);
-            --gradient-store: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            --gradient-store-light: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            --gradient-dark: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.2);
+            
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body { 
             background-color: var(--background-light);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            margin: 0;
-            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            min-height: 100vh;
         }
 
-        .container-list-modern {
+        .container-modern {
             width: 100%;
-            max-width: 1400px;
+            max-width: 1800px;
             margin: 0 auto;
             padding: 2rem;
             min-height: 100vh;
         }
 
-        /* Header */
-        .top-header-flex {
+        /* Header Styles */
+        .header-modern {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 2px solid var(--border-light);
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-light);
+            position: relative;
         }
 
-        .logo-modern {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-icon {
-            width: 50px;
-            height: 50px;
+        .header-modern::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
             background: var(--gradient-primary);
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: 700;
-            color: white;
-            font-size: 1.25rem;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            border-radius: 2px;
         }
 
-        .logo-text {
-            font-size: 1.75rem;
-            font-weight: 700;
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-container {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-normal);
+        }
+
+        .logo-container:hover {
+            transform: rotate(-5deg) scale(1.05);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .logo-container i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-name {
+            font-size: 1.8rem;
+            font-weight: 800;
             background: var(--gradient-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            line-height: 1.2;
         }
 
-        .logout-link-modern {
+        .brand-subtitle {
+            font-size: 0.875rem;
             color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--gradient-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--gradient-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
             font-weight: 600;
-            padding: 10px 18px;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: var(--gradient-card);
             border: 1px solid var(--border-color);
-            border-radius: 0.75rem;
+            color: var(--text-secondary);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             text-decoration: none;
-            transition: all 0.3s ease;
-            background-color: var(--neutral-50);
+        }
+
+        .logout-btn:hover {
+            background: white;
+            color: var(--status-danger);
+            border-color: #fecaca;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--gradient-card);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .sidebar-title {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            border-radius: var(--radius-md);
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all var(--transition-fast);
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: var(--neutral-50);
+            color: var(--primary-green);
+            border-color: var(--border-light);
+        }
+
+        .nav-link.active {
+            background: var(--primary-green-light);
+            color: var(--primary-green-dark);
+            border-color: var(--primary-green);
+            font-weight: 600;
+        }
+
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            font-family: inherit;
+            justify-content: center;
+            min-width: 24px;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: auto;
         }
 
-        .logout-link-modern:hover {
-            background-color: var(--neutral-100);
-            color: var(--text-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .badge-primary {
+            background: var(--gradient-primary);
+            color: white;
         }
 
-        h1 { 
-            color: var(--neutral-800);
-            font-size: 2rem;
+        .badge-secondary {
+            background: var(--gradient-secondary);
+            color: white;
+        }
+
+        .badge-accent {
+            background: var(--gradient-accent);
+            color: white;
+        }
+
+        /* Content Area */
+        .content-area {
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Welcome Banner */
+        .welcome-banner {
+            background: var(--gradient-card);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 8px;
+            height: 100%;
+            background: var(--gradient-primary);
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-title {
+            font-size: 1.8rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
             background: var(--gradient-primary);
@@ -128,49 +378,67 @@
             background-clip: text;
         }
 
-        .welcome-text {
+        .welcome-subtitle {
             color: var(--text-secondary);
             font-size: 1.1rem;
-            font-weight: 500;
-            margin: 1rem 0 2rem 0;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        /* Debug Info */
-        .debug-info {
-            background: #f3f4f6;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 12px;
-            color: #6b7280;
-            border: 1px solid var(--neutral-200);
+            line-height: 1.6;
         }
 
         /* Messages */
-        .message {
-            padding: 1.25rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-            border: 1px solid;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        .messages-container {
+            margin-bottom: 2rem;
         }
+
+        .message {
+            padding: 1.25rem 1.5rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message i {
+            font-size: 1.2rem;
+        }
+
         .message-success {
-            background-color: var(--primary-green-light); 
+            background: var(--primary-green-light);
             color: var(--primary-green-dark);
             border-color: var(--primary-green);
         }
+
         .message-error {
-            background-color: #fef2f2;
+            background: #fef2f2;
             color: var(--status-danger);
             border-color: #fecaca;
         }
+
         .message-warning {
-            background-color: #fef3c7;
+            background: #fef3c7;
             color: #92400e;
             border-color: #fde68a;
+        }
+
+        .message-info {
+            background: var(--secondary-blue-light);
+            color: var(--secondary-blue-dark);
+            border-color: var(--secondary-blue);
         }
 
         /* Observer Banner */
@@ -178,105 +446,191 @@
             background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%);
             border: 1px solid var(--neutral-200);
             color: var(--neutral-700);
-            padding: 1.25rem 1.5rem;
-            border-radius: 1rem;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
             margin-bottom: 2rem;
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-weight: 500;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            gap: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .observer-banner i {
+            color: var(--neutral-600);
+            font-size: 1.5rem;
         }
 
         /* Storekeeper Panel */
-        .storekeeper-actions-card {
-            background: var(--gradient-store-light);
-            padding: 2rem;
-            border-radius: 1.5rem;
+        .storekeeper-panel {
+            background: var(--gradient-card);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
             border: 1px solid #ddd6fe;
-            margin-bottom: 2.5rem;
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
+            box-shadow: var(--shadow-lg);
             position: relative;
             overflow: hidden;
         }
 
-        .storekeeper-actions-card::before {
+        .storekeeper-panel::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             height: 4px;
-            background: var(--gradient-store);
+            background: var(--gradient-accent);
         }
 
-        .storekeeper-actions-card h3 {
-            color: #7c3aed;
-            margin-top: 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
+        .storekeeper-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 1rem;
+            margin-bottom: 2rem;
         }
 
-        .storekeeper-actions-card h3 i {
-            font-size: 1.3rem;
-        }
-
-        .admin-actions-group {
+        .storekeeper-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-accent);
+            border-radius: var(--radius-lg);
             display: flex;
-            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .storekeeper-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-purple-dark);
+            margin: 0;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1rem;
         }
 
-        .action-link-btn { 
-            text-decoration: none; 
-            padding: 1rem 1.75rem; 
-            border-radius: 1rem; 
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border: 2px solid transparent;
-            min-width: 180px;
-            justify-content: center;
+        .action-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            border: 1px solid var(--border-light);
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
         }
 
-        .btn-store-modern {
-            background: var(--gradient-store);
-            color: white;
-            border-color: #7c3aed;
+        .action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-purple);
         }
-        
-        .btn-store-modern:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+
+        .action-card-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .action-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-purple-light);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-purple-dark);
+            font-size: 1.5rem;
+        }
+
+        .action-details h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--neutral-800);
+        }
+
+        .action-details p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            background: var(--gradient-card);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            border: 1px solid var(--primary-green-light);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .admin-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .admin-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .admin-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .admin-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-green-dark);
+            margin: 0;
         }
 
         /* Storekeeper Only Message */
         .storekeeper-message {
-            background: linear-gradient(135deg, #f8fbf9 0%, #e8f5e9 100%);
-            padding: 3rem;
-            border-radius: 1.5rem;
+            background: var(--gradient-card);
+            padding: 4rem 2rem;
+            border-radius: var(--radius-xl);
             text-align: center;
             margin: 2rem 0;
-            border: 2px dashed #c8e6c9;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 2px dashed var(--accent-purple-light);
+            box-shadow: var(--shadow-md);
         }
 
         .storekeeper-message i {
             font-size: 4rem;
-            color: #7c3aed;
+            color: var(--accent-purple);
             margin-bottom: 1.5rem;
         }
 
         .storekeeper-message h3 {
-            color: #7c3aed;
+            color: var(--accent-purple-dark);
             margin-bottom: 1rem;
             font-size: 1.8rem;
         }
@@ -289,421 +643,683 @@
             line-height: 1.6;
         }
 
-        /* Admin Actions Card */
-        .admin-actions-card {
-            background: var(--gradient-card);
-            padding: 2rem;
-            border-radius: 1.5rem;
-            border: 1px solid var(--primary-green-light);
-            margin-bottom: 2.5rem;
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .admin-actions-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--gradient-primary);
-        }
-
-        .admin-actions-card h3 {
-            color: var(--primary-green-dark);
-            margin-top: 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-        }
-
-        .create-btn-modern { 
-            background: var(--gradient-primary);
-            color: white; 
-            border-color: var(--primary-green);
-        }
-        .create-btn-modern:hover { 
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-        }
-
-        .report-btn-modern, .audit-btn-modern { 
-            background-color: var(--neutral-600);
-            color: white; 
-            border-color: var(--neutral-600);
-        }
-        .report-btn-modern:hover, .audit-btn-modern:hover { 
-            background-color: var(--neutral-700);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-secondary-modern {
-            background-color: #0ea5e9;
-            color: white;
-            border-color: #0ea5e9;
-        }
-        
-        .btn-secondary-modern:hover {
-            background-color: #0284c7;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
-        }
-
         /* Orders Section */
         .orders-section {
-            margin-top: 3rem;
+            background: var(--gradient-card);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-light);
         }
 
         .section-title {
-            color: var(--neutral-800);
             font-size: 1.8rem;
             font-weight: 700;
-            margin-bottom: 1.5rem;
+            color: var(--neutral-800);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-title i {
+            color: var(--primary-green);
+        }
+
+        .quick-stats {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--neutral-50);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--primary-green);
+            font-size: 1.1rem;
         }
 
         /* Filter Tabs */
-        .filter-tabs {
-            margin-bottom: 2.5rem;
-        }
-        
         .filter-tabs-container {
             display: flex;
             gap: 1rem;
-            flex-wrap: wrap;
-            align-items: center;
+            margin-bottom: 2.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
         }
-        
+
+        .filter-tabs-container::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .filter-tabs-container::-webkit-scrollbar-track {
+            background: var(--neutral-100);
+            border-radius: 2px;
+        }
+
+        .filter-tabs-container::-webkit-scrollbar-thumb {
+            background: var(--neutral-300);
+            border-radius: 2px;
+        }
+
         .filter-tab {
-            padding: 1rem 1.75rem;
-            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-lg);
             text-decoration: none;
             font-weight: 600;
-            transition: all 0.3s ease;
+            white-space: nowrap;
+            transition: all var(--transition-normal);
             border: 2px solid var(--border-color);
             background: white;
             color: var(--text-dark);
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            font-size: 0.95rem;
+            box-shadow: var(--shadow-sm);
         }
-        
+
+        .filter-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-green-light);
+        }
+
         .filter-tab.active {
             background: var(--gradient-primary);
             color: white;
             border-color: var(--primary-green);
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
         }
-        
-        .filter-tab:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        
-        .filter-count {
-            background: var(--primary-green);
+
+        .filter-tab.active i {
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            min-width: 28px;
-            text-align: center;
-        }
-        
-        .filter-tab.active .filter-count {
-            background: white;
-            color: var(--primary-green);
         }
 
-        /* Orders Grid */
+        .filter-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 28px;
+            padding: 0 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        .filter-tab.active .filter-count {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Orders Grid - Asosiy buyurtmalar uchun 2-3 qator */
         .orders-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-            gap: 2rem;
-            margin-top: 1rem;
+            gap: 1.5rem;
         }
-        
+
+        /* Child Orders Grid - 3 qator kengroq */
+        .child-orders-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
         .order-card {
-            background: var(--gradient-card);
-            border-radius: 1.5rem;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
             border: 1px solid var(--border-light);
             overflow: hidden;
-            transition: all 0.4s ease;
+            transition: all var(--transition-normal);
             position: relative;
         }
-        
+
         .order-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--shadow-xl);
             border-color: var(--primary-green-light);
         }
-        
-        /* Expired Orders */
+
         .order-card.expired {
             border: 2px solid #fecaca;
             background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
         }
-        
+
         .order-card-header {
             background: var(--gradient-primary);
             color: white;
             padding: 1.75rem;
             position: relative;
+            overflow: hidden;
         }
-        
+
+        .order-card-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+
         .order-number {
             font-size: 1.5rem;
-            font-weight: 700;
+            font-weight: 800;
             margin-bottom: 0.5rem;
             letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
         }
-        
+
         .customer-name {
             font-size: 1.15rem;
             font-weight: 600;
             opacity: 0.95;
+            position: relative;
+            z-index: 1;
         }
-        
+
         .order-card-body {
             padding: 1.75rem;
         }
-        
-        .order-detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1rem;
+
+        .detail-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--border-light);
         }
-        
-        .order-detail-row:last-child {
+
+        .detail-row:last-child {
             border-bottom: none;
-            margin-bottom: 0;
             padding-bottom: 0;
         }
-        
+
         .detail-label {
             color: var(--text-secondary);
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        
+
+        .detail-label i {
+            font-size: 0.875rem;
+            width: 16px;
+        }
+
         .detail-value {
             font-weight: 600;
             color: var(--text-dark);
             text-align: right;
-            max-width: 60%;
             word-break: break-word;
         }
-        
+
         .price-value {
             color: var(--primary-green);
             font-size: 1.1rem;
+            font-weight: 700;
         }
-        
+
         .deadline-value {
             font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.25rem;
         }
-        
+
         .deadline-overdue {
             color: var(--status-danger);
         }
-        
+
+        .overdue-badge {
+            background: var(--status-danger);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
         .order-card-footer {
             padding: 1.75rem;
             background-color: var(--neutral-50);
             border-top: 1px solid var(--border-light);
         }
-        
-        .status-section {
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 1.25rem;
         }
-        
+
         .status-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 1rem;
-            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
             font-weight: 700;
-            text-align: center;
             white-space: nowrap;
             border: 1px solid transparent;
         }
-        
+
         /* Status Colors */
-        .status-kiritildi { background-color: var(--primary-green-light); color: var(--primary-green-dark); } 
+        .status-kiritildi { background: linear-gradient(135deg, var(--neutral-100) 0%, var(--neutral-200) 100%); color: var(--neutral-700); } 
         .status-tasdiqlandi { background: var(--gradient-primary); color: white; } 
-        .status-rad_etildi { background-color: #fef2f2; color: var(--status-danger); border-color: #fecaca; } 
-        .status-usta_qabul_qildi { background-color: #dbeafe; color: #1e40af; } 
-        .status-usta_boshla { background-color: #fef3c7; color: #92400e; } 
-        .status-ishda { background-color: #fef3c7; color: #92400e; } 
-        .status-usta_tugatdi { background-color: #d1fae5; color: #065f46; } 
-        .status-tayyor { background-color: #d1fae5; color: #065f46; } 
+        .status-rad_etildi { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: var(--status-danger); } 
+        .status-usta_qabul_qildi { background: var(--gradient-secondary); color: white; } 
+        .status-usta_boshla { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; } 
+        .status-ishda { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; } 
+        .status-usta_tugatdi { background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%); color: #065f46; } 
+        .status-tayyor { background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%); color: #065f46; } 
         .status-bajarildi { background: var(--gradient-primary); color: white; } 
         
-        .card-actions {
-            display: flex;
-            flex-wrap: wrap;
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 0.75rem;
         }
-        
-        .btn-small { 
-            padding: 10px 16px; 
-            font-size: 0.8rem;
-            font-weight: 600;
-            border-radius: 0.75rem;
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
             text-decoration: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-edit { background: #fef3c7; color: #92400e; border-color: #fde68a; } 
+        .btn-delete { background: #fee2e2; color: var(--status-danger); border-color: #fecaca; } 
+        .btn-confirm { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
+        .btn-reject { background: var(--neutral-100); color: var(--neutral-600); border: 1px solid var(--neutral-300); } 
+        .btn-start { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
+        .btn-finish { background: var(--primary-green-light); color: var(--primary-green-dark); border-color: var(--primary-green); } 
+        .btn-complete { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
+        .btn-usta-qabul { background: var(--gradient-secondary); color: white; border-color: var(--secondary-blue); } 
+        .btn-usta-boshla { background: linear-gradient(135deg, #92400e 0%, #b45309 100%); color: white; border-color: #92400e; } 
+        .btn-usta-tugat { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
+        .btn-view { background: var(--neutral-600); color: white; border-color: var(--neutral-600); } 
+        .btn-details { background: var(--neutral-100); color: var(--neutral-600); border: 1px solid var(--neutral-300); } 
+        
+        .pdf-link {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            border: 1px solid transparent;
-        }
-        
-        .btn-small:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-        }
-        
-        /* Button Colors */
-        .btn-edit { background-color: #fef3c7; color: #92400e; border-color: #fde68a; } 
-        .btn-delete { background-color: #fef2f2; color: var(--status-danger); border-color: #fecaca; } 
-        .btn-confirm { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
-        .btn-reject { background-color: var(--neutral-100); color: var(--text-secondary); border: 1px solid var(--neutral-300); } 
-        .btn-start { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
-        .btn-finish { background-color: var(--primary-green-light); color: var(--primary-green-dark); border-color: var(--primary-green); } 
-        .btn-complete { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
-        .btn-usta-qabul { background-color: #1e40af; color: white; border-color: #1e40af; } 
-        .btn-usta-boshla { background-color: #92400e; color: white; border-color: #92400e; } 
-        .btn-usta-tugat { background: var(--gradient-primary); color: white; border-color: var(--primary-green); } 
-        .btn-view { background-color: var(--neutral-500); color: white; border-color: var(--neutral-500); } 
-        
-        .pdf-link-modern {
+            gap: 0.5rem;
             color: var(--primary-green);
             text-decoration: none;
             font-weight: 600;
             font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: color 0.3s ease;
+            transition: color var(--transition-fast);
         }
         
-        .pdf-link-modern:hover {
+        .pdf-link:hover {
             color: var(--primary-green-dark);
         }
 
         /* No Orders Message */
-        .no-orders-message {
+        .empty-state {
             grid-column: 1 / -1;
             text-align: center;
             padding: 4rem 2rem;
             color: var(--text-secondary);
         }
 
-        .no-orders-message i {
-            font-size: 3.5rem;
+        .empty-state-icon {
+            font-size: 4rem;
             margin-bottom: 1.5rem;
             color: var(--neutral-300);
+            opacity: 0.5;
         }
 
-        .no-orders-message h3 {
+        .empty-state-title {
             color: var(--neutral-600);
             margin-bottom: 1rem;
             font-size: 1.5rem;
+            font-weight: 600;
         }
 
-        .no-orders-message p {
+        .empty-state-description {
             color: var(--text-secondary);
             font-size: 1.1rem;
             max-width: 500px;
-            margin: 0 auto;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+
+        .empty-state-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            background: var(--gradient-primary);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            transition: all var(--transition-normal);
+        }
+
+        .empty-state-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Child Orders Catalog */
+        .child-orders-section {
+            background: var(--gradient-card);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-top: 3rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        .child-orders-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .child-orders-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--neutral-800);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .child-orders-title i {
+            color: var(--accent-purple);
+        }
+
+        .child-order-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .child-order-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-purple-light);
+        }
+
+        .child-order-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-purple);
+        }
+
+        .child-order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .child-order-id {
+            font-weight: 700;
+            color: var(--accent-purple-dark);
+            font-size: 1.1rem;
+        }
+
+        .child-order-parent {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .child-order-parent a {
+            color: var(--primary-green);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .child-order-parent a:hover {
+            text-decoration: underline;
+        }
+
+        .child-order-details {
+            display: grid;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .child-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .child-detail-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .child-detail-value {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .child-order-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .child-status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: var(--accent-purple-light);
+            color: var(--accent-purple-dark);
+        }
+
+        .child-order-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .child-action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all var(--transition-fast);
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-dark);
+        }
+
+        .child-action-btn:hover {
+            background: var(--neutral-50);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .child-action-btn.primary {
+            background: var(--accent-purple);
+            color: white;
+            border-color: var(--accent-purple);
+        }
+
+        .child-action-btn.primary:hover {
+            background: var(--accent-purple-dark);
         }
 
         /* Responsive Design */
-        @media (max-width: 1200px) {
+        @media (max-width: 1400px) {
+            .main-content {
+                grid-template-columns: 250px 1fr;
+            }
+            
             .orders-grid {
                 grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            }
+            
+            .child-orders-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .container-modern {
+                padding: 1.5rem;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .sidebar {
+                position: static;
+            }
+            
+            .child-orders-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 992px) {
-            .container-list-modern {
-                padding: 1.5rem;
+            .header-modern {
+                flex-direction: column;
+                gap: 1.5rem;
+                align-items: stretch;
+            }
+            
+            .user-section {
+                justify-content: space-between;
             }
             
             .orders-grid {
                 grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-                gap: 1.5rem;
             }
             
-            .action-link-btn {
-                min-width: 160px;
-                padding: 0.875rem 1.5rem;
+            .child-orders-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 768px) {
-            .top-header-flex {
+            .container-modern {
+                padding: 1rem;
+            }
+            
+            .section-header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 1.5rem;
+                gap: 1rem;
             }
             
-            .logout-link-modern {
-                align-self: stretch;
-                justify-content: center;
-                margin-top: 1rem;
-            }
-            
-            .admin-actions-group {
-                flex-direction: column;
-            }
-            
-            .action-link-btn {
+            .quick-stats {
                 width: 100%;
-                justify-content: center;
+                justify-content: space-between;
             }
             
             .filter-tabs-container {
-                flex-direction: column;
-                align-items: stretch;
+                flex-wrap: wrap;
             }
             
-            .filter-tab {
-                justify-content: center;
-                padding: 1rem;
+            .action-grid {
+                grid-template-columns: 1fr;
             }
             
             .orders-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .child-orders-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 480px) {
-            .container-list-modern {
-                padding: 1rem;
+            .welcome-banner {
+                padding: 2rem 1rem;
             }
             
-            h1 {
-                font-size: 1.5rem;
-            }
-            
-            .logo-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 1rem;
-            }
-            
-            .logo-text {
-                font-size: 1.4rem;
+            .admin-panel,
+            .storekeeper-panel,
+            .orders-section,
+            .child-orders-section {
+                padding: 1.5rem;
             }
             
             .order-card-header,
@@ -712,427 +1328,1011 @@
                 padding: 1.25rem;
             }
             
-            .storekeeper-message {
-                padding: 2rem 1rem;
+            .actions-grid {
+                grid-template-columns: 1fr;
             }
             
-            .storekeeper-message i {
-                font-size: 3rem;
+            .detail-row {
+                grid-template-columns: 1fr;
+                gap: 0.25rem;
             }
             
-            .storekeeper-message h3 {
-                font-size: 1.5rem;
+            .detail-value {
+                text-align: left;
+            }
+            
+            .child-detail {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+            
+            .child-detail-value {
+                text-align: left;
+                width: 100%;
             }
         }
     </style>
 
-    <div class="container-list-modern">
+    <div class="container-modern">
         
-        <div class="top-header-flex">
-            <div class="logo-modern">
-                <div class="logo-icon">EC</div>
-                <span class="logo-text">EcoProm</span>
-            </div>
-            <h1>{{ request.user.get_full_name|default:request.user.username }} Boshqarish Paneli</h1>
-            <form method="post" action="{% url 'logout' %}" style="margin: 0;">
-                {% csrf_token %} 
-                <button type="submit" class="logout-link-modern">
-                    <i class="fas fa-sign-out-alt"></i> Tizimdan Chiqish
-                </button>
-            </form>
-        </div>
-
-        <h2 class="welcome-text">Xush kelibsiz, **{{ request.user.get_full_name|default:request.user.username }}**!</h2>
-
-        {# Django Messages #}
-        {% if messages %}
-            {% for message in messages %}
-                <div class="message message-{{ message.tags }}">
-                    <i class="fas fa-info-circle me-2"></i> {{ message }}
+        <!-- Header -->
+        <div class="header-modern">
+            <div class="brand-section">
+                <div class="logo-container">
+                    <i class="fas fa-industry"></i>
                 </div>
-            {% endfor %}
-        {% endif %}
-
-        <!-- {# Debug Info #}
-        <div class="debug-info">
-            <strong>DEBUG INFO:</strong><br>
-            Username: {{ request.user.username }}<br>
-            Groups: 
-            {% for group in request.user.groups.all %}
-                {{ group.name }}{% if not forloop.last %}, {% endif %}
-            {% empty %}
-                No groups
-            {% endfor %}<br>
-            Is Staff: {{ request.user.is_staff }}<br>
-            Is Superuser: {{ request.user.is_superuser }}
-        </div> -->
-
-        {# Observer Panel #}
-        {% if is_observer %} 
-            <div class="observer-banner">
-                <i class="fas fa-eye"></i>
-                <div>
-                    <strong>Kuzatuvchi Rejimi</strong> - Siz faqat ma'lumotlarni ko'rish huquqiga egasiz. 
-                    Hech qanday o'zgartirish amallarini bajarolmaysiz.
+                <div class="brand-text">
+                    <div class="brand-name">EcoProm Panel</div>
+                    <div class="brand-subtitle">Ishlab chiqarish boshqaruvi tizimi</div>
                 </div>
             </div>
             
-            <div class="admin-actions-card">
-                <h3>Hisobotlar va Monitoring</h3>
-                <div class="admin-actions-group">
-                    <a href="{% url 'sales_report_view' %}" class="action-link-btn report-btn-modern">
-                        <i class="fas fa-chart-bar"></i> Sotuv Hisoboti
-                    </a>
+            <div class="user-section">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {{ request.user.get_full_name|default:request.user.username|first|upper }}
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                        <div class="user-role">
+                            {% if is_observer %}Kuzatuvchi{% endif %}
+                            {% if is_worker %}Usta{% endif %}
+                            {% if is_manager %}Menejer{% endif %}
+                            {% if is_glavniy_admin %}Administrator{% endif %}
+                        </div>
+                    </div>
                 </div>
-            </div>
-        {% endif %}
-
-        {# Storekeeper Panel #}
-        {% if request.user.username == "Omborchi" or "omborchi" in request.user.username|lower or "store" in request.user.username|lower or "warehouse" in request.user.username|lower %}
-            <div class="storekeeper-actions-card">
-                <h3><i class="fas fa-warehouse"></i> Ombor Boshqaruvi</h3>
-                <div class="admin-actions-group">
-                    <a href="{% url 'material_transaction_create' %}" class="action-link-btn btn-store-modern">
-                        <i class="fas fa-exchange-alt"></i> Kirim / Chiqim
-                    </a>
-
-                    <a href="{% url 'material_list' %}" class="action-link-btn btn-store-modern">
-                        <i class="fas fa-boxes"></i> Ombor Katalogi
-                    </a>
-                    
-                    <!-- <a href="{% url 'material_report' %}" class="action-link-btn btn-store-modern">
-                        <i class="fas fa-clipboard-list"></i> List va Siryo Sarfi
-                    </a> -->
-                </div>
-            </div>
-        {% endif %}
-
-        {# Admin Panel #}
-        {% if is_glavniy_admin and not is_observer and request.user.username != "Omborchi" and "omborchi" not in request.user.username|lower %} 
-            <div class="admin-actions-card">
-                <h3>Admin va Hisobot Harakatlari</h3>
-                <div class="admin-actions-group">
-                    <a href="{% url 'order_create' %}" class="action-link-btn create-btn-modern">
-                        <i class="fas fa-plus-circle"></i> Yangi Buyurtmani Kiritish
-                    </a>
-                    
-                    <a href="{% url 'sales_report_view' %}" class="action-link-btn report-btn-modern">
-                        <i class="fas fa-chart-bar"></i> Sotuv Hisoboti (Vaqt Oralig'i)
-                    </a>
-                    
-                    <a href="{% url 'product_audit_log_view' %}" class="action-link-btn audit-btn-modern">
-                        <i class="fas fa-history"></i> Mahsulot O'zgarishlari Jurnali
-                    </a>
-
-                    <a href="{% url 'worker_activity_report' %}" class="action-link-btn audit-btn-modern">
-                        <i class="fas fa-chart-bar"></i> Ustalar Hisoboti
-                    </a>
-
-                    <a href="{% url 'material_report' %}" class="action-link-btn btn-secondary-modern">
-                      <i class="fas fa-clipboard-list"></i> List va Siryo Sarfi
-                    </a>
-
-                    <a href="{% url 'material_transaction_create' %}" class="action-link-btn btn-store-modern">
-                        <i class="fas fa-exchange-alt"></i> Kirim / Chiqim
-                    </a>
-
-                    <a href="{% url 'material_list' %}" class="action-link-btn btn-store-modern">
-                        <i class="fas fa-boxes"></i> Ombor Katalogi
-                    </a>
-                </div>
-            </div>
-        {% endif %}
-        
-        {# Orders Section - Hidden for Storekeeper #}
-        {% if not request.user.username == "Omborchi" and "omborchi" not in request.user.username|lower %}
-        
-        <div class="orders-section">
-            <h2 class="section-title">Buyurtmalar Ro'yxati</h2>
-
-            {# Filter Tabs #}
-            <div class="filter-tabs">
-                <div class="filter-tabs-container">
-                    <a href="?filter=all" class="filter-tab {% if filter_type == 'all' %}active{% endif %}">
-                        <i class="fas fa-list"></i> Barcha Buyurtmalar
-                        {% if not is_worker %}<span class="filter-count">{{ total_orders }}</span>{% endif %}
-                    </a>
-                    
-                    <a href="?filter=completed" class="filter-tab {% if filter_type == 'completed' %}active{% endif %}">
-                        <i class="fas fa-check-circle"></i> Tayyor Buyurtmalar
-                        {% if not is_worker %}<span class="filter-count">{{ completed_orders }}</span>{% endif %}
-                    </a>
-                    
-                    <a href="?filter=in_progress" class="filter-tab {% if filter_type == 'in_progress' %}active{% endif %}">
-                        <i class="fas fa-tasks"></i> Jarayondagi Buyurtmalar
-                        {% if not is_worker %}<span class="filter-count">{{ in_progress_orders }}</span>{% endif %}
-                    </a>
-                    
-                    <a href="?filter=overdue" class="filter-tab {% if filter_type == 'overdue' %}active{% endif %}">
-                        <i class="fas fa-exclamation-triangle"></i> Muddati O'tgan
-                        {% if not is_worker %}<span class="filter-count">{{ overdue_orders_count }}</span>{% endif %}
-                    </a>
-                </div>
-            </div>
-
-            {# Orders Grid #}
-            <div class="orders-grid">
-                {% for order in orders %}
-                {% with status_code=order.status|lower %}
                 
-                {# Worker Specific Logic #}
-                {% if is_worker %}
-                    {% if request.user.worker_profile in order.assigned_workers.all %}
-                    <div class="order-card {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
-                    {% else %}
-                    <div class="order-card other-worker-order {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
-                    {% endif %}
-                {% else %}
-                    <div class="order-card {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
-                {% endif %}
+                <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+                    {% csrf_token %} 
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Chiqish
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Asosiy menyu</div>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{% url 'order_list' %}" class="nav-link active">
+                                <i class="fas fa-list"></i>
+                                <span>Barcha buyurtmalar</span>
+                                <span class="badge badge-primary">{{ total_orders }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'order_list' %}?filter=in_progress" class="nav-link">
+                                <i class="fas fa-tasks"></i>
+                                <span>Jarayondagilar</span>
+                                <span class="badge badge-secondary">{{ in_progress_orders }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'order_list' %}?filter=completed" class="nav-link">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Tayyor</span>
+                                <span class="badge badge-primary">{{ completed_orders }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'order_list' %}?filter=overdue" class="nav-link">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Muddati o'tgan</span>
+                                <span class="badge badge-accent">{{ overdue_orders_count }}</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
                 
-                    <div class="order-card-header">
-                        <div class="order-number">
-                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                                ***
-                            {% else %}
-                                № {{ order.order_number }}
-                            {% endif %}
-                        </div>
-                        <div class="customer-name">
-                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                                ***
-                            {% else %}
-                                {{ order.customer_name }}
-                            {% endif %}
-                        </div>
-                        
-                        {# Other Worker Indicator #}
-                        {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                        <div class="worker-info" style="background: var(--neutral-200); color: var(--neutral-600); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; text-align: center; margin-top: 10px;">
-                            <i class="fas fa-user-shield"></i> Boshqa usta buyurtmasi
-                        </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Bo'limlar</div>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="#child-orders" class="nav-link">
+                                <i class="fas fa-sitemap"></i>
+                                <span>Panel va Ugul</span>
+                                <span class="badge badge-accent">{{ child_orders_count }}</span>
+                            </a>
+                        </li>
+                        {% if is_glavniy_admin or is_manager %}
+                        <li class="nav-item">
+                            <a href="{% url 'sales_report_view' %}" class="nav-link">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Sotuv hisoboti</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'worker_activity_report' %}" class="nav-link">
+                                <i class="fas fa-users-cog"></i>
+                                <span>Ustalar hisoboti</span>
+                            </a>
+                        </li>
                         {% endif %}
+                        {% if request.user.username == "Omborchi" or "omborchi" in request.user.username|lower %}
+                        <li class="nav-item">
+                            <a href="{% url 'material_list' %}" class="nav-link">
+                                <i class="fas fa-warehouse"></i>
+                                <span>Ombor katalogi</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Welcome Banner -->
+                <div class="welcome-banner">
+                    <div class="welcome-content">
+                        <h1 class="welcome-title">Xush kelibsiz, {{ request.user.get_full_name|default:request.user.username }}!</h1>
+                        <p class="welcome-subtitle">
+                            Ish jarayonlaringizni monitoring qiling, buyurtmalarni boshqaring va hisobotlarni ko'rib chiqing.
+                            {% if is_observer %}<strong>Siz kuzatuvchi rejimidasiz.</strong>{% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                    <div class="message message-{{ message.tags }}">
+                        <i class="fas 
+                            {% if message.tags == 'success' %}fa-check-circle
+                            {% elif message.tags == 'error' %}fa-exclamation-circle
+                            {% elif message.tags == 'warning' %}fa-exclamation-triangle
+                            {% else %}fa-info-circle{% endif %}">
+                        </i>
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Observer Banner -->
+                {% if is_observer %} 
+                <div class="observer-banner">
+                    <i class="fas fa-eye"></i>
+                    <div>
+                        <strong>Kuzatuvchi rejimi</strong> - Siz faqat ma'lumotlarni ko'rish huquqiga egasiz. 
+                        Hech qanday o'zgartirish amallarini bajarolmaysiz.
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Storekeeper Panel -->
+                {% if request.user.username == "Omborchi" or "omborchi" in request.user.username|lower or "store" in request.user.username|lower or "warehouse" in request.user.username|lower %}
+                <div class="storekeeper-panel">
+                    <div class="storekeeper-header">
+                        <div class="storekeeper-icon">
+                            <i class="fas fa-warehouse"></i>
+                        </div>
+                        <h2 class="storekeeper-title">Ombor Boshqaruvi</h2>
                     </div>
                     
-                    <div class="order-card-body">
-                        <div class="order-detail-row">
-                            <span class="detail-label">Mahsulot Nomi</span>
-                            <span class="detail-value">
-                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                                    ***
-                                {% else %}
-                                    {{ order.product_name|default:"—" }}
-                                {% endif %}
-                            </span>
-                        </div>
+                    <div class="action-grid">
+                        <a href="{% url 'material_transaction_create' %}" class="action-card">
+                            <div class="action-card-content">
+                                <div class="action-icon">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <div class="action-details">
+                                    <h4>Kirim / Chiqim</h4>
+                                    <p>Materiallar kirim va chiqim operatsiyalari</p>
+                                </div>
+                            </div>
+                        </a>
                         
-                        <div class="order-detail-row">
-                            <span class="detail-label">Panel Qalinligi (mm)</span>
-                            <span class="detail-value">
-                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                                    ***
-                                {% else %}
-                                    {% if order.panel_thickness %}
-                                        {{ order.panel_thickness }}
+                        <a href="{% url 'material_list' %}" class="action-card">
+                            <div class="action-card-content">
+                                <div class="action-icon">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <div class="action-details">
+                                    <h4>Ombor Katalogi</h4>
+                                    <p>Materiallar ro'yxati va qoldiqlari</p>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'material_report' %}" class="action-card">
+                            <div class="action-card-content">
+                                <div class="action-icon">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                                <div class="action-details">
+                                    <h4>Sarf hisoboti</h4>
+                                    <p>List va siryo sarfi hisobotlari</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Admin Panel -->
+                {% if is_glavniy_admin and not is_observer and request.user.username != "Omborchi" and "omborchi" not in request.user.username|lower %} 
+                <div class="admin-panel">
+                    <div class="admin-header">
+                        <div class="admin-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h2 class="admin-title">Admin va Hisobotlar</h2>
+                    </div>
+                    
+                    <div class="action-grid">
+                        <a href="{% url 'order_create' %}" class="action-card">
+                            <div class="action-card-content">
+                                <div class="action-icon">
+                                    <i class="fas fa-plus-circle"></i>
+                                </div>
+                                <div class="action-details">
+                                    <h4>Yangi buyurtma</h4>
+                                    <p>Yangi buyurtma yaratish</p>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'sales_report_view' %}" class="action-card">
+                            <div class="action-card-content">
+                                <div class="action-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <div class="action-details">
+                                    <h4>Sotuv hisoboti</h4>
+                                    <p>Vaqt oralig'i bo'yicha sotuvlar</p>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'worker_activity_report' %}" class="action-card">
+                            <div class="action-card-content">
+                                <div class="action-icon">
+                                    <i class="fas fa-users-cog"></i>
+                                </div>
+                                <div class="action-details">
+                                    <h4>Ustalar hisoboti</h4>
+                                    <p>Ustalar faolligi monitoringi</p>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'material_report' %}" class="action-card">
+                            <div class="action-card-content">
+                                <div class="action-icon">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                                <div class="action-details">
+                                    <h4>List va siryo</h4>
+                                    <p>Materiallar sarfi hisobotlari</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Orders Section -->
+                {% if not request.user.username == "Omborchi" and "omborchi" not in request.user.username|lower %}
+                <div class="orders-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-clipboard-list"></i>
+                            Asosiy Buyurtmalar
+                        </h2>
+                        
+                        <div class="quick-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Barcha:</span>
+                                <span class="stat-value">{{ total_orders }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Jarayonda:</span>
+                                <span class="stat-value">{{ in_progress_orders }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">O'tgan:</span>
+                                <span class="stat-value">{{ overdue_orders_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Tabs -->
+                    <div class="filter-tabs-container">
+                        <a href="?filter=all" class="filter-tab {% if filter_type == 'all' %}active{% endif %}">
+                            <i class="fas fa-list"></i>
+                            <span>Barchasi</span>
+                            {% if not is_worker %}<span class="filter-count">{{ total_orders }}</span>{% endif %}
+                        </a>
+                        
+                        <a href="?filter=in_progress" class="filter-tab {% if filter_type == 'in_progress' %}active{% endif %}">
+                            <i class="fas fa-tasks"></i>
+                            <span>Jarayonda</span>
+                            {% if not is_worker %}<span class="filter-count">{{ in_progress_orders }}</span>{% endif %}
+                        </a>
+                        
+                        <a href="?filter=completed" class="filter-tab {% if filter_type == 'completed' %}active{% endif %}">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Tayyor</span>
+                            {% if not is_worker %}<span class="filter-count">{{ completed_orders }}</span>{% endif %}
+                        </a>
+                        
+                        <a href="?filter=overdue" class="filter-tab {% if filter_type == 'overdue' %}active{% endif %}">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Muddati o'tgan</span>
+                            {% if not is_worker %}<span class="filter-count">{{ overdue_orders_count }}</span>{% endif %}
+                        </a>
+                    </div>
+
+                    <!-- Orders Grid - 2-3 qator format -->
+                    <div class="orders-grid">
+                        {% for order in main_orders %}
+                        {% with status_code=order.status|lower %}
+                        
+                        <!-- Worker Specific Logic -->
+                        {% if is_worker %}
+                            {% if request.user.worker_profile in order.assigned_workers.all %}
+                            <div class="order-card {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
+                            {% else %}
+                            <div class="order-card other-worker-order {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
+                            {% endif %}
+                        {% else %}
+                            <div class="order-card {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}expired{% endif %}">
+                        {% endif %}
+                        
+                            <div class="order-card-header">
+                                <div class="order-number">
+                                    {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                        № ***
                                     {% else %}
-                                        <span style="color: #9ca3af;">Aniqlanmagan</span>
+                                        № {{ order.order_number }}
                                     {% endif %}
-                                {% endif %}
-                            </span>
-                        </div>
-                        
-                        <div class="order-detail-row">
-                            <span class="detail-label">Kvadrat (m²)</span>
-                            <span class="detail-value">
-                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                                    ***
-                                {% else %}
-                                    {{ order.panel_kvadrat|floatformat:2|intcomma }}
-                                {% endif %}
-                            </span>
-                        </div>
-                        
-                        <div class="order-detail-row">
-                            <span class="detail-label">Summa</span>
-                            <span class="detail-value price-value">
-                                {% if is_worker %}
-                                    ***
-                                {% else %}
-                                    {{ order.total_price|floatformat:0|intcomma }} so'm
-                                {% endif %}
-                            </span>
-                        </div>
-                        
-                        <div class="order-detail-row">
-                            <span class="detail-label">Muddat</span>
-                            <span class="detail-value deadline-value 
-                                {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}deadline-overdue{% endif %}">
-                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                                    ***
-                                {% else %}
-                                    {% if order.deadline %}
-                                        {{ order.deadline|date:"Y-m-d H:i" }}
-                                        {% if order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}
-                                            <div style="font-size: 0.7rem; margin-top: 4px; color: var(--status-danger); font-weight: 700;">
-                                                <i class="fas fa-exclamation-circle"></i> MUDDAT O'TDI!
-                                            </div>
-                                        {% endif %}
+                                </div>
+                                <div class="customer-name">
+                                    {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                        ***
                                     {% else %}
-                                        Belgilanmagan
+                                        {{ order.customer_name }}
                                     {% endif %}
+                                </div>
+                                
+                                <!-- Other Worker Indicator -->
+                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                <div style="background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; text-align: center; margin-top: 10px; display: flex; align-items: center; gap: 5px;">
+                                    <i class="fas fa-user-shield"></i> Boshqa usta buyurtmasi
+                                </div>
                                 {% endif %}
-                            </span>
-                        </div>
-                        
-                        <div class="order-detail-row">
-                            <span class="detail-label">Chizma</span>
-                            <span class="detail-value">
-                                {% if order.pdf_file %}
-                                    {% if order.status in 'USTA_QABUL_QILDI,USTA_BOSHLA,ISHDA,USTA_TUGATDI,TAYYOR,BAJARILDI' or not is_worker %}
+                            </div>
+                            
+                            <div class="order-card-body">
+                                <div class="detail-grid">
+                                    <div class="detail-row">
+                                        <span class="detail-label">
+                                            <i class="fas fa-box"></i>
+                                            <span>Mahsulot</span>
+                                        </span>
+                                        <span class="detail-value">
+                                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                                ***
+                                            {% else %}
+                                                {{ order.product_name|default:"—" }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="detail-row">
+                                        <span class="detail-label">
+                                            <i class="fas fa-ruler"></i>
+                                            <span>Qalinlik</span>
+                                        </span>
+                                        <span class="detail-value">
+                                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                                ***
+                                            {% else %}
+                                                {% if order.panel_thickness %}
+                                                    {{ order.panel_thickness }} mm
+                                                {% else %}
+                                                    <span style="color: var(--text-secondary); font-style: italic;">Aniqlanmagan</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="detail-row">
+                                        <span class="detail-label">
+                                            <i class="fas fa-border-style"></i>
+                                            <span>Kvadrat</span>
+                                        </span>
+                                        <span class="detail-value">
+                                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                                ***
+                                            {% else %}
+                                                {{ order.panel_kvadrat|floatformat:2|intcomma }} m²
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="detail-row">
+                                        <span class="detail-label">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                            <span>Summa</span>
+                                        </span>
+                                        <span class="detail-value price-value">
+                                            {% if is_worker %}
+                                                ***
+                                            {% else %}
+                                                {{ order.total_price|floatformat:0|intcomma }} so'm
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="detail-row">
+                                        <span class="detail-label">
+                                            <i class="fas fa-clock"></i>
+                                            <span>Muddat</span>
+                                        </span>
+                                        <span class="detail-value deadline-value 
+                                            {% if order.deadline and order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}deadline-overdue{% endif %}">
+                                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                                ***
+                                            {% else %}
+                                                {% if order.deadline %}
+                                                    {{ order.deadline|date:"Y-m-d H:i" }}
+                                                    {% if order.deadline < now and status_code not in 'bajarildi, rad_etildi, usta_tugatdi' %}
+                                                        <span class="overdue-badge">
+                                                            <i class="fas fa-exclamation-circle"></i> MUDDAT O'TDİ
+                                                        </span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    Belgilanmagan
+                                                {% endif %}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="detail-row">
+                                        <span class="detail-label">
+                                            <i class="fas fa-file-pdf"></i>
+                                            <span>Chizma</span>
+                                        </span>
+                                        <span class="detail-value">
+                                            {% if order.pdf_file %}
+                                                {% if order.status in 'USTA_QABUL_QILDI,USTA_BOSHLA,ISHDA,USTA_TUGATDI,TAYYOR,BAJARILDI' or not is_worker %}
+                                                    {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                                        ***
+                                                    {% else %}
+                                                        <a href="{{ order.pdf_file.url }}" target="_blank" class="pdf-link">
+                                                            <i class="fas fa-external-link-alt"></i> Ko'rish
+                                                        </a>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span style="color: var(--text-secondary); font-size: 0.8rem;">
+                                                        Qabul qilingach
+                                                    </span>
+                                                {% endif %}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="order-card-footer">
+                                <div class="status-row">
+                                    <span class="status-badge status-{{ status_code }}">
+                                        <i class="fas 
+                                            {% if status_code == 'bajarildi' %}fa-check-circle
+                                            {% elif status_code == 'rad_etildi' %}fa-times-circle
+                                            {% elif status_code == 'tayyor' %}fa-check-double
+                                            {% elif 'usta' in status_code %}fa-user-cog
+                                            {% elif 'ish' in status_code %}fa-tools
+                                            {% else %}fa-clock{% endif %}">
+                                        </i>
                                         {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
                                             ***
                                         {% else %}
-                                            <a href="{{ order.pdf_file.url }}" target="_blank" class="pdf-link-modern">
-                                                <i class="fas fa-file-pdf"></i> Ko'rish
+                                            {{ order.get_status_display }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                <div class="actions-grid">
+                                    <!-- Actions based on user role -->
+                                    {% if is_observer %}
+                                        <a href="{% url 'order_detail' order.pk %}" class="action-btn btn-view">
+                                            <i class="fas fa-eye"></i> Ko'rish
+                                        </a>
+                                    {% elif is_worker and request.user.worker_profile in order.assigned_workers.all %}
+                                        <!-- Worker actions -->
+                                        {% if status_code == 'tasdiqlandi' or status_code == 'kiritildi' %}
+                                            <a href="{% url 'order_worker_accept' order.pk %}" class="action-btn btn-usta-qabul"
+                                                onclick="return confirm('Tovarlarni qabul qilganingizni tasdiqlaysizmi? Status: USTA QABUL QILDI. ENDI CHIZMANI KOʻRA OLASIZ.')">
+                                                <i class="fas fa-check"></i> Qabul
+                                            </a>
+                                        {% elif status_code == 'usta_qabul_qildi' %}
+                                            {% if order.start_image %} 
+                                                <a href="{% url 'order_worker_start' order.pk %}" class="action-btn btn-usta-boshla"
+                                                    onclick="return confirm('Ishni boshlashni tasdiqlaysizmi? Status: USTA BOSHLADI.')">
+                                                    <i class="fas fa-play"></i> Boshlash
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'order_detail' order.pk %}" class="action-btn" style="background: #fca5a5; color: #991b1b;">
+                                                    <i class="fas fa-camera"></i> Boshlash rasmi
+                                                </a>
+                                            {% endif %}
+                                            {% if order.pdf_file %}
+                                                <a href="{{ order.pdf_file.url }}" target="_blank" class="action-btn" style="background: var(--gradient-secondary); color: white;">
+                                                    <i class="fas fa-file-pdf"></i> Chizma
+                                                </a>
+                                            {% endif %}
+                                        {% elif status_code == 'usta_boshla' or status_code == 'ishda' %}
+                                            {% if order.finish_image %}
+                                                <a href="{% url 'order_worker_finish' order.pk %}" class="action-btn btn-usta-tugat"
+                                                    onclick="return confirm('Ishni tugatganingizni tasdiqlaysizmi? Status: USTA YAKUNLADI.')">
+                                                    <i class="fas fa-check-double"></i> Tugatdim
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'order_detail' order.pk %}" class="action-btn" style="background: #fca5a5; color: #991b1b;">
+                                                    <i class="fas fa-image"></i> Tugatish rasmi
+                                                </a>
+                                            {% endif %}
+                                            {% if order.pdf_file %}
+                                                <a href="{{ order.pdf_file.url }}" target="_blank" class="action-btn" style="background: var(--gradient-secondary); color: white;">
+                                                    <i class="fas fa-file-pdf"></i> Chizma
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% elif is_manager or is_production_boss or is_glavniy_admin %}
+                                        <!-- Admin/Manager actions -->
+                                        {% if is_glavniy_admin %} 
+                                            <a href="{% url 'order_edit' order.pk %}" class="action-btn btn-edit">
+                                                <i class="fas fa-edit"></i> Tahrir
+                                            </a>
+                                            <a href="{% url 'order_delete' order.pk %}" class="action-btn btn-delete">
+                                                <i class="fas fa-trash"></i> O'chirish
                                             </a>
                                         {% endif %}
-                                    {% else %}
-                                        <span style="color: var(--text-secondary); font-style: italic; font-size: 0.8rem;">
-                                            Qabul qilingach
-                                        </span>
+                                        {% if is_manager or is_glavniy_admin %}
+                                            {% if status_code == 'kiritildi' %}
+                                                <a href="{% url 'order_confirm' order.pk %}" class="action-btn btn-confirm">
+                                                    <i class="fas fa-check"></i> Qabul
+                                                </a>
+                                                <a href="{% url 'order_reject' order.pk %}" class="action-btn btn-reject">
+                                                    <i class="fas fa-times"></i> Rad
+                                                </a>
+                                            {% elif status_code == 'tayyor' %}
+                                                <a href="{% url 'order_complete' order.pk %}" class="action-btn btn-complete">
+                                                    <i class="fas fa-check-double"></i> Bajarildi
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                        {% if is_production_boss or is_glavniy_admin %}
+                                            {% if status_code == 'tasdiqlandi' or status_code == 'usta_qabul_qildi' %}
+                                                <a href="{% url 'order_start_production' order.pk %}" class="action-btn btn-start">
+                                                    <i class="fas fa-play"></i> Ishga berish
+                                                </a>
+                                            {% elif status_code == 'ishda' or status_code == 'usta_tugatdi' %}
+                                                <a href="{% url 'order_finish' order.pk %}" class="action-btn btn-finish">
+                                                    <i class="fas fa-check"></i> Tayyor
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
                                     {% endif %}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="order-card-footer">
-                        <div class="status-section">
-                            <span class="status-badge status-{{ status_code }}">
-                                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                                    ***
-                                {% else %}
-                                    {{ order.get_status_display }}
-                                {% endif %}
-                            </span>
-                        </div>
-                        
-                        <div class="card-actions">
-                            {# Actions based on user role #}
-                            {% if is_observer %}
-                                <a href="{% url 'order_detail' order.pk %}" class="btn-small btn-view">
-                                    <i class="fas fa-eye"></i> Ko'rish
-                                </a>
-                            {% elif is_worker and request.user.worker_profile in order.assigned_workers.all %}
-                                {# Worker actions #}
-                                {% if status_code == 'tasdiqlandi' or status_code == 'kiritildi' %}
-                                    <a href="{% url 'order_worker_accept' order.pk %}" class="btn-small btn-usta-qabul"
-                                        onclick="return confirm('Tovarlarni qabul qilganingizni tasdiqlaysizmi? Status: USTA QABUL QILDI. ENDI CHIZMANI KOʻRA OLASIZ.')">
-                                        <i class="fas fa-check"></i> Qabul
-                                    </a>
-                                {% elif status_code == 'usta_qabul_qildi' %}
-                                    {% if order.start_image %} 
-                                        <a href="{% url 'order_worker_start' order.pk %}" class="btn-small btn-usta-boshla"
-                                            onclick="return confirm('Ishni boshlashni tasdiqlaysizmi? Status: USTA BOSHLADI.')">
-                                            <i class="fas fa-play"></i> Boshlash
-                                        </a>
-                                    {% else %}
-                                        <a href="{% url 'order_detail' order.pk %}" class="btn-small btn-edit" style="background-color: #fca5a5; color: #991b1b;">
-                                            <i class="fas fa-camera"></i> Boshlash Rasmi
-                                        </a>
-                                    {% endif %}
-                                    {% if order.pdf_file %}
-                                        <a href="{{ order.pdf_file.url }}" target="_blank" class="btn-small" style="background-color: #3b82f6; color: white;">
-                                            <i class="fas fa-file-pdf"></i> Chizma
-                                        </a>
-                                    {% endif %}
-                                {% elif status_code == 'usta_boshla' or status_code == 'ishda' %}
-                                    {% if order.finish_image %}
-                                        <a href="{% url 'order_worker_finish' order.pk %}" class="btn-small btn-usta-tugat"
-                                            onclick="return confirm('Ishni tugatganingizni tasdiqlaysizmi? Status: USTA YAKUNLADI.')">
-                                            <i class="fas fa-check-double"></i> Tugatdim
-                                        </a>
-                                    {% else %}
-                                        <a href="{% url 'order_detail' order.pk %}" class="btn-small btn-edit" style="background-color: #fca5a5; color: #991b1b;">
-                                            <i class="fas fa-image"></i> Tugatish Rasmi
-                                        </a>
-                                    {% endif %}
-                                    {% if order.pdf_file %}
-                                        <a href="{{ order.pdf_file.url }}" target="_blank" class="btn-small" style="background-color: #3b82f6; color: white;">
-                                            <i class="fas fa-file-pdf"></i> Chizma
-                                        </a>
-                                    {% endif %}
-                                {% endif %}
-                            {% elif is_manager or is_production_boss or is_glavniy_admin %}
-                                {# Admin/Manager actions #}
-                                {% if is_glavniy_admin %} 
-                                    <a href="{% url 'order_edit' order.pk %}" class="btn-small btn-edit">
-                                        <i class="fas fa-edit"></i> Tahrir
-                                    </a>
-                                    <a href="{% url 'order_delete' order.pk %}" class="btn-small btn-delete">
-                                        <i class="fas fa-trash"></i> O'chirish
-                                    </a>
-                                {% endif %}
-                                {% if is_manager or is_glavniy_admin %}
-                                    {% if status_code == 'kiritildi' %}
-                                        <a href="{% url 'order_confirm' order.pk %}" class="btn-small btn-confirm">
-                                            <i class="fas fa-check"></i> Qabul
-                                        </a>
-                                        <a href="{% url 'order_reject' order.pk %}" class="btn-small btn-reject">
-                                            <i class="fas fa-times"></i> Rad
-                                        </a>
-                                    {% elif status_code == 'tayyor' %}
-                                        <a href="{% url 'order_complete' order.pk %}" class="btn-small btn-complete">
-                                            <i class="fas fa-check-double"></i> Bajarildi
-                                        </a>
-                                    {% endif %}
-                                {% endif %}
-                                {% if is_production_boss or is_glavniy_admin %}
-                                    {% if status_code == 'tasdiqlandi' or status_code == 'usta_qabul_qildi' %}
-                                        <a href="{% url 'order_start_production' order.pk %}" class="btn-small btn-start">
-                                            <i class="fas fa-play"></i> Ishga Berish
-                                        </a>
-                                    {% elif status_code == 'ishda' or status_code == 'usta_tugatdi' %}
-                                        <a href="{% url 'order_finish' order.pk %}" class="btn-small btn-finish">
-                                            <i class="fas fa-check"></i> Tayyor
-                                        </a>
-                                    {% endif %}
-                                {% endif %}
-                            {% else %}
-                                <span style="color: var(--text-secondary); font-style: italic; font-size: 11px;">Faoliyat yo'q</span>
-                            {% endif %}
 
-                            {# Detail button for all non-observers #}
-                            {% if not is_observer %}
-                                <a href="{% url 'order_detail' order.pk %}" class="btn-small" style="background-color: #f5f5f5; color: var(--neutral-600);">
-                                    <i class="fas fa-info-circle"></i> Batafsil
-                                </a>
+                                    <!-- Detail button for all non-observers -->
+                                    {% if not is_observer %}
+                                        <a href="{% url 'order_detail' order.pk %}" class="action-btn btn-details">
+                                            <i class="fas fa-info-circle"></i> Batafsil
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endwith %}
+                        {% empty %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <h3 class="empty-state-title">Hozircha asosiy buyurtmalar mavjud emas</h3>
+                            <p class="empty-state-description">
+                                Tizimda hozircha asosiy buyurtmalar qo'shilmagan. 
+                                Yangi buyurtma qo'shish uchun quyidagi tugmani bosing.
+                            </p>
+                            {% if not is_observer and not is_worker %}
+                            <a href="{% url 'order_create' %}" class="empty-state-action">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Yangi buyurtma qo'shish</span>
+                            </a>
                             {% endif %}
                         </div>
+                        {% endfor %}
                     </div>
                 </div>
-                {% endwith %}
-                {% empty %}
-                <div class="no-orders-message">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <h3>Hozircha tizimda buyurtmalar mavjud emas</h3>
-                    <p>Yangi buyurtma qo'shish uchun yuqoridagi "Yangi Buyurtmani Kiritish" tugmasini bosing.</p>
-                </div>
-                {% endfor %}
+                
+                <!-- Child Orders Catalog - 3 qator kengroq -->
+                <!-- Child Orders Section - Panel va Ugul alohida -->
+<div id="child-orders" class="child-orders-section">
+    <!-- Panel Child Orders -->
+    <div class="child-category-section">
+        <div class="child-category-header">
+            <h3 class="child-category-title">
+                <i class="fas fa-th-large"></i>
+                Panel Child Orderlar
+                <span class="category-badge">{{ panel_child_count }}</span>
+            </h3>
+            <div class="category-stats">
+                <span class="stat-item">
+                    <span class="stat-label">Tayyor:</span>
+                    <span class="stat-value">{{ panel_completed }}</span>
+                </span>
             </div>
         </div>
         
-        {% else %}
-        
-        {# Storekeeper Only Message #}
-        <div class="storekeeper-message">
-            <i class="fas fa-warehouse"></i>
-            <h3>Ombor Boshqaruv Paneli</h3>
+        {% if panel_child_orders %}
+        <div class="child-orders-grid">
+            {% for order in panel_child_orders %}
+            <div class="child-order-card panel-card">
+                <div class="child-order-header">
+                    <div class="child-order-id">
+                        № {{ order.order_number }}
+                        <span class="product-type-badge" style="background: var(--gradient-primary);">PANEL</span>
+                    </div>
+                    {% if order.parent_order %}
+                    <div class="child-order-parent">
+                        <i class="fas fa-level-up-alt"></i>
+                        Asosiy: 
+                        <a href="{% url 'order_detail' order.parent_order.pk %}">
+                            {{ order.parent_order.order_number }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="child-order-details">
+                    <div class="child-detail">
+                        <span class="child-detail-label">Mijoz:</span>
+                        <span class="child-detail-value">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {{ order.customer_name|truncatechars:20 }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="child-detail">
+                        <span class="child-detail-label">Mahsulot:</span>
+                        <span class="child-detail-value">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {{ order.product_name|default:"—"|truncatechars:25 }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="child-detail">
+                        <span class="child-detail-label">Qalinlik:</span>
+                        <span class="child-detail-value">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {% if order.panel_thickness %}
+                                    {{ order.panel_thickness }} mm
+                                {% else %}
+                                    —
+                                {% endif %}
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="child-detail">
+                        <span class="child-detail-label">Kvadrat:</span>
+                        <span class="child-detail-value">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {{ order.panel_kvadrat|floatformat:2 }} m²
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="child-detail">
+                        <span class="child-detail-label">Summa:</span>
+                        <span class="child-detail-value" style="color: var(--primary-green);">
+                            {% if is_worker %}
+                                ***
+                            {% else %}
+                                {{ order.total_price|floatformat:0|intcomma }} so'm
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="child-detail">
+                        <span class="child-detail-label">Muddat:</span>
+                        <span class="child-detail-value {% if order.deadline and order.deadline < now and order.status not in 'BAJARILDI,RAD_ETILDI,TAYYOR' %}deadline-overdue{% endif %}">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {% if order.deadline %}
+                                    {{ order.deadline|date:"Y-m-d" }}
+                                {% else %}
+                                    Belgilanmagan
+                                {% endif %}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="child-order-status">
+                    <span class="child-status-badge">
+                        <i class="fas 
+                            {% if order.status == 'BAJARILDI' %}fa-check-circle
+                            {% elif order.status == 'RAD_ETILDI' %}fa-times-circle
+                            {% elif order.status == 'TAYYOR' %}fa-check-double
+                            {% elif 'USTA' in order.status %}fa-user-cog
+                            {% elif 'ISH' in order.status %}fa-tools
+                            {% else %}fa-clock{% endif %}">
+                        </i>
+                        {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                            ***
+                        {% else %}
+                            {{ order.get_status_display }}
+                        {% endif %}
+                    </span>
+                    
+                    <div class="child-order-actions">
+                        <a href="{% url 'order_detail' order.pk %}" class="child-action-btn">
+                            <i class="fas fa-eye"></i> Ko'rish
+                        </a>
+                        {% if order.parent_order %}
+                        <a href="{% url 'order_detail' order.parent_order.pk %}" class="child-action-btn primary">
+                            <i class="fas fa-external-link-alt"></i> Asosiy
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
-        
+        {% else %}
+        <div class="empty-state" style="padding: 2rem; margin: 1rem 0; background: var(--neutral-50); border-radius: var(--radius-lg);">
+            <div class="empty-state-icon" style="font-size: 2.5rem; color: var(--neutral-300);">
+                <i class="fas fa-th-large"></i>
+            </div>
+            <h4 class="empty-state-title" style="font-size: 1.2rem;">Panel child orderlar mavjud emas</h4>
+            <p class="empty-state-description" style="font-size: 0.9rem;">
+                Hozircha panel uchun child orderlar yaratilmagan.
+            </p>
+        </div>
         {% endif %}
-        
     </div>
+    
+  
+    
+    <!-- Boshqa Child Orders (agar mavjud bo'lsa) -->
+    {% if other_child_count > 0 %}
+    <div class="child-category-section" style="margin-top: 2.5rem;">
+        
+        
+        <div class="child-orders-grid">
+            {% for order in other_child_orders %}
+            <div class="child-order-card other-card">
+                <div class="child-order-header">
+                    <div class="child-order-id">
+                        № {{ order.order_number }}
+                        <span class="product-type-badge" style="background: var(--neutral-600); color: white;">UGOL</span>
+                    </div>
+                    {% if order.parent_order %}
+                    <div class="child-order-parent">
+                        <i class="fas fa-level-up-alt"></i>
+                        Asosiy: 
+                        <a href="{% url 'order_detail' order.parent_order.pk %}">
+                            {{ order.parent_order.order_number }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="child-order-details">
+                    <div class="child-detail">
+                        <span class="child-detail-label">Mijoz:</span>
+                        <span class="child-detail-value">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {{ order.customer_name|truncatechars:20 }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="child-detail">
+                        <span class="child-detail-label">Mahsulot:</span>
+                        <span class="child-detail-value">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {{ order.product_name|default:"—"|truncatechars:25 }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="child-detail">
+                        <span class="child-detail-label">Qalinlik:</span>
+                        <span class="child-detail-value">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {% if order.panel_thickness %}
+                                    {{ order.panel_thickness }} mm
+                                {% else %}
+                                    —
+                                {% endif %}
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="child-detail">
+                        <span class="child-detail-label">Kvadrat:</span>
+                        <span class="child-detail-value">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {{ order.panel_kvadrat|floatformat:2 }} m²
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="child-detail">
+                        <span class="child-detail-label">Summa:</span>
+                        <span class="child-detail-value" style="color: var(--primary-green);">
+                            {% if is_worker %}
+                                ***
+                            {% else %}
+                                {{ order.total_price|floatformat:0|intcomma }} so'm
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="child-detail">
+                        <span class="child-detail-label">Muddat:</span>
+                        <span class="child-detail-value {% if order.deadline and order.deadline < now and order.status not in 'BAJARILDI,RAD_ETILDI,TAYYOR' %}deadline-overdue{% endif %}">
+                            {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                                ***
+                            {% else %}
+                                {% if order.deadline %}
+                                    {{ order.deadline|date:"Y-m-d" }}
+                                {% else %}
+                                    Belgilanmagan
+                                {% endif %}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="child-order-status">
+                    <span class="child-status-badge">
+                        <i class="fas 
+                            {% if order.status == 'BAJARILDI' %}fa-check-circle
+                            {% elif order.status == 'RAD_ETILDI' %}fa-times-circle
+                            {% elif order.status == 'TAYYOR' %}fa-check-double
+                            {% elif 'USTA' in order.status %}fa-user-cog
+                            {% elif 'ISH' in order.status %}fa-tools
+                            {% else %}fa-clock{% endif %}">
+                        </i>
+                        {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+                            ***
+                        {% else %}
+                            {{ order.get_status_display }}
+                        {% endif %}
+                    </span>
+                    
+                    <div class="child-order-actions">
+                        <a href="{% url 'order_detail' order.pk %}" class="child-action-btn">
+                            <i class="fas fa-eye"></i> Ko'rish
+                        </a>
+                        {% if order.parent_order %}
+                        <a href="{% url 'order_detail' order.parent_order.pk %}" class="child-action-btn primary">
+                            <i class="fas fa-external-link-alt"></i> Asosiy
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Add animation to cards on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.order-card, .action-card, .child-order-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+
+            // Update active nav link based on current filter
+            const currentFilter = "{{ filter_type }}";
+            if (currentFilter) {
+                const navLinks = document.querySelectorAll('.nav-link');
+                navLinks.forEach(link => {
+                    if (link.textContent.includes(currentFilter.replace('_', ' '))) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        });
+
+        // Confirmation for delete actions
+        document.querySelectorAll('.btn-delete').forEach(button => {
+            button.addEventListener('click', function(e) {
+                if (!confirm('Bu buyurtmani o\'chirishni tasdiqlaysizmi? Bu amalni bekor qilib bo\'lmaydi.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Status badge color updates based on status
+        document.querySelectorAll('.status-badge').forEach(badge => {
+            const status = badge.classList[1].replace('status-', '');
+            const icon = badge.querySelector('i');
+            
+            // Add appropriate icon based on status
+            switch(status) {
+                case 'bajarildi':
+                    badge.style.background = 'linear-gradient(135deg, #10b981 0%, #34d399 100%)';
+                    break;
+                case 'tayyor':
+                    badge.style.background = 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
+                    break;
+                case 'rad_etildi':
+                    badge.style.background = 'linear-gradient(135deg, #ef4444 0%, #f87171 100%)';
+                    break;
+                case 'usta_qabul_qildi':
+                    badge.style.background = 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)';
+                    break;
+                case 'usta_boshla':
+                case 'ishda':
+                    badge.style.background = 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)';
+                    break;
+            }
+        });
+    </script>
+    {% endif %} 
 {% endblock %}
