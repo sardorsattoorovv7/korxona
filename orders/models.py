@@ -145,6 +145,7 @@ class Order(models.Model):
         ('PANEL', 'Panel Ustasi'),
         ('UGOL', 'Ugol Ustasi'),
         ('ESHIK', 'Eshik Ustasi'),
+        ('LIST_ESHIK', 'List va Eshik aralash'),
     ]
     
     order_number = models.CharField(max_length=50, unique=True, verbose_name="Buyurtma Raqami")
