@@ -229,21 +229,87 @@ def order_list(request):
     # Filtr parametri
     filter_type = request.GET.get('filter', 'all')  # all, completed, in_progress, overdue
     
-    # 🔴 FAQR ASOSIY BUYURTMALAR (parent_order=None)
-    orders = Order.objects.filter(parent_order__isnull=True).order_by('-created_at')
+    # ASOSIY BUYURTMALAR (parent_order=None)
+    main_orders = Order.objects.filter(parent_order__isnull=True).order_by('-created_at')
+    
+    # CHILD BUYURTMALAR - PANEL va UGUL
+    all_child_orders = Order.objects.filter(parent_order__isnull=False).order_by('-created_at')
+    
+    # Panel child orderlar (product_name ichida "panel" so'zi borlar)
+    panel_child_orders = all_child_orders.filter(
+        Q(product_name__icontains='panel') | 
+        Q(product_name__icontains='панель') |
+        Q(product_name__icontains='панел')
+    )
+    
+    # Ugul child orderlar (product_name ichida "ugul" so'zi borlar)
+    ugul_child_orders = all_child_orders.filter(
+        Q(product_name__icontains='ugul') | 
+        Q(product_name__icontains='угол') |
+        Q(product_name__icontains='уголь')
+    )
+    
+    # Boshqa child orderlar
+    other_child_orders = all_child_orders.exclude(
+        Q(product_name__icontains='panel') | 
+        Q(product_name__icontains='панель') |
+        Q(product_name__icontains='панел') |
+        Q(product_name__icontains='ugul') | 
+        Q(product_name__icontains='угол') |
+        Q(product_name__icontains='уголь')
+    )
+    
+    # Hammasini vaqt bo'yicha ko'rsatadi (asosiy va child birlashtirilgan)
+    orders = Order.objects.all().order_by('-created_at')
     
     # Filtrlash
     now = timezone.now()
     if filter_type == 'completed':
         # Tayyor buyurtmalar
+        main_orders = main_orders.filter(status__in=['TAYYOR', 'BAJARILDI'])
+        panel_child_orders = panel_child_orders.filter(status__in=['TAYYOR', 'BAJARILDI'])
+        ugul_child_orders = ugul_child_orders.filter(status__in=['TAYYOR', 'BAJARILDI'])
+        other_child_orders = other_child_orders.filter(status__in=['TAYYOR', 'BAJARILDI'])
         orders = orders.filter(status__in=['TAYYOR', 'BAJARILDI'])
     elif filter_type == 'in_progress':
         # Jarayondagi buyurtmalar - FAQAT MUDDATI O'TMAGANLAR
+        main_orders = main_orders.exclude(status__in=['TAYYOR', 'BAJARILDI', 'RAD_ETILDI']).filter(
+            Q(deadline__isnull=True) | Q(deadline__gte=now)
+        )
+        panel_child_orders = panel_child_orders.exclude(status__in=['TAYYOR', 'BAJARILDI', 'RAD_ETILDI']).filter(
+            Q(deadline__isnull=True) | Q(deadline__gte=now)
+        )
+        ugul_child_orders = ugul_child_orders.exclude(status__in=['TAYYOR', 'BAJARILDI', 'RAD_ETILDI']).filter(
+            Q(deadline__isnull=True) | Q(deadline__gte=now)
+        )
+        other_child_orders = other_child_orders.exclude(status__in=['TAYYOR', 'BAJARILDI', 'RAD_ETILDI']).filter(
+            Q(deadline__isnull=True) | Q(deadline__gte=now)
+        )
         orders = orders.exclude(status__in=['TAYYOR', 'BAJARILDI', 'RAD_ETILDI']).filter(
-            Q(deadline__isnull=True) | Q(deadline__gte=now)  # Muddati o'tmagan yoki muddati yo'q
+            Q(deadline__isnull=True) | Q(deadline__gte=now)
         )
     elif filter_type == 'overdue':
         # Muddati o'tgan buyurtmalar - FAQAT JARAYONDAGI VA MUDDATI O'TGANLAR
+        main_orders = main_orders.filter(
+            deadline__lt=now
+        ).exclude(
+            status__in=['BAJARILDI', 'RAD_ETILDI', 'TAYYOR']
+        )
+        panel_child_orders = panel_child_orders.filter(
+            deadline__lt=now
+        ).exclude(
+            status__in=['BAJARILDI', 'RAD_ETILDI', 'TAYYOR']
+        )
+        ugul_child_orders = ugul_child_orders.filter(
+            deadline__lt=now
+        ).exclude(
+            status__in=['BAJARILDI', 'RAD_ETILDI', 'TAYYOR']
+        )
+        other_child_orders = other_child_orders.filter(
+            deadline__lt=now
+        ).exclude(
+            status__in=['BAJARILDI', 'RAD_ETILDI', 'TAYYOR']
+        )
         orders = orders.filter(
             deadline__lt=now
         ).exclude(
@@ -266,11 +332,39 @@ def order_list(request):
                     status='RAD_ETILDI'
                 ).distinct().order_by('-created_at')
                 
+                main_orders = main_orders.filter(
+                    assigned_workers__user=request.user, 
+                ).exclude(
+                    status='RAD_ETILDI'
+                ).distinct().order_by('-created_at')
+                
+                panel_child_orders = panel_child_orders.filter(
+                    assigned_workers__user=request.user, 
+                ).exclude(
+                    status='RAD_ETILDI'
+                ).distinct().order_by('-created_at')
+                
+                ugul_child_orders = ugul_child_orders.filter(
+                    assigned_workers__user=request.user, 
+                ).exclude(
+                    status='RAD_ETILDI'
+                ).distinct().order_by('-created_at')
+                
+                other_child_orders = other_child_orders.filter(
+                    assigned_workers__user=request.user, 
+                ).exclude(
+                    status='RAD_ETILDI'
+                ).distinct().order_by('-created_at')
+                
                 if not orders.exists():
                     messages.info(request, "Sizga tayinlangan buyurtmalar topilmadi.")
 
             except Exception:
                 orders = orders.none() 
+                main_orders = main_orders.none()
+                panel_child_orders = panel_child_orders.none()
+                ugul_child_orders = ugul_child_orders.none()
+                other_child_orders = other_child_orders.none()
                 messages.warning(request, "Buyurtmalarni yuklashda xato: Usta profili noto'g'ri bog'langan bo'lishi mumkin.")
             
             should_filter = True
@@ -280,7 +374,7 @@ def order_list(request):
 
     # Muddat buzilishini tekshirish
     if is_glavniy_admin or is_production_boss:
-        overdue_orders = orders.filter(
+        overdue_orders = main_orders.filter(
             deadline__lt=timezone.now(),
             status__in=['TASDIQLANDI', 'USTA_QABUL_QILDI', 'USTA_BOSHLA', 'ISHDA', 'KIRITILDI']
         )
@@ -289,26 +383,39 @@ def order_list(request):
 
     user_notifications = Notification.objects.filter(user=request.user, is_read=False)[:5]
     
-    # 🔴 STATISTIKA HAM FAQAT ASOSIY BUYURTMALAR UCHUN
-    total_orders = Order.objects.filter(parent_order__isnull=True).count()
-    completed_orders = Order.objects.filter(parent_order__isnull=True, status__in=['TAYYOR', 'BAJARILDI']).count()
+    # STATISTIKA
+    total_orders = main_orders.count()  # Faqat asosiy buyurtmalar
+    completed_orders = main_orders.filter(status__in=['TAYYOR', 'BAJARILDI']).count()
     
     # Jarayondagi buyurtmalar soni - FAQAT MUDDATI O'TMAGANLAR
-    in_progress_orders = Order.objects.filter(parent_order__isnull=True).exclude(
+    in_progress_orders = main_orders.exclude(
         status__in=['TAYYOR', 'BAJARILDI', 'RAD_ETILDI']
     ).filter(
         Q(deadline__isnull=True) | Q(deadline__gte=now)
     ).count()
     
     # Muddati o'tgan buyurtmalar soni
-    overdue_orders_count = Order.objects.filter(parent_order__isnull=True).filter(
+    overdue_orders_count = main_orders.filter(
         deadline__lt=now
     ).exclude(
         status__in=['BAJARILDI', 'RAD_ETILDI', 'TAYYOR']
     ).count()
     
+    # Child orderlar statistikasi
+    all_child_orders_count = all_child_orders.count()
+    panel_child_count = panel_child_orders.count()
+    ugul_child_count = ugul_child_orders.count()
+    other_child_count = other_child_orders.count()
+    
+    panel_completed = panel_child_orders.filter(status__in=['TAYYOR', 'BAJARILDI']).count()
+    ugul_completed = ugul_child_orders.filter(status__in=['TAYYOR', 'BAJARILDI']).count()
+    
     context = {
         'orders': orders,
+        'main_orders': main_orders,
+        'panel_child_orders': panel_child_orders,
+        'ugul_child_orders': ugul_child_orders,
+        'other_child_orders': other_child_orders,
         'is_glavniy_admin': is_glavniy_admin,
         'is_manager': is_manager_or_confirmer, 
         'is_production_boss': is_production_boss,
@@ -321,9 +428,32 @@ def order_list(request):
         'completed_orders': completed_orders,
         'in_progress_orders': in_progress_orders,
         'overdue_orders_count': overdue_orders_count,
+        'all_child_orders_count': all_child_orders_count,
+        'panel_child_count': panel_child_count,
+        'ugul_child_count': ugul_child_count,
+        'other_child_count': other_child_count,
+        'panel_completed': panel_completed,
+        'ugul_completed': ugul_completed,
         'is_storekeeper': request.user.username.lower() == 'omborchi' or 'store' in request.user.username.lower(),
     }
     return render(request, 'orders/order_list.html', context)
+
+from django.db.models import Sum, Count
+from django.shortcuts import render
+from .models import Worker, Order
+
+def rankings_view(request):
+    """Ustalar reytingi sahifasi"""
+    # Bajarilgan buyurtmalar soni va kvadrat metr bo'yicha ustalarni hisoblash
+    workers_list = Worker.objects.annotate(
+        total_finished=Count('orders', filter=models.Q(orders__status='TUGATILDI')),
+        total_kvadrat=Sum('orders__panel_kvadrat', filter=models.Q(orders__status='TUGATILDI'))
+    ).order_by('-total_kvadrat') # Eng ko'p kvadrat metr qilganlar birinchi chiqadi
+
+    context = {
+        'workers': workers_list,
+    }
+    return render(request, 'orders/rankings.html', context)
 # ----------------------------------------------------------------------
 # BUYURTMA TAHSILOTLARI
 # ----------------------------------------------------------------------
