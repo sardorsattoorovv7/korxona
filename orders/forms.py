@@ -19,6 +19,11 @@ PANEL_THICKNESS_CHOICES = [
     ('20', '20 mm'), 
 ]
 
+import os
+from django import forms
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+
 class OrderForm(forms.ModelForm):
     """Buyurtmani kiritish va tahrirlash uchun asosiy ModelForm."""
     
@@ -29,20 +34,22 @@ class OrderForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     
-    # 🔴 YANGI: Ish turi uchun maydon
+    # Ish turi - LIST, ESHIK va ARALASH turlari bilan
     worker_type = forms.ChoiceField(
         choices=[
             ('', '--- Ish Turini Tanlang ---'),
             ('LIST', 'List Ustasi uchun'),
             ('ESHIK', 'Eshik Ustasi uchun'),
+            ('LIST_ESHIK', 'List va Eshik aralash'),
         ],
         required=True,
         label="Ish Turi",
-        widget=forms.Select(attrs={'class': 'form-control'})
+        widget=forms.Select(attrs={'class': 'form-control', 'onchange': 'this.form.submit()'})
     )
-    
+
     class Meta:
         model = Order
+        # Modelda mavjud bo'lgan haqiqiy maydonlar
         fields = [
             'order_number', 'pdf_file', 'customer_name', 'product_name', 
             'comment', 'worker_comment', 'panel_kvadrat', 'total_price',
@@ -57,8 +64,8 @@ class OrderForm(forms.ModelForm):
             'deadline': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'worker_started_at': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'worker_finished_at': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'comment': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Qoʻshimcha izohlar...', 'class': 'form-control'}),
-            'worker_comment': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Usta izohlari...', 'class': 'form-control'}),
+            'comment': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Qoʻshimcha izohlar...', 'class': 'form-control'}),
+            'worker_comment': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Usta izohlari...', 'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'order_number': forms.TextInput(attrs={'placeholder': 'Buyurtma raqami...', 'class': 'form-control'}),
             'customer_name': forms.TextInput(attrs={'placeholder': 'Xaridor nomi...', 'class': 'form-control'}),
@@ -68,140 +75,82 @@ class OrderForm(forms.ModelForm):
             'pdf_file': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf'}),
             'start_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'finish_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'worker_type': forms.Select(attrs={'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Avval barcha ustalarni ko'rsatmaymiz
-        self.fields['assigned_workers'].queryset = Worker.objects.none()
-        self.fields['assigned_workers'].label = "Ustalarni Tanlang"
-        self.fields['assigned_workers'].required = True
-        
-        # 🔴 1. Agar forma tahrirlash uchun ochilgan bo'lsa (instance mavjud)
-        if 'instance' in kwargs and kwargs['instance']:
-            instance = kwargs['instance']
-            if instance.worker_type:
-                if instance.worker_type == 'LIST':
-                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='LIST')
-                    self.fields['assigned_workers'].label = "List Ustalarini Tanlang"
-                elif instance.worker_type == 'ESHIK':
-                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='ESHIK')
-                    self.fields['assigned_workers'].label = "Eshik Ustalarini Tanlang"
-                elif instance.worker_type == 'PANEL':
-                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='PANEL')
-                    self.fields['assigned_workers'].label = "Panel Ustalarini Tanlang"
-                elif instance.worker_type == 'UGOL':
-                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='UGOL')
-                    self.fields['assigned_workers'].label = "Ugol Ustalarini Tanlang"
-        # 🔴 2. Agar POST so'rov bo'lsa
-        elif 'data' in kwargs:
-            worker_type = kwargs['data'].get('worker_type')
-            if worker_type:
-                if worker_type == 'LIST':
-                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='LIST')
-                    self.fields['assigned_workers'].label = "List Ustalarini Tanlang"
-                elif worker_type == 'ESHIK':
-                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='ESHIK')
-                    self.fields['assigned_workers'].label = "Eshik Ustalarini Tanlang"
-                elif worker_type == 'PANEL':
-                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='PANEL')
-                    self.fields['assigned_workers'].label = "Panel Ustalarini Tanlang"
-                elif worker_type == 'UGOL':
-                    self.fields['assigned_workers'].queryset = Worker.objects.filter(role='UGOL')
-                    self.fields['assigned_workers'].label = "Ugol Ustalarini Tanlang"
+        # Dinamik ravishda worker_type ni aniqlash
+        worker_type = None
+        if self.data and self.data.get('worker_type'):
+            worker_type = self.data.get('worker_type')
+        elif self.instance and self.instance.pk:
+            worker_type = self.instance.worker_type
+
+        # 1. Checkboxlar uchun Queryset filtrini sozlash
+        if worker_type == 'LIST':
+            self.fields['assigned_workers'].queryset = Worker.objects.filter(role='LIST')
+            self.fields['assigned_workers'].label = "Faqat List Ustalarini Tanlang"
+        elif worker_type == 'ESHIK':
+            self.fields['assigned_workers'].queryset = Worker.objects.filter(role='ESHIK')
+            self.fields['assigned_workers'].label = "Faqat Eshik Ustalarini Tanlang"
+        elif worker_type == 'LIST_ESHIK':
+            self.fields['assigned_workers'].queryset = Worker.objects.filter(role__in=['LIST', 'ESHIK'])
+            self.fields['assigned_workers'].label = "List va Eshik Ustalarini Tanlang"
         else:
-            # Ish turi tanlanmagan bo'lsa, barcha ustalarni ko'rsatish
-            self.fields['assigned_workers'].queryset = Worker.objects.all()
+            # Tanlanmagan bo'lsa barcha ishchilarni ko'rsatish
+            self.fields['assigned_workers'].queryset = Worker.objects.filter(role__in=['LIST', 'ESHIK'])
             self.fields['assigned_workers'].label = "Ustalarni Tanlang"
-    
+
+        self.fields['assigned_workers'].required = True
+
     def clean_order_number(self):
         order_number = self.cleaned_data.get('order_number')
-        if not order_number:
-            raise ValidationError("Buyurtma raqami majburiy")
         qs = Order.objects.filter(order_number=order_number)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise ValidationError("Bu buyurtma raqami allaqachon mavjud")
         return order_number
-    
-    def clean_panel_kvadrat(self):
-        panel_kvadrat = self.cleaned_data.get('panel_kvadrat')
-        if panel_kvadrat is not None and panel_kvadrat < 0:
-            raise ValidationError("Kvadrat manfiy bo'lishi mumkin emas")
-        return panel_kvadrat
-    
-    def clean_total_price(self):
-        total_price = self.cleaned_data.get('total_price')
-        if total_price is not None and total_price < 0:
-            raise ValidationError("Narx manfiy bo'lishi mumkin emas")
-        return total_price
-    
+
     def clean_pdf_file(self):
         pdf_file = self.cleaned_data.get('pdf_file')
         if not pdf_file and self.instance and self.instance.pdf_file:
             return self.instance.pdf_file
         if not self.instance.pk and not pdf_file:
-            raise ValidationError("PDF fayl majburiy")
-        if pdf_file:
-            if pdf_file.size > 10 * 1024 * 1024:
-                raise ValidationError("PDF fayl hajmi 10MB dan oshmasligi kerak (Maks. 10MB)")
-            ext = os.path.splitext(pdf_file.name)[1].lower()
-            if ext != '.pdf':
-                raise ValidationError("Faqat PDF fayllarni yuklash mumkin")
+            raise ValidationError("PDF chizma yuklash majburiy")
+        if pdf_file and pdf_file.size > 10 * 1024 * 1024:
+            raise ValidationError("Fayl hajmi 10MB dan oshmasligi kerak")
         return pdf_file
 
-    def clean_assigned_workers(self):
-        workers = self.cleaned_data.get('assigned_workers')
-        worker_type = self.cleaned_data.get('worker_type')
-        
-        if not worker_type:
-            raise ValidationError("Iltimos, avval ish turini tanlang!")
-        
-        # 🔴 Ish turiga mos ustalarni tekshirish
-        for worker in workers:
-            if worker_type == 'LIST' and worker.role != 'LIST':
-                raise ValidationError(f"{worker.get_full_name()} - List usta emas! Faqat List ustalarini tanlang.")
-            elif worker_type == 'ESHIK' and worker.role != 'ESHIK':
-                raise ValidationError(f"{worker.get_full_name()} - Eshik usta emas! Faqat Eshik ustalarini tanlang.")
-        
-        return workers
-    
     def clean(self):
         cleaned_data = super().clean()
-        deadline = cleaned_data.get('deadline')
         worker_type = cleaned_data.get('worker_type')
         assigned_workers = cleaned_data.get('assigned_workers')
-        
-        if deadline and deadline < timezone.now():
+        deadline = cleaned_data.get('deadline')
+
+        # Deadline tekshiruvi
+        if deadline and deadline < timezone.now() and not self.instance.pk:
             self.add_error('deadline', "Muddat o'tgan sana bo'lishi mumkin emas")
-        
-        # Ish turi majburiy
-        if not worker_type:
-            self.add_error('worker_type', "Ish turini tanlash majburiy!")
-        
+
+        # Ish turi va ustalar mutanosibligi
         if worker_type and assigned_workers:
-            # 🔴 Ish turiga mos ustalar tanlanganligini tekshirish
-            valid_roles = []
             if worker_type == 'LIST':
-                valid_roles = ['LIST']
-            elif worker_type == 'ESHIK':
-                valid_roles = ['ESHIK']
+                for w in assigned_workers:
+                    if w.role != 'LIST':
+                        self.add_error('assigned_workers', f"{w.get_full_name()} List ustasi emas!")
             
-            for worker in assigned_workers:
-                if worker.role not in valid_roles:
-                    self.add_error('assigned_workers', 
-                        f"{worker.get_full_name()} - {worker.get_role_display()} bu ish turiga mos emas. "
-                        f"Faqat {worker_type} ishlari uchun ustalar tanlanishi kerak.")
-        
-        worker_started_at = cleaned_data.get('worker_started_at')
-        worker_finished_at = cleaned_data.get('worker_finished_at')
-        if worker_started_at and worker_finished_at:
-            if worker_finished_at < worker_started_at:
-                self.add_error('worker_finished_at', "Tugatish vaqti boshlash vaqtidan oldin bo'lishi mumkin emas")
-        
+            elif worker_type == 'ESHIK':
+                for w in assigned_workers:
+                    if w.role != 'ESHIK':
+                        self.add_error('assigned_workers', f"{w.get_full_name()} Eshik ustasi emas!")
+            
+            elif worker_type == 'LIST_ESHIK':
+                has_list = any(w.role == 'LIST' for w in assigned_workers)
+                has_eshik = any(w.role == 'ESHIK' for w in assigned_workers)
+                if not has_list or not has_eshik:
+                    self.add_error('assigned_workers', "Aralash ishda kamida bitta List va bitta Eshik ustasi bo'lishi shart.")
+
         return cleaned_data
 
 class StartImageUploadForm(forms.ModelForm):
