@@ -47,6 +47,9 @@ urlpatterns = [
 
     path('worker-panel/', views.worker_panel, name='worker_panel'),
     path('worker-orders/<int:worker_id>/', views.worker_orders, name='worker_orders'),
+    # Ham eski, ham yangi nom bilan ishlashi uchun:
+    # path('worker-panel/', views.worker_panel, name='worker_panel'),
+    path('worker-my-orders/', views.worker_panel, name='worker_my_orders'), # SHUNI QO'SHING
     path('worker-report/', views.worker_activity_report_view, name='worker_activity_report'),
 
     # Duplicate yo'llar olib tashlandi, lekin quyidagilar qoldirildi
@@ -65,6 +68,7 @@ urlpatterns = [
 
     # 3. Inventarizatsiya
     path('inventory/list/', views.material_list, name='material_list'),
+    path('rankings/', views.rankings_view, name='ranking'), # SHU QATORNI QO'SHING
     
     # 4. Boshqa inventarizatsiya harakatlari
     path('inventory/transaction/create/', views.material_transaction_create, name='material_transaction_create'),
