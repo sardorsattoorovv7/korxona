@@ -601,6 +601,7 @@ def order_detail(request, pk):
     
     return render(request, 'orders/order_detail.html', context)
 
+
 # ----------------------------------------------------------------------
 # USTA HARAKATLARI FUNKSIYALARI
 # ----------------------------------------------------------------------
@@ -1396,6 +1397,15 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
+import uuid
+import json
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db import transaction as db_transaction  # Nomini moslashtirdik
+from django.contrib.auth.decorators import login_required
+from .models import Material, MaterialTransaction
+from .forms import MaterialTransactionForm
+
 @login_required
 def material_transaction_create(request):
     """Material kirim/chiqim tranzaksiyasini yaratish."""
@@ -1409,15 +1419,15 @@ def material_transaction_create(request):
                     transaction_obj = form.save(commit=False)
                     transaction_obj.performed_by = request.user
                     
-                    material = transaction_obj.material
+                    # Materialni bazadan "select_for_update" bilan olish (Bir vaqtda ikki kishi o'zgartirmasligi uchun)
+                    material = Material.objects.select_for_update().get(id=transaction_obj.material.id)
                     quantity = transaction_obj.quantity_change
                     transaction_type = transaction_obj.transaction_type
 
                     # 🔴 PARTIYA BARCODE YARATISH MANTIQI
-                    # Agar Kirim bo'lsa va checkbox bosilgan bo'lsa
                     create_barcode = request.POST.get('create_batch_barcode') == 'on'
                     if transaction_type == 'IN' and create_barcode:
-                        # Unikal va qisqaroq kod yaratish
+                        # Qisqaroq va unikal kod
                         new_code = f"P-{uuid.uuid4().hex[:8].upper()}"
                         transaction_obj.transaction_barcode = new_code
                     
@@ -1427,37 +1437,41 @@ def material_transaction_create(request):
                         message_type = "✅ Kirim"
                     else:  # OUT
                         if material.quantity < quantity:
-                            raise ValueError(f"Omborda yetarli qoldiq yo'q! (Mavjud: {material.quantity})")
+                            # Userga tushunarli xato xabari
+                            raise ValueError(f"Omborda yetarli qoldiq yo'q! (Mavjud: {material.quantity} {material.unit})")
+                        
                         material.quantity -= quantity
                         message_type = "📤 Chiqim"
                     
-                    # Saqlash
+                    # Saqlash tartibi muhim
                     material.save()
                     transaction_obj.save()
                     
-                    success_msg = f"{message_type} saqlandi. Qoldiq: {material.quantity}"
+                    success_msg = f"{message_type} muvaffaqiyatli bajarildi. Yangi qoldiq: {material.quantity}"
                     if transaction_obj.transaction_barcode:
                         success_msg += f" | Partiya kodi: {transaction_obj.transaction_barcode}"
                         
                     messages.success(request, success_msg)
                     return redirect('material_list')
                     
+            except ValueError as e:
+                messages.error(request, f"⚠️ Diqqat: {str(e)}")
             except Exception as e:
-                messages.error(request, f"❌ Xatolik: {str(e)}")
+                messages.error(request, f"❌ Texnik xatolik: {str(e)}")
         else:
+            # Formadagi xatolarni chiroyli chiqarish
             for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
+                messages.error(request, f"{field}: {', '.join(errors)}")
     
-    # GET so'rovi uchun qolgan qism (mavjud kodingiz)
     else:
         form = MaterialTransactionForm()
     
+    # GET qismi
     materials = Material.objects.all().select_related('category')
     material_data = {
         str(mat.id): {
             'name': mat.name,
-            'unit': mat.unit.upper(),
+            'unit': mat.get_unit_display() if hasattr(mat, 'get_unit_display') else mat.unit,
             'quantity': float(mat.quantity),
             'category': mat.category.name if mat.category else 'Kategoriyasiz',
         } for mat in materials
