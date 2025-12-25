@@ -239,50 +239,50 @@ class Order(models.Model):
         
     #     super().save(*args, **kwargs)
     
-    def create_panel_ugol_orders(self):
-        """List usta tugatganidan keyin Panel va Ugol ustalari uchun buyurtmalar yaratish"""
-        # Faqat List usta tugatgandagina ishlaydi
-        if self.worker_type == 'LIST':
+def create_panel_ugol_orders(self):
+        """Asosiy bosqichlar tugagach, Panel va Ugol uchun order ochish"""
+        # Faqat belgilangan turlar uchun ishlaydi
+        if self.worker_type in ['LIST', 'ESHIK', 'LIST_ESHIK']:
             
-            # Yaratish kerak bo'lgan turlar
             next_steps = [
                 ('PANEL', 'Panel ishlari'),
                 ('UGOL', 'Ugol ishlari')
             ]
 
-            for w_type, label in next_steps:
-                # Dublikat bo'lmasligi uchun tekshiramiz
-                new_order_number = f"{self.order_number}-{w_type}"
-                if not Order.objects.filter(order_number=new_order_number).exists():
-                    
-                    new_order = Order.objects.create(
-                        order_number=new_order_number,
-                        pdf_file=self.pdf_file,
-                        customer_name=self.customer_name,
-                        product_name=f"{self.product_name} ({label})",
-                        worker_type=w_type,
-                        parent_order=self,
-                        comment=f"Avtomatik: List usta #{self.order_number} buyurtmasidan nusxalandi.",
-                        panel_kvadrat=self.panel_kvadrat,
-                        total_price=self.total_price,
-                        panel_thickness=self.panel_thickness,
-                        status='TASDIQLANDI', # List usta bitirgan bo'lsa, bu allaqachon tasdiqlangan
-                        created_by=self.created_by,
-                        needs_manager_approval=False
-                    )
+        for w_type, label in next_steps:
+            new_order_number = f"{self.order_number}-{w_type}"
+            
+            if not Order.objects.filter(order_number=new_order_number).exists():
+                new_order = Order.objects.create(
+                    order_number=new_order_number,
+                    pdf_file=self.pdf_file,
+                    customer_name=self.customer_name,
+                    product_name=f"{self.product_name} ({label})",
+                    worker_type=w_type, # Bu yerda 'PANEL' yoki 'UGOL' bo'ladi
+                    parent_order=self,
+                    comment=f"Avtomatik: {self.worker_type} bosqichi #{self.order_number}dan yaratildi.",
+                    panel_kvadrat=self.panel_kvadrat,
+                    total_price=self.total_price,
+                    panel_thickness=self.panel_thickness,
+                    status='TASDIQLANDI', 
+                    created_by=self.created_by,
+                    needs_manager_approval=False
+                )
 
-                    # O'sha roldagi barcha ustalarni topib biriktiramiz
-                    workers = Worker.objects.filter(role=w_type)
-                    if workers.exists():
-                        new_order.assigned_workers.set(workers)
-                        
-                        # Har bir ustaga bildirishnoma
-                        for w in workers:
-                            Notification.objects.create(
-                                user=w.user,
-                                order=new_order,
-                                message=f"Yangi ish keldi: {new_order.order_number}. List usta jarayonni bitirdi."
-                            )
+                # 4. Ustani roliga qarab topib biriktiramiz
+                from .models import Worker # Circular import oldini olish
+                workers = Worker.objects.filter(role=w_type)
+                
+                if workers.exists():
+                    new_order.assigned_workers.set(workers)
+                    
+                    # 5. Bildirishnoma
+                    for w in workers:
+                        Notification.objects.create(
+                            user=w.user,
+                            order=new_order,
+                            message=f"Yangi ish: {new_order.order_number}. List/Eshik bosqichi yakunlandi."
+                        )
 # =======================================================================
 # 5. MATERIAL TRANSACTION MODELI
 # =======================================================================
@@ -347,14 +347,25 @@ class MaterialTransaction(models.Model):
         ordering = ['-timestamp']
 
     def save(self, *args, **kwargs):
-        if not self.transaction_barcode:
-            prefix = self.material.name[:3].upper() if self.material else "MTR"
+        # 1. Barcode faqat bo'sh bo'lsa va faqat KIRIM bo'lsa yaratilishi kerak
+        if not self.transaction_barcode and self.transaction_type == 'IN':
+            # Material nomidan xavfsiz foydalanish (probel va belgilarni tozalash)
+            import re
+            prefix = re.sub(r'[^a-zA-Z0-9]', '', self.material.name)[:3].upper() if self.material else "MTR"
+            
+            # Unikal id qo'shish
             unique_id = uuid.uuid4().hex[:6].upper()
             self.transaction_barcode = f"{prefix}-{unique_id}"
+        
+        # 2. Agar Chiqim (OUT) bo'lsa, barcodeni null saqlash yoki 
+        # chiqim qilingan partiya kodini qo'lda kiritishni talab qilish mumkin.
+        
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"[{self.get_transaction_type_display()}] {self.material.name}: {self.quantity_change}"
+        # Miqdor yoniga birligini ham qo'shib qo'ysak, adminga oson bo'ladi
+        unit = self.material.unit if self.material else ""
+        return f"[{self.get_transaction_type_display()}] {self.material.name}: {self.quantity_change} {unit}"
 
 # =======================================================================
 # 6. NOTIFICATION MODELI
