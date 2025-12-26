@@ -1727,6 +1727,24 @@
                                             {% endif %}
                                         </span>
                                     </div>
+
+                                    <div class="detail-row">
+    <span class="detail-label">
+        <i class="fas fa-door-open"></i>
+        <span>Eshik Turi</span>
+    </span>
+    <span class="detail-value">
+        {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+            ***
+        {% else %}
+            {% if order.eshik_turi %}
+                {{ order.eshik_turi }}
+            {% else %}
+                <span style="color: var(--text-secondary); font-style: italic;">Aniqlanmagan</span>
+            {% endif %}
+        {% endif %}
+    </span>
+</div>
                                     
                                     <div class="detail-row">
                                         <span class="detail-label">
@@ -1738,7 +1756,7 @@
                                                 ***
                                             {% else %}
                                                 {% if order.panel_thickness %}
-                                                    {{ order.panel_thickness }} mm
+                                                    {{ order.panel_thickness }} sm
                                                 {% else %}
                                                     <span style="color: var(--text-secondary); font-style: italic;">Aniqlanmagan</span>
                                                 {% endif %}
@@ -1769,7 +1787,7 @@
                                             {% if is_worker %}
                                                 ***
                                             {% else %}
-                                                {{ order.total_price|floatformat:0|intcomma }} so'm
+                                                {{ order.total_price|floatformat:0|intcomma }} USD
                                             {% endif %}
                                         </span>
                                     </div>
@@ -2062,7 +2080,7 @@
                                         <span class="text-masked">***</span>
                                     {% else %}
                                         {% if order.panel_thickness %}
-                                            <span class="value-number">{{ order.panel_thickness }}</span> mm
+                                            <span class="value-number">{{ order.panel_thickness }}</span> sm
                                         {% else %}
                                             —
                                         {% endif %}
@@ -2095,7 +2113,7 @@
                                     {% if is_worker %}
                                         <span class="text-masked">***</span>
                                     {% else %}
-                                        {{ order.total_price|floatformat:0|intcomma }} so'm
+                                        {{ order.total_price|floatformat:0|intcomma }} USD
                                     {% endif %}
                                 </span>
                             </div>
@@ -2296,7 +2314,7 @@
                                         <span class="text-masked">***</span>
                                     {% else %}
                                         {% if order.panel_thickness %}
-                                            <span class="value-number">{{ order.panel_thickness }}</span> mm
+                                            <span class="value-number">{{ order.panel_thickness }}</span> sm
                                         {% else %}
                                             —
                                         {% endif %}
@@ -2329,7 +2347,7 @@
                                     {% if is_worker %}
                                         <span class="text-masked">***</span>
                                     {% else %}
-                                        {{ order.total_price|floatformat:0|intcomma }} so'm
+                                        {{ order.total_price|floatformat:0|intcomma }} USD
                                     {% endif %}
                                 </span>
                             </div>
