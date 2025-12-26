@@ -238,20 +238,10 @@
         margin-right: 0.5rem;
     }
 
-    .badge-5mm {
-        background-color: #dbeafe;
-        color: #1d4ed8;
-    }
-
-    .badge-10mm {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
-
-    .badge-15mm {
-        background-color: #fce7f3;
-        color: #9d174d;
-    }
+    .badge-5cm { background-color: #dbeafe; color: #1d4ed8; }
+    .badge-8cm { background-color: #c7f0db; color: #059669; }
+    .badge-10cm { background-color: #fef3c7; color: #92400e; }
+    .badge-15cm { background-color: #fce7f3; color: #9d174d; }
 
     .total-summary {
         background: linear-gradient(135deg, var(--bg-light) 0%, #f0fdf4 100%);
@@ -270,42 +260,17 @@
     }
 
     @media (max-width: 768px) {
-        .container-modern {
-            padding: 1.25rem;
-            margin: 1rem;
-        }
-        
-        .header-box {
-            flex-direction: column;
-            gap: 1rem;
-            align-items: flex-start;
-        }
-        
-        .stats-container {
-            grid-template-columns: 1fr;
-        }
-        
-        h1 {
-            font-size: 1.5rem;
-        }
-        
-        .stat-value {
-            font-size: 2rem;
-        }
-        
-        .table-modern {
-            font-size: 0.875rem;
-        }
-        
-        .table-modern th,
-        .table-modern td {
-            padding: 0.75rem;
-        }
+        .container-modern { padding: 1.25rem; margin: 1rem; }
+        .header-box { flex-direction: column; gap: 1rem; align-items: flex-start; }
+        .stats-container { grid-template-columns: 1fr; }
+        h1 { font-size: 1.5rem; }
+        .stat-value { font-size: 2rem; }
+        .table-modern { font-size: 0.875rem; }
+        .table-modern th, .table-modern td { padding: 0.75rem; }
     }
 </style>
 
 <div class="container-modern">
-    <!-- Sarlavha qismi -->
     <div class="header-box">
         <h1>Material Sarfi Hisoboti</h1>
         <a href="{% url 'order_list' %}" class="btn-back-modern">
@@ -315,33 +280,30 @@
             Buyurtmalar Ro'yxati
         </a>
     </div>
-    
-    <!-- Kirish matni -->
+
     <p class="intro-text">
         Bu hisobot tizimdagi barcha buyurtmalar bo'yicha umumiy list va siryo sarfini ko'rsatadi. 
         Ma'lumotlar qalinlik bo'yicha guruhlangan holda taqdim etilgan.
     </p>
-    
-    <!-- Statistik kartalar -->
+
     <div class="stats-container">
         <div class="stat-card">
             <h2>Jami List Sarfi</h2>
             <div class="stat-value">{{ jami_list_sarfi|floatformat:2 }} m²</div>
             <div class="stat-formula">Formula: (Jami Kvadrat × 2) + 10</div>
         </div>
-        
+
         <div class="stat-card">
             <h2>Jami Siryo Sarfi</h2>
             <div class="stat-value">{{ jami_siryo_sarfi|floatformat:2 }} kg</div>
             <div class="stat-formula">Formula: Qalinlik bo'yicha yig'indi</div>
         </div>
     </div>
-    
+
     <hr>
-    
-    <!-- Detal hisobot -->
+
     <h3>Siryo Sarfi Qalinlik Bo'yicha Tafsilotlar</h3>
-    
+
     <table class="table-modern">
         <thead>
             <tr>
@@ -353,28 +315,28 @@
         </thead>
         <tbody>
             <tr>
-                <td>
-                    <span class="badge badge-5mm">5 mm</span>
-                </td>
-                <td>{{ sum_kvadrat_5mm|floatformat:2 }}</td>
+                <td><span class="badge badge-5cm">5 cm</span></td>
+                <td>{{ sum_kvadrat_5cm|floatformat:2 }}</td>
                 <td>× 2</td>
-                <td style="font-weight: 600;">{{ siryo_5mm_sarfi|floatformat:2 }} kg</td>
+                <td style="font-weight: 600;">{{ siryo_5cm_sarfi|floatformat:2 }} kg</td>
             </tr>
             <tr>
-                <td>
-                    <span class="badge badge-10mm">10 mm</span>
-                </td>
-                <td>{{ sum_kvadrat_10mm|floatformat:2 }}</td>
+                <td><span class="badge badge-8cm">8 cm</span></td>
+                <td>{{ sum_kvadrat_8cm|floatformat:2 }}</td>
+                <td>× 3</td>
+                <td style="font-weight: 600;">{{ siryo_8cm_sarfi|floatformat:2 }} kg</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-10cm">10 cm</span></td>
+                <td>{{ sum_kvadrat_10cm|floatformat:2 }}</td>
                 <td>× 4</td>
-                <td style="font-weight: 600;">{{ siryo_10mm_sarfi|floatformat:2 }} kg</td>
+                <td style="font-weight: 600;">{{ siryo_10cm_sarfi|floatformat:2 }} kg</td>
             </tr>
             <tr>
-                <td>
-                    <span class="badge badge-15mm">15 mm</span>
-                </td>
-                <td>{{ sum_kvadrat_15mm|floatformat:2 }}</td>
+                <td><span class="badge badge-15cm">15 cm</span></td>
+                <td>{{ sum_kvadrat_15cm|floatformat:2 }}</td>
                 <td>× 6</td>
-                <td style="font-weight: 600;">{{ siryo_15mm_sarfi|floatformat:2 }} kg</td>
+                <td style="font-weight: 600;">{{ siryo_15cm_sarfi|floatformat:2 }} kg</td>
             </tr>
         </tbody>
         <tfoot>
@@ -384,8 +346,7 @@
             </tr>
         </tfoot>
     </table>
-    
-    <!-- Umumiy yig'indi -->
+
     <div class="total-summary">
         <strong>Jami Barcha Kvadratlar Yig'indisi:</strong> {{ total_kvadrat|floatformat:2 }} m²
     </div>
