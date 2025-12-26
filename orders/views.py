@@ -849,49 +849,90 @@ def worker_orders(request, worker_id):
 
 # ----------------------------------------------------------------------
 # QOLGAN FUNKSIYALAR
-# ----------------------------------------------------------------------
+# views.py - order_create funksiyasini yangilang
+
 @login_required
-@user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
+@user_passes_test(
+    lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin') or is_in_group(u, 'Manager'),
+    login_url='/login/'
+)
 def order_create(request):
-    """Buyurtma yaratish - soddalashtirilgan versiya"""
+    """Buyurtma yaratish - eshik qo'shish imkoniyati bilan"""
     
     if request.method == 'POST':
         form = OrderForm(request.POST, request.FILES)
+        
         if form.is_valid():
-            order = form.save(commit=False)
-            order.created_by = request.user
-            
-            # 🔴 PANEL VA UGOL UCHUN AVTOMATIK TASDIQLASH
-            worker_type = form.cleaned_data.get('worker_type', 'LIST')
-            
-            if worker_type in ['PANEL', 'UGOL']:
-                order.status = 'TASDIQLANDI'  # Avtomatik tasdiqlangan
-                status_message = "avtomatik tasdiqlandi"
-            else:
-                order.status = 'KIRITILDI'  # List va Eshik uchun
-                status_message = "kiritildi"
-            
-            # 🔴 MODEL VALIDATIONNI O'TKAZIB YUBORISH
             try:
+                order = form.save(commit=False)
+                order.created_by = request.user
+                
+                # Ish turi bo'yicha holatni belgilash
+                worker_type = form.cleaned_data.get('worker_type', 'LIST')
+                
+                # Admin uchun status har doim KIRITILDI bo'ladi
+                order.status = 'KIRITILDI'
+                
+                # ✅ Eshik uchun maxsus saqlash - TO'G'RI ISHLASHI UCHUN
+                if worker_type == 'ESHIK':
+                    eshik_turi = form.cleaned_data.get('eshik_turi', '')
+                    zamokli_eshik = form.cleaned_data.get('zamokli_eshik', False)
+                    
+                    # Agar eshik turi allaqachon formatlangan bo'lsa (F1 (Zamokli))
+                    if '(' in str(eshik_turi):
+                        order.eshik_turi = eshik_turi
+                    else:
+                        # Formatlash kerak
+                        zamok_status = "Zamokli" if zamokli_eshik else "Zamoksiz"
+                        order.eshik_turi = f"{eshik_turi} ({zamok_status})" if eshik_turi else ""
+                
+                # Menejer tasdiqlash sozlamasi
+                order.needs_manager_approval = form.cleaned_data.get('needs_manager_approval', True)
+                
+                # Panel qalinligini saqlash
+                order.panel_thickness = form.cleaned_data.get('panel_thickness')
+                
+                # Buyurtmani saqlash
                 order.save()
-            except ValidationError as e:
-                # Agar validatsiya xatosi bo'lsa, uni ignore qilish
-                order.status = 'TASDIQLANDI' if worker_type in ['PANEL', 'UGOL'] else 'KIRITILDI'
-                order.save(force_insert=True)
-            
-            form.save_m2m()
-            
-            messages.success(request, 
-                f"✅ Buyurtma №{order.order_number} {status_message}! "
-                f"Ish turi: {order.get_worker_type_display()}"
+                form.save_m2m()  # Many-to-many maydonlarini saqlash
+                
+                # Bildirishnomalarni yuborish
+                send_notifications_for_new_order(order)
+                
+                # Agar List usta uchun bo'lsa, eslatma berish
+                if worker_type == 'LIST':
+                    messages.info(request, 
+                        f"⚠️ List usta ishni tugatgandan so'ng, "
+                        f"Panel va Ugol ustalari uchun avtomatik buyurtmalar yaratiladi."
+                    )
+                
+                messages.success(request, 
+                    f"✅ Buyurtma №{order.order_number} muvaffaqiyatli kiritildi! "
+                    f"Ish turi: {order.get_worker_type_display()}"
+                )
+                
+                return redirect('order_list')
+                
+            except Exception as e:
+                messages.error(request, 
+                    f"❌ Xatolik yuz berdi: {str(e)}"
+                )
+                return render(request, 'orders/order_create.html', {'form': form})
+        else:
+            # Formada xatolik bo'lsa
+            messages.error(request, 
+                "❌ Formani to'ldirishda xatoliklar mavjud. "
+                "Iltimos, barcha majburiy maydonlarni to'ldiring."
             )
-            
-            return redirect('order_list')
     else:
+        # GET so'rovi
         form = OrderForm()
     
-    return render(request, 'orders/order_create.html', {'form': form})
-
+    context = {
+        'form': form,
+        'title': 'Yangi Buyurtma Kiritish',
+    }
+    return render(request, 'orders/order_create.html', context)
 @login_required
 @login_required
 def order_edit(request, pk):
@@ -1405,6 +1446,9 @@ from django.db import transaction as db_transaction  # Nomini moslashtirdik
 from django.contrib.auth.decorators import login_required
 from .models import Material, MaterialTransaction
 from .forms import MaterialTransactionForm
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+import json
 
 @login_required
 def material_transaction_create(request):
@@ -1415,72 +1459,107 @@ def material_transaction_create(request):
         
         if form.is_valid():
             try:
-                with db_transaction.atomic():
+                with transaction.atomic():
                     transaction_obj = form.save(commit=False)
                     transaction_obj.performed_by = request.user
                     
-                    # Materialni bazadan "select_for_update" bilan olish (Bir vaqtda ikki kishi o'zgartirmasligi uchun)
-                    material = Material.objects.select_for_update().get(id=transaction_obj.material.id)
+                    # Materialni olish
+                    material = transaction_obj.material
                     quantity = transaction_obj.quantity_change
                     transaction_type = transaction_obj.transaction_type
-
-                    # 🔴 PARTIYA BARCODE YARATISH MANTIQI
+                    
+                    # DEBUG
+                    print(f"Material: {material.name} (ID: {material.id})")
+                    print(f"Quantity: {quantity}")
+                    print(f"Type: {transaction_type}")
+                    
+                    # Barcode yaratish
                     create_barcode = request.POST.get('create_batch_barcode') == 'on'
                     if transaction_type == 'IN' and create_barcode:
-                        # Qisqaroq va unikal kod
+                        import uuid
                         new_code = f"P-{uuid.uuid4().hex[:8].upper()}"
                         transaction_obj.transaction_barcode = new_code
                     
-                    # Material qoldig'ini yangilash
+                    # Qoldiqni yangilash
                     if transaction_type == 'IN':
                         material.quantity += quantity
                         message_type = "✅ Kirim"
                     else:  # OUT
                         if material.quantity < quantity:
-                            # Userga tushunarli xato xabari
-                            raise ValueError(f"Omborda yetarli qoldiq yo'q! (Mavjud: {material.quantity} {material.unit})")
-                        
+                            raise ValueError(
+                                f"Omborda yetarli qoldiq yo'q! "
+                                f"Mavjud: {material.quantity} {material.unit}, "
+                                f"So'ralgan: {quantity}"
+                            )
                         material.quantity -= quantity
                         message_type = "📤 Chiqim"
                     
-                    # Saqlash tartibi muhim
                     material.save()
                     transaction_obj.save()
                     
-                    success_msg = f"{message_type} muvaffaqiyatli bajarildi. Yangi qoldiq: {material.quantity}"
-                    if transaction_obj.transaction_barcode:
-                        success_msg += f" | Partiya kodi: {transaction_obj.transaction_barcode}"
-                        
-                    messages.success(request, success_msg)
+                    messages.success(request, 
+                        f"{message_type} muvaffaqiyatli bajarildi. "
+                        f"Material: {material.name}, "
+                        f"Yangi qoldiq: {material.quantity} {material.unit}"
+                    )
                     return redirect('material_list')
                     
             except ValueError as e:
-                messages.error(request, f"⚠️ Diqqat: {str(e)}")
+                messages.error(request, f"⚠️ {str(e)}")
             except Exception as e:
                 messages.error(request, f"❌ Texnik xatolik: {str(e)}")
         else:
-            # Formadagi xatolarni chiroyli chiqarish
             for field, errors in form.errors.items():
-                messages.error(request, f"{field}: {', '.join(errors)}")
+                field_name = form.fields[field].label if field in form.fields else field
+                messages.error(request, f"{field_name}: {', '.join(errors)}")
     
     else:
         form = MaterialTransactionForm()
     
-    # GET qismi
-    materials = Material.objects.all().select_related('category')
-    material_data = {
-        str(mat.id): {
+    # Material ma'lumotlarini JSON formatda yuborish
+    materials = Material.objects.all().select_related('category').order_by('name')
+    material_data = {}
+    
+    for mat in materials:
+        material_data[str(mat.id)] = {
             'name': mat.name,
-            'unit': mat.get_unit_display() if hasattr(mat, 'get_unit_display') else mat.unit,
             'quantity': float(mat.quantity),
+            'unit': mat.unit,
             'category': mat.category.name if mat.category else 'Kategoriyasiz',
-        } for mat in materials
-    }
+            'product_name': mat.product_name if hasattr(mat, 'product_name') else '',
+        }
     
     return render(request, 'orders/material_transaction_create.html', {
         'form': form,
         'material_data_json': json.dumps(material_data, ensure_ascii=False),
     })
+
+
+# ✅ AJAX endpoint material ma'lumotlari uchun
+@require_GET
+@login_required
+def get_material_details(request, material_id):
+    """Material ma'lumotlarini JSON formatda qaytarish."""
+    try:
+        material = Material.objects.select_related('category').get(id=material_id)
+        
+        data = {
+            'id': material.id,
+            'name': material.name,
+            'code': material.code,
+            'quantity': float(material.quantity),
+            'unit': material.unit,
+            'category': material.category.name if material.category else 'Kategoriyasiz',
+            'product_name': material.product_name if hasattr(material, 'product_name') else '',
+            'price_per_unit': float(material.price_per_unit) if material.price_per_unit else 0,
+            'min_stock_level': float(material.min_stock_level) if material.min_stock_level else 0,
+            'success': True
+        }
+        return JsonResponse(data)
+    except Material.DoesNotExist:
+        return JsonResponse({'error': 'Material topilmadi', 'success': False}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e), 'success': False}, status=500)
 
 
 # 🔴 YANGI: Material yaratish view
@@ -2016,35 +2095,38 @@ def get_material_data():
 
 from django.db.models.functions import Coalesce # ⬅️ Mana bu qatorni qo'shing
 from decimal import Decimal # ✅ Decimal to'g'ri import qilindi
+from decimal import Decimal
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
+from django.shortcuts import render
+from .models import Order
+
 def material_sarfi_report(request):
-    
-    # Kvadrat maydoni NULL bo'lishi mumkinligini hisobga olamiz
-    # Shuningdek, DecimalField bilan ishlash uchun Decimal(0) dan foydalanamiz
     
     # =======================================================================
     # 1. SARFNI HISOBLASH UCHUN KVADRAT METRLARNI GURUH BO'YICHA YIG'ISH
     # =======================================================================
     
-    # Barcha buyurtmalarni filtrlash (misol uchun, faqat 'BAJARILDI' statusdagilarni)
-    # Agar barcha kiritilgan buyurtmalar kerak bo'lsa, filter() qismini olib tashlang
     all_orders = Order.objects.all() 
     
-    # Barcha panellarning umumiy kvadratini topish (Jami List uchun kerak)
-    # Coalesce(Sum('panel_kvadrat'), Decimal(0)) yig'indi bo'sh bo'lsa 0 ni qaytaradi
     total_kvadrat = all_orders.aggregate(
         sum_kvadrat=Coalesce(Sum('panel_kvadrat'), Decimal(0))
     )['sum_kvadrat']
 
-    # Qalinlik bo'yicha kvadrat yig'indilarini hisoblash (Siryo uchun kerak)
-    sum_kvadrat_5mm = all_orders.filter(panel_thickness='5').aggregate(
+    # Qalinlik bo'yicha kvadrat yig'indilarini hisoblash
+    sum_kvadrat_5cm = all_orders.filter(panel_thickness='5').aggregate(
         sum_kvadrat=Coalesce(Sum('panel_kvadrat'), Decimal(0))
     )['sum_kvadrat']
 
-    sum_kvadrat_10mm = all_orders.filter(panel_thickness='10').aggregate(
+    sum_kvadrat_8cm = all_orders.filter(panel_thickness='8').aggregate(
         sum_kvadrat=Coalesce(Sum('panel_kvadrat'), Decimal(0))
     )['sum_kvadrat']
 
-    sum_kvadrat_15mm = all_orders.filter(panel_thickness='15').aggregate(
+    sum_kvadrat_10cm = all_orders.filter(panel_thickness='10').aggregate(
+        sum_kvadrat=Coalesce(Sum('panel_kvadrat'), Decimal(0))
+    )['sum_kvadrat']
+
+    sum_kvadrat_15cm = all_orders.filter(panel_thickness='15').aggregate(
         sum_kvadrat=Coalesce(Sum('panel_kvadrat'), Decimal(0))
     )['sum_kvadrat']
 
@@ -2052,46 +2134,39 @@ def material_sarfi_report(request):
     # 2. SARF FORMULALARINI QO'LLASH
     # =======================================================================
     
-    # 1. Jami List Sarfi (m²): (Total Kvadrat * 2) + 10
-    # Natijani Decimal formatda saqlash, floatga o'tkazishdan qochish yaxshi amaliyot
+    # Jami List Sarfi (m²): (Total Kvadrat * 2) + 10
     jami_list_sarfi = (total_kvadrat * Decimal(2)) + Decimal(10)
     
-    # 2. Siryo Sarfi (kg): Har bir qalinlik uchun alohida hisoblash
-    
-    # 5mm siryo: Sum Kvadrat * 2
-    siryo_5mm_sarfi = sum_kvadrat_5mm * Decimal(2)
-    
-    # 10mm siryo: Sum Kvadrat * 4
-    siryo_10mm_sarfi = sum_kvadrat_10mm * Decimal(4)
-    
-    # 15mm siryo: Sum Kvadrat * 6
-    siryo_15mm_sarfi = sum_kvadrat_15mm * Decimal(6)
+    # Siryo Sarfi (kg) qalinlik bo'yicha
+    siryo_5cm_sarfi = sum_kvadrat_5cm * Decimal(2)
+    siryo_8cm_sarfi = sum_kvadrat_8cm * Decimal(3)  # 8cm uchun o'rtacha koeff
+    siryo_10cm_sarfi = sum_kvadrat_10cm * Decimal(4)
+    siryo_15cm_sarfi = sum_kvadrat_15cm * Decimal(6)
 
-    # Umumiy Siryo Sarfi
-    jami_siryo_sarfi = siryo_5mm_sarfi + siryo_10mm_sarfi + siryo_15mm_sarfi
+    jami_siryo_sarfi = siryo_5cm_sarfi + siryo_8cm_sarfi + siryo_10cm_sarfi + siryo_15cm_sarfi
 
     # =======================================================================
     # 3. CONTEXT GA YUKLASH
     # =======================================================================
     
     context = {
-        # Umumiy yakuniy hisobot
         'jami_list_sarfi': jami_list_sarfi,
         'jami_siryo_sarfi': jami_siryo_sarfi,
         
-        # Detallashgan siryo hisoboti
-        'siryo_5mm_sarfi': siryo_5mm_sarfi,
-        'siryo_10mm_sarfi': siryo_10mm_sarfi,
-        'siryo_15mm_sarfi': siryo_15mm_sarfi,
+        'siryo_5cm_sarfi': siryo_5cm_sarfi,
+        'siryo_8cm_sarfi': siryo_8cm_sarfi,
+        'siryo_10cm_sarfi': siryo_10cm_sarfi,
+        'siryo_15cm_sarfi': siryo_15cm_sarfi,
         
-        # Xom ma'lumotlar
         'total_kvadrat': total_kvadrat,
-        'sum_kvadrat_5mm': sum_kvadrat_5mm,
-        'sum_kvadrat_10mm': sum_kvadrat_10mm,
-        'sum_kvadrat_15mm': sum_kvadrat_15mm,
+        'sum_kvadrat_5cm': sum_kvadrat_5cm,
+        'sum_kvadrat_8cm': sum_kvadrat_8cm,
+        'sum_kvadrat_10cm': sum_kvadrat_10cm,
+        'sum_kvadrat_15cm': sum_kvadrat_15cm,
     }
     
     return render(request, 'orders/material_sarfi_report.html', context)
+
 
 
 
