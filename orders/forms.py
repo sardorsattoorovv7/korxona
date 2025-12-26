@@ -13,10 +13,10 @@ from .models import Order, MaterialTransaction, Material, Category, Worker
 
 PANEL_THICKNESS_CHOICES = [
     ('', '--- Tanlang ---'),
-    ('5', '5 mm'),
-    ('10', '10 mm'),
-    ('15', '15 mm'),
-    ('20', '20 mm'), 
+    ('5', '5 sm'),
+    ('8', '8 sm'), 
+    ('10', '10 sm'),
+    ('15', '15 sm'),
 ]
 
 import os
@@ -24,85 +24,243 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from django import forms
+from .models import Order, Worker
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+
+PANEL_THICKNESS_CHOICES = [
+    ('', '--- Panel Qalinligini Tanlang ---'),
+    ('5', '5 sm'),
+    ('8', '8 sm'),
+    ('10', '10 sm'),
+    ('15', '15 sm'),
+
+]
+
 class OrderForm(forms.ModelForm):
     """Buyurtmani kiritish va tahrirlash uchun asosiy ModelForm."""
     
     panel_thickness = forms.ChoiceField(
         choices=PANEL_THICKNESS_CHOICES,
         required=True,
-        label="Panel Qalinligi (mm)",
+        label="Panel Qalinligi (sm)",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     
-    # Ish turi - LIST, ESHIK va ARALASH turlari bilan
+    # Ish turi - faqat LIST va ESHIK (Panel va Ugol uchun admin buyurtma berolmaydi)
     worker_type = forms.ChoiceField(
         choices=[
             ('', '--- Ish Turini Tanlang ---'),
             ('LIST', 'List Ustasi uchun'),
             ('ESHIK', 'Eshik Ustasi uchun'),
-            ('LIST_ESHIK', 'List va Eshik aralash'),
         ],
         required=True,
         label="Ish Turi",
-        widget=forms.Select(attrs={'class': 'form-control', 'onchange': 'this.form.submit()'})
+        widget=forms.Select(attrs={
+            'class': 'form-control', 
+            'id': 'id_worker_type'
+        })
+    )
+    
+    # Eshik turlari
+    eshik_turi = forms.ChoiceField(
+        choices=Order.ESHIK_TURI_CHOICES,
+        required=False,
+        label="Eshik Turi",
+        widget=forms.Select(attrs={
+            'class': 'form-control', 
+            'id': 'id_eshik_turi'
+        })
+    )
+    
+    zamokli_eshik = forms.BooleanField(
+        required=False,
+        label="Zamokli Eshik",
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input', 
+            'id': 'id_zamokli_eshik'
+        })
     )
 
     class Meta:
         model = Order
-        # Modelda mavjud bo'lgan haqiqiy maydonlar
         fields = [
             'order_number', 'pdf_file', 'customer_name', 'product_name', 
             'comment', 'worker_comment', 'panel_kvadrat', 'total_price',
-            'panel_thickness', 'worker_type',
+            'panel_thickness', 'worker_type', 'eshik_turi', 'zamokli_eshik',
             'assigned_workers', 'deadline', 'status',
             'worker_started_at', 'worker_finished_at',
-            'start_image', 'finish_image',
+            'start_image', 'finish_image', 'needs_manager_approval'
         ]
         
         widgets = {
-            'assigned_workers': forms.CheckboxSelectMultiple(),
-            'deadline': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'worker_started_at': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'worker_finished_at': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'comment': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Qoʻshimcha izohlar...', 'class': 'form-control'}),
-            'worker_comment': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Usta izohlari...', 'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
-            'order_number': forms.TextInput(attrs={'placeholder': 'Buyurtma raqami...', 'class': 'form-control'}),
-            'customer_name': forms.TextInput(attrs={'placeholder': 'Xaridor nomi...', 'class': 'form-control'}),
-            'product_name': forms.TextInput(attrs={'placeholder': 'Mahsulot nomi...', 'class': 'form-control'}),
-            'panel_kvadrat': forms.NumberInput(attrs={'step': '0.01', 'min': '0', 'class': 'form-control'}),
-            'total_price': forms.NumberInput(attrs={'step': '0.01', 'min': '0', 'class': 'form-control'}),
-            'pdf_file': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf'}),
-            'start_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'finish_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'assigned_workers': forms.CheckboxSelectMultiple(attrs={
+                'id': 'id_assigned_workers'
+            }),
+            'deadline': forms.DateTimeInput(attrs={
+                'type': 'datetime-local', 
+                'class': 'form-control'
+            }),
+            'worker_started_at': forms.DateTimeInput(attrs={
+                'type': 'datetime-local', 
+                'class': 'form-control'
+            }),
+            'worker_finished_at': forms.DateTimeInput(attrs={
+                'type': 'datetime-local', 
+                'class': 'form-control'
+            }),
+            'comment': forms.Textarea(attrs={
+                'rows': 2, 
+                'placeholder': 'Qoʻshimcha izohlar...', 
+                'class': 'form-control'
+            }),
+            'worker_comment': forms.Textarea(attrs={
+                'rows': 2, 
+                'placeholder': 'Usta izohlari...', 
+                'class': 'form-control'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'order_number': forms.TextInput(attrs={
+                'placeholder': 'Masalan: ORD-001-2024', 
+                'class': 'form-control',
+                'autocomplete': 'off'
+            }),
+            'customer_name': forms.TextInput(attrs={
+                'placeholder': 'Xaridor nomi...', 
+                'class': 'form-control'
+            }),
+            'product_name': forms.TextInput(attrs={
+                'placeholder': 'Masalan: Kabinet, Stol, Eshik...', 
+                'class': 'form-control'
+            }),
+            'panel_kvadrat': forms.NumberInput(attrs={
+                'step': '0.01', 
+                'min': '0', 
+                'class': 'form-control',
+                'placeholder': '0.00'
+            }),
+            'total_price': forms.NumberInput(attrs={
+                'step': '0.01', 
+                'min': '0', 
+                'class': 'form-control',
+                'placeholder': '0.00'
+            }),
+            'pdf_file': forms.FileInput(attrs={
+                'class': 'form-control', 
+                'accept': '.pdf'
+            }),
+            'start_image': forms.FileInput(attrs={
+                'class': 'form-control', 
+                'accept': 'image/*'
+            }),
+            'finish_image': forms.FileInput(attrs={
+                'class': 'form-control', 
+                'accept': 'image/*'
+            }),
+            'needs_manager_approval': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+        }
+        
+        labels = {
+            'needs_manager_approval': 'Menejer Tasdiqlash Talab Qilinadi',
+            'assigned_workers': 'Ish Beriladigan Ustalar',
+        }
+        
+        help_texts = {
+            'order_number': 'Har bir buyurtma uchun unikal raqam kiriting',
+            'pdf_file': 'Chizma yoki texnik hujjatni PDF formatida yuklang',
+            'deadline': 'Usta bu muddatgacha ishni tugatishi kerak',
+            'needs_manager_approval': 'Agar belgilansa, usta ishni boshlashdan oldin menejerdan tasdiq kutadi',
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Dinamik ravishda worker_type ni aniqlash
+        # Status maydoni uchun cheklangan variantlar (faqat admin uchun)
+        self.fields['status'].choices = [
+            ('KIRITILDI', "1. Kiritildi (Admin)"),
+        ]
+        
+        # Ish turini aniqlash
         worker_type = None
         if self.data and self.data.get('worker_type'):
             worker_type = self.data.get('worker_type')
         elif self.instance and self.instance.pk:
             worker_type = self.instance.worker_type
-
-        # 1. Checkboxlar uchun Queryset filtrini sozlash
+        
+        # Ustalarni filter qilish
         if worker_type == 'LIST':
             self.fields['assigned_workers'].queryset = Worker.objects.filter(role='LIST')
             self.fields['assigned_workers'].label = "Faqat List Ustalarini Tanlang"
         elif worker_type == 'ESHIK':
             self.fields['assigned_workers'].queryset = Worker.objects.filter(role='ESHIK')
             self.fields['assigned_workers'].label = "Faqat Eshik Ustalarini Tanlang"
-        elif worker_type == 'LIST_ESHIK':
-            self.fields['assigned_workers'].queryset = Worker.objects.filter(role__in=['LIST', 'ESHIK'])
-            self.fields['assigned_workers'].label = "List va Eshik Ustalarini Tanlang"
         else:
-            # Tanlanmagan bo'lsa barcha ishchilarni ko'rsatish
             self.fields['assigned_workers'].queryset = Worker.objects.filter(role__in=['LIST', 'ESHIK'])
             self.fields['assigned_workers'].label = "Ustalarni Tanlang"
+        
+        # Eshik turlari maydonini kerakli qilish
+        if worker_type == 'ESHIK':
+            self.fields['eshik_turi'].required = True
+            self.fields['eshik_turi'].widget.attrs['required'] = 'required'
+        else:
+            self.fields['eshik_turi'].required = False
+        
+        # Menejer tasdiqlashni default False qilish
+        self.fields['needs_manager_approval'].initial = False
 
-        self.fields['assigned_workers'].required = True
+    def clean(self):
+        cleaned_data = super().clean()
+        worker_type = cleaned_data.get('worker_type')
+        assigned_workers = cleaned_data.get('assigned_workers')
+        deadline = cleaned_data.get('deadline')
+        eshik_turi = cleaned_data.get('eshik_turi')
+        zamokli_eshik = cleaned_data.get('zamokli_eshik', False)
+
+        # Deadline tekshiruvi
+        if deadline and deadline < timezone.now() and not self.instance.pk:
+            self.add_error('deadline', "Muddat o'tgan sana bo'lishi mumkin emas")
+
+        # Ish turi va ustalar mutanosibligi
+        if worker_type and assigned_workers:
+            if worker_type == 'LIST':
+                for w in assigned_workers:
+                    if w.role != 'LIST':
+                        self.add_error('assigned_workers', 
+                            f"{w.get_full_name()} List ustasi emas!")
+            
+            elif worker_type == 'ESHIK':
+                for w in assigned_workers:
+                    if w.role != 'ESHIK':
+                        self.add_error('assigned_workers', 
+                            f"{w.get_full_name()} Eshik ustasi emas!")
+                
+                # Eshik turini tanlash majburiy
+                if not eshik_turi:
+                    self.add_error('eshik_turi', 
+                        "Eshik turini tanlash majburiy")
+                
+                # Zamokli eshik holatini saqlash uchun maxsus format
+                if eshik_turi:
+                    zamok_status = "Zamokli" if zamokli_eshik else "Zamoksiz"
+                    cleaned_data['eshik_turi'] = f"{eshik_turi} ({zamok_status})"
+        
+        # Panel thickness tekshiruvi
+        panel_thickness = cleaned_data.get('panel_thickness')
+        if not panel_thickness:
+            self.add_error('panel_thickness', "Panel qalinligini tanlash majburiy")
+        
+        # Minimum bir usta tanlanganligini tekshirish
+        if assigned_workers and assigned_workers.count() == 0:
+            self.add_error('assigned_workers', "Kamida birta usta tanlashingiz kerak")
+        
+        return cleaned_data
+
+
 
     def clean_order_number(self):
         order_number = self.cleaned_data.get('order_number')
@@ -115,43 +273,25 @@ class OrderForm(forms.ModelForm):
 
     def clean_pdf_file(self):
         pdf_file = self.cleaned_data.get('pdf_file')
-        if not pdf_file and self.instance and self.instance.pdf_file:
-            return self.instance.pdf_file
+        
+        # Yangi buyurtma uchun PDF majburiy
         if not self.instance.pk and not pdf_file:
             raise ValidationError("PDF chizma yuklash majburiy")
+        
+        # Mavjud buyurtmani tahrirlashda PDF bo'lmasa, eskisini saqlaymiz
+        if not pdf_file and self.instance and self.instance.pdf_file:
+            return self.instance.pdf_file
+        
+        # Fayl hajmini tekshirish
         if pdf_file and pdf_file.size > 10 * 1024 * 1024:
             raise ValidationError("Fayl hajmi 10MB dan oshmasligi kerak")
+        
+        # Fayl formati tekshiruvi
+        if pdf_file:
+            if not pdf_file.name.lower().endswith('.pdf'):
+                raise ValidationError("Faqat PDF formatidagi fayllarni yuklashingiz mumkin")
+        
         return pdf_file
-
-    def clean(self):
-        cleaned_data = super().clean()
-        worker_type = cleaned_data.get('worker_type')
-        assigned_workers = cleaned_data.get('assigned_workers')
-        deadline = cleaned_data.get('deadline')
-
-        # Deadline tekshiruvi
-        if deadline and deadline < timezone.now() and not self.instance.pk:
-            self.add_error('deadline', "Muddat o'tgan sana bo'lishi mumkin emas")
-
-        # Ish turi va ustalar mutanosibligi
-        if worker_type and assigned_workers:
-            if worker_type == 'LIST':
-                for w in assigned_workers:
-                    if w.role != 'LIST':
-                        self.add_error('assigned_workers', f"{w.get_full_name()} List ustasi emas!")
-            
-            elif worker_type == 'ESHIK':
-                for w in assigned_workers:
-                    if w.role != 'ESHIK':
-                        self.add_error('assigned_workers', f"{w.get_full_name()} Eshik ustasi emas!")
-            
-            elif worker_type == 'LIST_ESHIK':
-                has_list = any(w.role == 'LIST' for w in assigned_workers)
-                has_eshik = any(w.role == 'ESHIK' for w in assigned_workers)
-                if not has_list or not has_eshik:
-                    self.add_error('assigned_workers', "Aralash ishda kamida bitta List va bitta Eshik ustasi bo'lishi shart.")
-
-        return cleaned_data
 
 class StartImageUploadForm(forms.ModelForm):
     class Meta:
@@ -177,6 +317,47 @@ class StartImageUploadForm(forms.ModelForm):
             raise ValidationError("Faqat rasm fayllarini yuklash mumkin (JPG, PNG, GIF, BMP, WebP)")
         return start_image
     
+# forms.py faylida EshikForm classini yangilang yoki qo'shing
+# forms.py - EshikForm classini yangilang
+
+class EshikForm(forms.ModelForm):
+    """Eshik buyurtmalari uchun maxsus form"""
+    
+    # Eshik turlari uchun radio button yaratish
+    ESHIK_TURI_CHOICES = [
+        ('', '--- Tanlang ---'),  # Bo'sh variant qo'shamiz
+        ('F1', 'F1'),
+        ('F2', 'F2'),
+        ('F3', 'F3'),
+        ('F4', 'F4'),
+        ('F5', 'F5'),
+        ('F6', 'F6'),
+        ('F7', 'F7'),
+        ('F8', 'F8'),
+    ]
+    
+    eshik_turi = forms.ChoiceField(
+        choices=ESHIK_TURI_CHOICES,
+        required=False,
+        label="Eshik Turi",
+        widget=forms.Select(attrs={  # Select ni RadioSelect o'rniga ishlatamiz
+            'class': 'form-control eshik-select',
+            'id': 'id_eshik_turi_select'
+        })
+    )
+    
+    zamokli_eshik = forms.BooleanField(
+        required=False,
+        label="Zamokli Eshik",
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input', 
+            'id': 'id_zamokli_eshik'
+        })
+    )
+    
+    class Meta:
+        model = Order
+        fields = ['eshik_turi', 'zamokli_eshik']
 
 class FinishImageUploadForm(forms.ModelForm):
     class Meta:
@@ -237,132 +418,229 @@ class MaterialChoiceField(forms.ModelChoiceField):
         category_name = obj.category.name if obj.category else 'Kategoriyasiz'
         return f"{obj.name} ({obj.unit.upper()}) - Kategoriya: {category_name} - Qoldiq: {obj.quantity:.3f}"
 
+from django import forms
+from decimal import Decimal
+from .models import MaterialTransaction, Material, Category, Order
+import json
+from django import forms
+from decimal import Decimal
+from .models import Material, MaterialTransaction, Category
 
 class MaterialTransactionForm(forms.ModelForm):
-    """Omborxona materiallari uchun Kirim yoki Chiqimni kiritish."""
+    # ✅ To'g'ri field e'lon qilish
+    transaction_type = forms.ChoiceField(
+        choices=MaterialTransaction.TRANSACTION_TYPES,
+        label="Harakat turi",
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'})
+    )
     
+    material = forms.ModelChoiceField(
+        queryset=Material.objects.none(),  # Boshlang'ich qiymat
+        label="Material *",
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'form-control select2',
+            'id': 'id_material'
+        })
+    )
+    
+    quantity_change = forms.DecimalField(
+        max_digits=15,
+        decimal_places=3,
+        label="Miqdor *",
+        min_value=0.001,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': '0.001',
+            'id': 'id_quantity_change'
+        })
+    )
+    
+    received_by = forms.CharField(
+        max_length=100,
+        required=False,
+        label="Kimga/Kimdan",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Masalan: Ali Valiyev yoki 1-sex'
+        })
+    )
+    
+    notes = forms.CharField(
+        required=False,
+        label="Izoh",
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Qo\'shimcha ma\'lumotlar...'
+        })
+    )
+    
+    # ✅ Yangi maydonlar
     new_category_name = forms.CharField(
         max_length=100,
         required=False,
-        label="Yangi Kategoriya Yaratish (Ixtiyoriy)",
+        label="Yangi Kategoriya Yaratish",
         widget=forms.TextInput(attrs={
-            'class': 'form-control', 
-            'placeholder': 'Yangi kategoriya nomi...'
-        }),
+            'class': 'form-control',
+            'placeholder': 'Yangi kategoriya nomi...',
+            'id': 'id_new_category_name'
+        })
     )
     
-    transaction_type = forms.ChoiceField(
-        choices=MaterialTransaction.TRANSACTION_TYPES,
-        widget=forms.RadioSelect(),
-        label="Harakat Turi",
-        initial='OUT' 
-    )
-
     product_name = forms.CharField(
-        label="Maxsulot nomi",
         max_length=255,
         required=False,
+        label="Maxsulot nomi",
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Mahsulot nomi...',
+            'placeholder': 'Maxsulot nomi...',
+            'id': 'id_product_name'
         })
     )
-    quantity_change = forms.DecimalField(
-        label="Miqdor",
-        max_digits=10, 
-        decimal_places=3,
-        min_value=Decimal('0.001'),
-        widget=forms.NumberInput(attrs={
-            'step': '0.001', 
-            'class': 'form-control',
-            'placeholder': '0.000'
-        })
-    )
-    create_batch_barcode = forms.BooleanField(required=False, label="Partiya Barcode yaratish")
 
-
-    # ✅ TO'G'RI: Custom fieldni to'g'ri ishlatish
-    material = MaterialChoiceField(
-        queryset=Material.objects.all().select_related('category').order_by('name'),
-        label="Material Tanlang",
-        widget=forms.Select(attrs={
-            'class': 'form-control', 
-            'id': 'id_material_select'
+    create_batch_barcode = forms.BooleanField(
+        required=False, 
+        label="Partiya Barcode yaratish",
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input',
+            'id': 'id_create_batch_barcode'
         })
     )
 
     class Meta:
         model = MaterialTransaction
-        fields = ['transaction_type', 'material', 'quantity_change', 'received_by', 'order', 'notes'] 
-        
-        widgets = {
-            'received_by': forms.TextInput(attrs={
-                'class': 'form-control', 
-                'placeholder': 'Kimdan olindi (Kirim) / Kimga berildi (Chiqim)'
-            }),
-            'order': forms.Select(attrs={'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={
-                'rows': 3, 
-                'class': 'form-control',
-                'placeholder': 'Qo\'shimcha izohlar...'
-            }),
-        }
-        
+        fields = [
+            'transaction_type', 
+            'material', 
+            'quantity_change', 
+            'received_by', 
+            'notes'
+        ]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Kategoriya field'i
-        category_choices = [('', '--- Mavjud Kategoriya Tanlang ---')] + [
-            (c.id, c.name) for c in Category.objects.all()
-        ]
-        self.fields['category'] = forms.ChoiceField(
-            choices=category_choices,
+        # ✅ To'g'ri queryset o'rnatish
+        self.fields['material'].queryset = Material.objects.all().select_related('category').order_by('name')
+        
+        # ✅ Kategoriya fieldini to'g'ri e'lon qilish
+        self.fields['category'] = forms.ModelChoiceField(
+            queryset=Category.objects.all().order_by('name'),
             required=False,
             label="Mavjud Kategoriya",
-            widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_category'})
+            widget=forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'id_category'
+            })
         )
         
-        # Order field'i
-        self.fields['order'].required = False 
-        self.fields['order'].queryset = Order.objects.all().order_by('-id')
-        self.fields['order'].label = "Bog'liq buyurtma (Opsional)"
-        
-        # Radio buttonlar uchun class qo'shish
-        self.fields['transaction_type'].widget.attrs.update({
-            'class': 'form-check-input',
-        })
-    
+        # ✅ Order fieldi agar mavjud bo'lsa
+        if hasattr(self, 'Order') or 'Order' in globals():
+            try:
+                from .models import Order
+                self.fields['order'] = forms.ModelChoiceField(
+                    queryset=Order.objects.all(),
+                    required=False,
+                    label="Buyurtma",
+                    widget=forms.Select(attrs={'class': 'form-control'})
+                )
+            except:
+                self.fields['order'] = forms.CharField(
+                    max_length=100,
+                    required=False,
+                    label="Buyurtma raqami",
+                    widget=forms.TextInput(attrs={'class': 'form-control'})
+                )
+        else:
+            self.fields['order'] = forms.CharField(
+                max_length=100,
+                required=False,
+                label="Buyurtma raqami",
+                widget=forms.TextInput(attrs={'class': 'form-control'})
+            )
+
     def clean(self):
         cleaned_data = super().clean()
-        new_cat_name = cleaned_data.get('new_category_name')
-        selected_cat_id = cleaned_data.get('category')
-        
-        # Kategoriya validatsiyasi
-        if new_cat_name and selected_cat_id:
-            raise forms.ValidationError(
-                "Siz ham Yangi Kategoriya nomini, ham Mavjud Kategoriyani tanlay olmaysiz. Faqat bittasini kiriting/tanlang."
-            )
-        
-        if new_cat_name and Category.objects.filter(name__iexact=new_cat_name).exists():
-            self.add_error('new_category_name', "Bu kategoriya nomi allaqachon mavjud.")
-        
-        # Chiqim holatida qoldiq tekshiruvi
         transaction_type = cleaned_data.get('transaction_type')
-        quantity = cleaned_data.get('quantity_change')
         material = cleaned_data.get('material')
+        quantity = cleaned_data.get('quantity_change')
         
-        if material and transaction_type == 'OUT' and quantity:
-            if quantity > material.quantity:
-                self.add_error(
-                    'quantity_change', 
-                    f"Omborda yetarli miqdor mavjud emas. "
-                    f"Mavjud: {material.quantity:.3f} {material.unit.upper()}, "
-                    f"So'ralmoqda: {quantity:.3f} {material.unit.upper()}"
-                )
+        print(f"DEBUG - Material: {material}")  # Debug uchun
+        
+        # 1. Material MAJBURIY tekshiruvi
+        if not material:
+            raise forms.ValidationError({
+                'material': "Materialni tanlash majburiy!"
+            })
+        
+        # 2. Kategoriya validatsiyasi
+        new_cat = cleaned_data.get('new_category_name')
+        old_cat = cleaned_data.get('category')
+        
+        if new_cat and old_cat:
+            raise forms.ValidationError({
+                'new_category_name': "Ham yangi, ham mavjud kategoriyani tanlab bo'lmaydi.",
+                'category': "Iltimos, faqat bittasini tanlang."
+            })
+        
+        # 3. Chiqim uchun qoldiq tekshiruvi
+        if transaction_type == 'OUT' and quantity and material:
+            try:
+                # Materialni bazadan yangilash
+                material.refresh_from_db()
+                
+                if Decimal(str(quantity)) > Decimal(str(material.quantity)):
+                    raise forms.ValidationError({
+                        'quantity_change': (
+                            f"❌ Omborda yetarli qoldiq yo'q! "
+                            f"Mavjud: {material.quantity:.3f} {material.unit}, "
+                            f"So'ralgan: {quantity:.3f}"
+                        )
+                    })
+            except Exception as e:
+                raise forms.ValidationError(f"Qoldiqni tekshirishda xatolik: {str(e)}")
+        
+        # 4. Yangi kategoriya yaratish
+        if new_cat:
+            # Kategoriya mavjudligini tekshirish
+            if Category.objects.filter(name__iexact=new_cat.strip()).exists():
+                raise forms.ValidationError({
+                    'new_category_name': "Bu kategoriya allaqachon mavjud!"
+                })
         
         return cleaned_data
-
-
+    
+    def save(self, commit=True):
+        """Formani saqlash - materialni to'g'ri bog'lash"""
+        instance = super().save(commit=False)
+        
+        # ✅ Yangi kategoriya yaratish
+        new_cat_name = self.cleaned_data.get('new_category_name')
+        if new_cat_name:
+            category, created = Category.objects.get_or_create(
+                name=new_cat_name.strip(),
+                defaults={'description': f"Avtomatik yaratilgan: {new_cat_name}"}
+            )
+            # Material kategoriyasini o'zgartirish
+            if instance.material:
+                instance.material.category = category
+                instance.material.save()
+        
+        # ✅ Maxsulot nomini saqlash
+        product_name = self.cleaned_data.get('product_name')
+        if product_name and instance.material:
+            # Maxsulot nomini notes ga qo'shish
+            if instance.notes:
+                instance.notes = f"Maxsulot: {product_name}\n{instance.notes}"
+            else:
+                instance.notes = f"Maxsulot: {product_name}"
+        
+        if commit:
+            instance.save()
+            self.save_m2m()  # Agar many-to-many maydonlari bo'lsa
+        
+        return instance
 
 # forms.py - MaterialChoiceField va MaterialForm ni yangilash
 from .models import Material
