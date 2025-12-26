@@ -123,7 +123,6 @@ class Material(models.Model):
         if self.product_name:
             base_str += f" → {self.product_name}"
         return f"{base_str} (Qoldiq: {self.quantity:,.3f} {self.unit.upper()})"
-
 # =======================================================================
 # 4. ORDER MODELI
 # =======================================================================
@@ -145,7 +144,18 @@ class Order(models.Model):
         ('PANEL', 'Panel Ustasi'),
         ('UGOL', 'Ugol Ustasi'),
         ('ESHIK', 'Eshik Ustasi'),
-        ('LIST_ESHIK', 'List va Eshik aralash'),
+    ]
+    
+    ESHIK_TURI_CHOICES = [
+        ('', '--- Eshik Turini Tanlang ---'),
+        ('F1', 'F1'),
+        ('F2', 'F2'),
+        ('F3', 'F3'),
+        ('F4', 'F4'),
+        ('F5', 'F5'),
+        ('F6', 'F6'),
+        ('F7', 'F7'),
+        ('F8', 'F8'),
     ]
     
     order_number = models.CharField(max_length=50, unique=True, verbose_name="Buyurtma Raqami")
@@ -163,7 +173,22 @@ class Order(models.Model):
         verbose_name="Ish Turi (Qaysi Ustalar Uchun)",
         help_text="Bu ish qaysi turdagi ustalar uchun ekanligini belgilaydi"
     )
-
+    
+    eshik_turi = models.CharField(
+        max_length=5,
+        choices=ESHIK_TURI_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name="Eshik Turi",
+        help_text="Faqat eshik uchun: Qaysi turdagi eshik?"
+    )
+    
+    zamokli_eshik = models.BooleanField(
+        default=False,
+        verbose_name="Zamokli Eshik",
+        help_text="Faqat eshik uchun: Eshikda zamok bormi?"
+    )
+    
     needs_manager_approval = models.BooleanField(
         default=True,
         verbose_name="Menejer Tasdiqlashi Kerak",
@@ -210,7 +235,7 @@ class Order(models.Model):
     deadline_breach_alert_sent = models.BooleanField(default=False, verbose_name="Muddat Buzilganligi Ogohlantirish Yuborildi")
     delayed_assignment_alert_sent = models.BooleanField(default=False, verbose_name="Ishga Berish Kechikkanligi Ogohlantirish Yuborildi")
     telegram_notified_overdue = models.BooleanField(default=False, verbose_name="Telegramga muddat haqida xabar berilgan")
-    panel_thickness = models.CharField(max_length=50, blank=True, null=True, verbose_name="Panel Qalinligi (mm)")
+    panel_thickness = models.CharField(max_length=50, blank=True, null=True, verbose_name="Panel Qalinligi (sm)")
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='KIRITILDI', verbose_name="Hozirgi Status")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_orders', verbose_name="Kirituvchi")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Kiritilgan vaqt")
@@ -223,66 +248,50 @@ class Order(models.Model):
     def __str__(self):
         return f"Buyurtma #{self.order_number} - {self.get_status_display()}"
 
-    # def save(self, *args, **kwargs):
-    #     if self.start_image and not self.start_image_uploaded_at:
-    #         self.start_image_uploaded_at = timezone.now()
-    #     if self.finish_image and not self.finish_image_uploaded_at:
-    #         self.finish_image_uploaded_at = timezone.now()
-    #     super().save(*args, **kwargs)
-    # def save(self, *args, **kwargs):
-    #     # 🔴 Panel va Ugol ustalari uchun menejer tasdiqlash kerak emas
-    #     if self.worker_type in ['PANEL', 'UGOL']:
-    #         self.needs_manager_approval = False
-    #         # Agar yangi buyurtma bo'lsa va parent_order dan kelgan bo'lsa
-    #         if not self.pk and self.parent_order:
-    #             self.status = 'TASDIQLANDI'  # Avtomatik tasdiqlangan
-        
-    #     super().save(*args, **kwargs)
-    
-def create_panel_ugol_orders(self):
-        """Asosiy bosqichlar tugagach, Panel va Ugol uchun order ochish"""
-        # Faqat belgilangan turlar uchun ishlaydi
-        if self.worker_type in ['LIST', 'ESHIK', 'LIST_ESHIK']:
+    def create_panel_ugol_orders(self):
+        """List usta tugatganidan keyin Panel va Ugol ustalari uchun buyurtmalar yaratish"""
+        # Faqat List usta tugatgandagina ishlaydi
+        if self.worker_type == 'LIST':
             
+            # Yaratish kerak bo'lgan turlar
             next_steps = [
                 ('PANEL', 'Panel ishlari'),
                 ('UGOL', 'Ugol ishlari')
             ]
 
-        for w_type, label in next_steps:
-            new_order_number = f"{self.order_number}-{w_type}"
-            
-            if not Order.objects.filter(order_number=new_order_number).exists():
-                new_order = Order.objects.create(
-                    order_number=new_order_number,
-                    pdf_file=self.pdf_file,
-                    customer_name=self.customer_name,
-                    product_name=f"{self.product_name} ({label})",
-                    worker_type=w_type, # Bu yerda 'PANEL' yoki 'UGOL' bo'ladi
-                    parent_order=self,
-                    comment=f"Avtomatik: {self.worker_type} bosqichi #{self.order_number}dan yaratildi.",
-                    panel_kvadrat=self.panel_kvadrat,
-                    total_price=self.total_price,
-                    panel_thickness=self.panel_thickness,
-                    status='TASDIQLANDI', 
-                    created_by=self.created_by,
-                    needs_manager_approval=False
-                )
-
-                # 4. Ustani roliga qarab topib biriktiramiz
-                from .models import Worker # Circular import oldini olish
-                workers = Worker.objects.filter(role=w_type)
-                
-                if workers.exists():
-                    new_order.assigned_workers.set(workers)
+            for w_type, label in next_steps:
+                # Dublikat bo'lmasligi uchun tekshiramiz
+                new_order_number = f"{self.order_number}-{w_type}"
+                if not Order.objects.filter(order_number=new_order_number).exists():
                     
-                    # 5. Bildirishnoma
-                    for w in workers:
-                        Notification.objects.create(
-                            user=w.user,
-                            order=new_order,
-                            message=f"Yangi ish: {new_order.order_number}. List/Eshik bosqichi yakunlandi."
-                        )
+                    new_order = Order.objects.create(
+                        order_number=new_order_number,
+                        pdf_file=self.pdf_file,
+                        customer_name=self.customer_name,
+                        product_name=f"{self.product_name} ({label})",
+                        worker_type=w_type,
+                        parent_order=self,
+                        comment=f"Avtomatik: List usta #{self.order_number} buyurtmasidan nusxalandi.",
+                        panel_kvadrat=self.panel_kvadrat,
+                        total_price=self.total_price,
+                        panel_thickness=self.panel_thickness,
+                        status='TASDIQLANDI', # List usta bitirgan bo'lsa, bu allaqachon tasdiqlangan
+                        created_by=self.created_by,
+                        needs_manager_approval=False
+                    )
+
+                    # O'sha roldagi barcha ustalarni topib biriktiramiz
+                    workers = Worker.objects.filter(role=w_type)
+                    if workers.exists():
+                        new_order.assigned_workers.set(workers)
+                        
+                        # Har bir ustaga bildirishnoma
+                        for w in workers:
+                            Notification.objects.create(
+                                user=w.user,
+                                order=new_order,
+                                message=f"Yangi ish keldi: {new_order.order_number}. List usta jarayonni bitirdi."
+                            )
 # =======================================================================
 # 5. MATERIAL TRANSACTION MODELI
 # =======================================================================
