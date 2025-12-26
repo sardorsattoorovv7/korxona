@@ -480,6 +480,85 @@
         margin: 0;
     }
     
+    /* Eshik Specific Styles */
+    .eshik-fields {
+        background: rgb(255, 255, 255);
+        border: 2px solid #c5c5c5;
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        margin-top: 1rem;
+        display: block;
+    }
+    
+    .eshik-fields.show {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .eshik-fields h4 {
+        color: #0369a1;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .checkbox-modern {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .checkbox-modern input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        cursor: pointer;
+        margin-left: 1px;
+    }
+    
+    .checkbox-modern label {
+        font-weight: 500;
+        color: var(--text-primary);
+        cursor: pointer;
+        margin-bottom: 0;
+        margin-left: 25px;
+    }
+    
+    /* File Input */
+    .file-input-wrapper {
+        position: relative;
+    }
+    
+    .file-input-label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: var(--transition);
+        pointer-events: none;
+    }
+    
+    .file-input-wrapper input[type="file"]:hover + .file-input-label {
+        border-color: var(--accent-blue);
+        background: #f8fafc;
+    }
+    
     /* Responsive Design */
     @media (max-width: 768px) {
         .container-modern {
@@ -670,18 +749,7 @@
                     <div class="section-icon">🛠️</div>
                     <h3 class="section-title">Ish Turi va Ustalar</h3>
                 </div>
-                
-                <!-- Work Type Cards -->
-                <div class="work-type-card">
-                    <h4>📋 List Ish Turi</h4>
-                    <p>List usta ishni tugatgandan so'ng, Panel va Ugol ustalarga avtomatik buyurtma yuboriladi.</p>
-                </div>
-                
-                <div class="work-type-card">
-                    <h4>🚪 Eshik Ish Turi</h4>
-                    <p>Eshik ustasi faqat eshik bilan bog'liq ishlarni bajaradi.</p>
-                </div>
-                
+              
                 <!-- Ish Turi (Worker Type) -->
                 <div class="form-field">
                     <label for="{{ form.worker_type.id_for_label }}">
@@ -693,6 +761,7 @@
                         <span>🔧 Admin faqat List yoki Eshik tanlashi mumkin</span>
                     </div>
                 </div>
+                
                 
                 <!-- Ustalarni Tanlash -->
                 <div class="form-field">
@@ -742,7 +811,7 @@
                 
                 <div class="form-field">
                     <label for="{{ form.panel_thickness.id_for_label }}">
-                        Panel Qalinligi (mm)
+                        Panel Qalinligi (sm)
                         <span class="required-star">*</span>
                     </label>
                     {{ form.panel_thickness }}
@@ -773,6 +842,11 @@
                             <span>yoki bu erga tashlang</span>
                         </div>
                     </div>
+                    {% if form.pdf_file.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.pdf_file.errors }}
+                        </div>
+                    {% endif %}
                 </div>
                 
                 <div class="form-field">
@@ -783,6 +857,36 @@
                     </div>
                 </div>
             </div>
+
+
+            <!-- Eshik uchun maxsus maydonlar -->
+                <div class="eshik-fields" id="eshik-fields">
+                    <h4>🚪 Eshik Tafsilotlari</h4>
+                    
+                    <div class="form-field">
+                        <label for="{{ form.eshik_turi.id_for_label }}">
+                            Eshik Turi
+                            <span class="required-star">*</span>
+                        </label>
+                        {{ form.eshik_turi }}
+                        <div class="field-hint">
+                            <span>🔑 F1 dan F8 gacha eshik turlaridan birini tanlang</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-field">
+                        <div class="checkbox-modern">
+                            {{ form.zamokli_eshik }}
+                            <label for="{{ form.zamokli_eshik.id_for_label }}">
+                                Zamokli Eshik
+                            </label>
+                        </div>
+                        <div class="field-hint">
+                            <span>🔒 Eshikda zamok borligini belgilang</span>
+                        </div>
+                    </div>
+                </div>
+                
         </div>
 
         <!-- Hidden Fields -->
@@ -793,6 +897,7 @@
             {{ form.start_image }}
             {{ form.finish_image }}
             {{ form.status }}
+            {{ form.needs_manager_approval }}
         </div>
 
         <!-- Submit Section -->
@@ -814,14 +919,17 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Ish turi tanlanganda ustalarni filtr qilish
         const workerTypeSelect = document.getElementById('id_worker_type');
+        const eshikFields = document.getElementById('eshik-fields');
+        const eshikTuriField = document.getElementById('id_eshik_turi');
+        const zamokliEshikField = document.getElementById('id_zamokli_eshik');
         const workerCheckboxes = document.querySelectorAll('.worker-checkbox');
         
         // Ish turi o'zgarganda
         if (workerTypeSelect) {
             workerTypeSelect.addEventListener('change', function() {
                 const selectedWorkType = this.value;
+                toggleEshikFields(selectedWorkType);
                 updateWorkersVisibility(selectedWorkType);
-                updateProgress();
                 
                 // Eslatma chiqarish
                 if (selectedWorkType === 'LIST') {
@@ -829,11 +937,50 @@
                         alert('💡 Eslatma: List usta ishni tugatgandan so\'ng, Panel va Ugol ustalarga avtomatik buyurtma yuboriladi.');
                     }, 300);
                 }
+                
+                // Admin uchun faqat List va Eshik ish turlarini tanlash imkoniyati
+                if (selectedWorkType === 'PANEL' || selectedWorkType === 'UGOL') {
+                    alert('⚠️ Eslatma: Admin faqat List yoki Eshik ish turini tanlashi mumkin!');
+                    workerTypeSelect.value = '';
+                    toggleEshikFields('');
+                    updateWorkersVisibility('');
+                }
             });
             
             // Boshlang'ich holatni tekshirish
-            if (workerTypeSelect.value) {
-                updateWorkersVisibility(workerTypeSelect.value);
+             if (workerTypeSelect.value) {
+        toggleEshikFields(workerTypeSelect.value);
+            } else {
+                // Default: optional ko‘rsatish, required emas
+                eshikFields.classList.add('show');
+                if (eshikTuriField) eshikTuriField.required = false;
+                if (zamokliEshikField) zamokliEshikField.disabled = false;
+            }
+        }
+        
+        function toggleEshikFields(workType) {
+            if (workType === 'ESHIK') {
+                eshikFields.classList.add('show');
+                if (eshikTuriField) {
+                    eshikTuriField.required = true;
+                    eshikTuriField.closest('.form-field').querySelector('label .required-star').style.display = 'inline';
+                }
+                if (zamokliEshikField) {
+                    zamokliEshikField.disabled = false;
+                    zamokliEshikField.closest('.checkbox-modern').style.opacity = '1';
+                }
+            } else {
+                eshikFields.classList.remove('show');
+                if (eshikTuriField) {
+                    eshikTuriField.required = false;
+                    eshikTuriField.value = '';
+                    eshikTuriField.closest('.form-field').querySelector('label .required-star').style.display = 'none';
+                }
+                if (zamokliEshikField) {
+                    zamokliEshikField.checked = false;
+                    zamokliEshikField.disabled = true;
+                    zamokliEshikField.closest('.checkbox-modern').style.opacity = '0.5';
+                }
             }
         }
         
@@ -843,23 +990,24 @@
                 if (!label) return;
                 
                 const badge = checkbox.querySelector('.worker-badge');
-                let workerType = '';
+                let workerTypeFromBadge = '';
                 
                 if (badge) {
-                    workerType = badge.textContent.trim().toUpperCase();
+                    workerTypeFromBadge = badge.textContent.trim().toUpperCase();
                 } else if (label.textContent.includes('List')) {
-                    workerType = 'LIST';
+                    workerTypeFromBadge = 'LIST';
                 } else if (label.textContent.includes('Eshik')) {
-                    workerType = 'ESHIK';
+                    workerTypeFromBadge = 'ESHIK';
                 }
                 
-                if (workType && workerType) {
-                    if (workerType === workType) {
+                if (workType && workerTypeFromBadge) {
+                    if (workerTypeFromBadge === workType) {
                         checkbox.style.display = 'block';
                         checkbox.style.opacity = '1';
                         const checkboxInput = checkbox.querySelector('input[type="checkbox"]');
                         if (checkboxInput) {
                             checkboxInput.disabled = false;
+                            checkboxInput.style.opacity = '1';
                         }
                     } else {
                         checkbox.style.display = 'none';
@@ -868,14 +1016,24 @@
                         if (checkboxInput) {
                             checkboxInput.checked = false;
                             checkboxInput.disabled = true;
+                            checkboxInput.style.opacity = '0.3';
                         }
+                    }
+                } else if (!workType) {
+                    // Agar ish turi tanlanmagan bo'lsa, barcha ustalarni ko'rsatish
+                    checkbox.style.display = 'block';
+                    checkbox.style.opacity = '0.5';
+                    const checkboxInput = checkbox.querySelector('input[type="checkbox"]');
+                    if (checkboxInput) {
+                        checkboxInput.disabled = true;
+                        checkboxInput.style.opacity = '0.3';
                     }
                 }
             });
             
             // Agar hech qanday usta ko'rinmasa, xabar chiqarish
             const visibleWorkers = Array.from(workerCheckboxes).filter(cb => 
-                cb.style.display !== 'none'
+                cb.style.display !== 'none' && cb.style.opacity === '1'
             );
             
             if (visibleWorkers.length === 0 && workerTypeSelect && workerTypeSelect.value) {
@@ -894,7 +1052,7 @@
                         <p style="color: #92400e; font-weight: 500;">
                             ⚠️ Bu ish turi uchun mavjud usta yo'q.
                             <br>
-                            <small>Iltimos, admin panel orqali "${workType}" turidagi ustalar qo'shing.</small>
+                            <small>Iltimos, admin panel orqali "${workerTypeSelect.value}" turidagi ustalar qo'shing.</small>
                         </p>
                     `;
                     container.appendChild(message);
@@ -911,16 +1069,18 @@
         const progressSteps = document.querySelectorAll('.progress-step');
         
         // File input preview
-        const fileInput = document.querySelector('input[type="file"]');
-        const fileLabel = document.querySelector('.file-input-label span:first-child');
+        const fileInput = document.querySelector('#id_pdf_file');
         
-        if (fileInput && fileLabel) {
+        if (fileInput) {
             fileInput.addEventListener('change', function(e) {
                 if (this.files && this.files[0]) {
                     const fileName = this.files[0].name;
-                    fileLabel.textContent = `📎 ${fileName}`;
-                    if (fileLabel.nextElementSibling) {
-                        fileLabel.nextElementSibling.textContent = 'Fayl tanlandi';
+                    const fileLabel = this.nextElementSibling;
+                    if (fileLabel) {
+                        const span = fileLabel.querySelector('span:first-child');
+                        if (span) {
+                            span.textContent = `📎 ${fileName}`;
+                        }
                     }
                 }
             });
@@ -955,6 +1115,15 @@
                 stepsCompleted++;
             }
             
+            // Eshik uchun qo'shimcha tekshirish
+            if (workerType && workerType.value === 'ESHIK') {
+                const eshikTuri = document.querySelector('[name="eshik_turi"]');
+                if (eshikTuri && eshikTuri.value === '') {
+                    // Eshik turi tanlanmagan bo'lsa, progressni kamaytirish
+                    stepsCompleted = Math.min(stepsCompleted, 2);
+                }
+            }
+            
             // Update progress steps
             progressSteps.forEach((step, index) => {
                 if (index < stepsCompleted) {
@@ -983,6 +1152,26 @@
         
         // Form submission animation
         form.addEventListener('submit', function(e) {
+            // Ish turini tekshirish
+            const workerType = document.querySelector('[name="worker_type"]');
+            if (workerType && (workerType.value === 'PANEL' || workerType.value === 'UGOL')) {
+                e.preventDefault();
+                alert('❌ Xatolik: Admin faqat List yoki Eshik ish turini tanlashi mumkin!');
+                workerType.focus();
+                return false;
+            }
+            
+            // Eshik turi tanlashni tekshirish
+            if (workerType && workerType.value === 'ESHIK') {
+                const eshikTuri = document.querySelector('[name="eshik_turi"]');
+                if (!eshikTuri || eshikTuri.value === '') {
+                    e.preventDefault();
+                    alert('❌ Xatolik: Eshik turini tanlash majburiy!');
+                    eshikTuri.focus();
+                    return false;
+                }
+            }
+            
             const submitBtn = this.querySelector('.btn-submit-modern');
             if (submitBtn) {
                 submitBtn.innerHTML = `
@@ -992,25 +1181,6 @@
                 submitBtn.disabled = true;
             }
         });
-        
-        // Ish turini tanlashda validatsiya
-        if (workerTypeSelect) {
-            const oldValue = workerTypeSelect.value;
-            
-            workerTypeSelect.addEventListener('focus', function() {
-                oldValue = this.value;
-            });
-            
-            workerTypeSelect.addEventListener('change', function() {
-                if (this.value === 'PANEL' || this.value === 'UGOL') {
-                    alert('⚠️ Eslatma: Admin faqat List yoki Eshik ish turini tanlashi mumkin!');
-                    this.value = oldValue;
-                    updateWorkersVisibility(this.value);
-                } else {
-                    oldValue = this.value;
-                }
-            });
-        }
     });
 </script>
 {% endblock %}
