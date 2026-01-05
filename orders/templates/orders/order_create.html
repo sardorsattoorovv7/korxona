@@ -1,216 +1,21 @@
-{% extends "orders/base.html" %} 
-{% load static %}
-
-{% block title %}Yangi Buyurtma Kiritish{% endblock %}
+{% extends 'base.html' %}
 
 {% block content %}
-    <style>
-        /* SIZNING STIL KODINGIZ O'ZGARISHSIZ QOLADI */
-        :root {
-            --primary-color: #0d9488;
-            --primary-action: #10b981;
-            --secondary-color: #0ea5e9;
-            --background-light: #f9fafb;
-            --card-bg: #ffffff;
-            --text-dark: #1f2937;
-            --input-border: #d1d5db;
-            --alert-danger-bg: #fef2f2;
-            --alert-danger-text: #b91c1c;
-        }
-        
-        body {
-            background-color: var(--background-light);
-        }
-        .container-modern {
-            width: 100%;
-            max-width: 700px;
-            margin: 2rem auto;
-            background: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); 
-        }
-
-        .header-box {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid var(--input-border);
-            padding-bottom: 1rem;
-        }
-        h1 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 2rem;
-            font-weight: 700;
-        }
-
-        .btn-back-modern {
-            color: var(--text-dark);
-            text-decoration: none;
-            font-weight: 500;
-            padding: 0.6rem 1rem;
-            border: 1px solid var(--input-border);
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .btn-back-modern:hover {
-            color: var(--primary-color);
-            border-color: var(--primary-color);
-            background-color: #eff6ff;
-        }
-        
-        .form-field {
-            margin-bottom: 1.5rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            font-size: 1rem;
-        }
-        
-        input[type="text"],
-        input[type="number"],
-        input[type="file"],
-        input[type="datetime-local"],
-        select,
-        textarea { /* textarea ham qo'shildi */
-            width: 100%;
-            padding: 0.8rem 1rem;
-            border: 1px solid var(--input-border);
-            border-radius: 0.5rem;
-            box-sizing: border-box;
-            transition: border-color 0.3s, box-shadow 0.3s;
-            font-size: 1rem;
-            color: var(--text-dark);
-            background-color: white;
-        }
-        input:focus, select:focus, textarea:focus { /* textarea ham focusga qo'shildi */
-            border-color: var(--secondary-color);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
-        }
-
-        input[type="file"] {
-            padding: 0.8rem;
-            cursor: pointer;
-        }
-        
-        .checkbox-container {
-            border: 1px solid var(--input-border);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            background-color: var(--background-light);
-            max-height: 250px; 
-            overflow-y: auto;
-        }
-        .checkbox-container::-webkit-scrollbar {
-            width: 6px;
-        }
-        .checkbox-container::-webkit-scrollbar-thumb {
-            background-color: #ccc;
-            border-radius: 3px;
-        }
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem;
-            margin: 0;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
-        .checkbox-item:hover {
-            background-color: #f0fdf4;
-            cursor: pointer;
-        }
-        .checkbox-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin-right: 12px;
-            accent-color: var(--primary-color);
-        }
-        .checkbox-item label {
-            margin-bottom: 0;
-            font-weight: 400;
-            cursor: pointer;
-            color: var(--text-dark);
-        }
-
-        .error-message-modern {
-            background-color: var(--alert-danger-bg);
-            color: var(--alert-danger-text);
-            border: 1px solid #fca5a5;
-            padding: 1.25rem;
-            border-radius: 0.5rem;
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
-        }
-        .error-message-modern p {
-            font-weight: 700;
-            margin-top: 0;
-        }
-        .error-message-modern ul {
-            margin: 0.5rem 0 0 1.25rem;
-            padding: 0;
-            list-style-type: disc;
-        }
-        
-        .btn-submit-modern {
-            display: block;
-            width: 100%;
-            padding: 1rem;
-            background-color: var(--primary-action);
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 1.15rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 2rem;
-            transition: background-color 0.3s ease, transform 0.1s, box-shadow 0.2s;
-            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
-        }
-        .btn-submit-modern:hover {
-            background-color: #059669;
-            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.6);
-        }
-        .btn-submit-modern:active {
-            transform: translateY(1px);
-        }
-
-        @media (max-width: 600px) {
-            .container-modern {
-                margin: 10px;
-                padding: 1.5rem;
-                border-radius: 0.75rem;
-            }
-            h1 {
-                font-size: 1.75rem;
-            }
-        }
-    </style>
-
-    <div class="container-modern">
-        
-        <div class="header-box">
-            <h1>Buyurtma Kiritish 📝</h1>
-            <a href="{% url 'order_list' %}" class="btn-back-modern">⬅️ Ro'yxatga Qaytish</a>
+<div class="container mt-4 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"><i class="fas fa-plus-circle"></i> Yangi Buyurtma Kiritish</h3>
         </div>
-
-        {# Xato Xabarlari #}
-        {% if form.errors %}
-            <div class="error-message-modern">
-                <p>⚠️ **Forma yuborishda xato yuz berdi.** Iltimos, quyidagi xatolarni tekshiring:</p>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" id="orderForm">
+                {% csrf_token %}
+                {% if form.errors %}
+            <div class="alert alert-danger">
+                <strong>Xatoliklarni tuzating:</strong>
                 <ul>
                     {% for field in form %}
                         {% for error in field.errors %}
-                            <li>**{{ field.label }}**: {{ error }}</li>
+                            <li>{{ field.label }}: {{ error }}</li>
                         {% endfor %}
                     {% endfor %}
                     {% for error in form.non_field_errors %}
@@ -219,104 +24,120 @@
                 </ul>
             </div>
         {% endif %}
-
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %} 
-            
-            <div class="form-field">
-                <label for="{{ form.order_number.id_for_label }}">Buyurtma Raqami: <span style="color:red">*</span></label>
-                {{ form.order_number }}
-            </div>
-            
-            <div class="form-field">
-                <label for="{{ form.customer_name.id_for_label }}">Xaridor Nomi: <span style="color:red">*</span></label>
-                {{ form.customer_name }}
-            </div>
-
-            {# 💡 YANGI QO'SHILGAN MAYDON: product_name #}
-            <div class="form-field">
-                <label for="{{ form.product_name.id_for_label }}">Mahsulot Nomi:</label>
-                {{ form.product_name }}
-            </div>
-
-            <div class="form-field">
-                <label for="{{ form.panel_kvadrat.id_for_label }}">Panel Kvadrat Metri (m²):</label>
-                {{ form.panel_kvadrat }}
-            </div>
-            
-            <div class="form-field">
-                <label for="{{ form.total_price.id_for_label }}">Umumiy Narx (Summa):</label>
-                {{ form.total_price }}
-            </div>
-
-            <div class="form-field">
-                <label for="{{ form.deadline.id_for_label }}">⏳ Belgilangan Muddat (Deadline):</label>
-                {{ form.deadline }}
-                <small style="display: block; color: #6b7280; margin-top: 5px;">
-                    Usta buyurtmani shu sana va vaqtgacha tugatishi kerak.
-                </small>
-            </div>
-            
-            <div class="form-field">
-                <label for="{{ form.pdf_file.id_for_label }}">PDF Fayl (Chizma): <span style="color:red">*</span></label>
-                {{ form.pdf_file }}
-            </div>
-
-            {# 💡 YANGI QO'SHILGAN MAYDON: comment (Ixtiyoriy bo'lishi kerak) #}
-            <div class="form-field">
-                <label for="{{ form.comment.id_for_label }}">Izoh (Menejer uchun):</label>
-                {{ form.comment }}
-            </div>
-            
-            {# 💡 YANGI QO'SHILGAN MAYDON: worker_comment (Odatda bo'sh qoladi) #}
-            <div class="form-field" style="display:none;"> 
-                <label for="{{ form.worker_comment.id_for_label }}">Usta Izohlari:</label>
-                {{ form.worker_comment }}
-            </div>
-            
-            {# 💡 YANGI QO'SHILGAN MAYDONLAR: Boshlash/Tugatish vaqtlari va Rasmlar (Odatda bo'sh qoladi) #}
-            <div class="form-field" style="display:none;"> 
-                <label for="{{ form.worker_started_at.id_for_label }}">Ish boshlash vaqti:</label>
-                {{ form.worker_started_at }}
-            </div>
-            <div class="form-field" style="display:none;"> 
-                <label for="{{ form.worker_finished_at.id_for_label }}">Ish tugatish vaqti:</label>
-                {{ form.worker_finished_at }}
-            </div>
-            <div class="form-field" style="display:none;"> 
-                <label for="{{ form.start_image.id_for_label }}">Boshlash rasmi:</label>
-                {{ form.start_image }}
-            </div>
-            <div class="form-field" style="display:none;"> 
-                <label for="{{ form.finish_image.id_for_label }}">Tugatish rasmi:</label>
-                {{ form.finish_image }}
-            </div>
-            
-            {# 💡 YANGI QO'SHILGAN MAYDON: status (Kirgizishda default bo'lishi kerak) #}
-            <div class="form-field" style="display:none;"> 
-                <label for="{{ form.status.id_for_label }}">Status:</label>
-                {{ form.status }}
-            </div>
-
-            <div class="form-field">
-                <label class="checkbox-label">🛠️ Buyurtmaga Tayinlanadigan Ustalar:</label>
-                
-                <div class="checkbox-container">
-                    {# Checkbox'lar ro'yxatini to'g'ri render qilish #}
-                    {% for checkbox in form.assigned_workers %}
-                        <div class="checkbox-item">
-                            {{ checkbox.tag }} 
-                            <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                <div class="row">
+                    <div class="col-md-6 border-right">
+                        <h5 class="text-secondary border-bottom pb-2">Asosiy Ma'lumotlar</h5>
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">PDF Chizma (Majburiy)</label>
+                            {{ form.pdf_file }}
                         </div>
-                    {% empty %}
-                        <p style="color:var(--alert-danger-text); margin: 0; font-weight: 500;">⚠️ Tizimda hali ustalar ro'yxati yaratilmagan. Ustalar Admin Panelda qo'shilishi kerak.</p>
-                    {% endfor %}
-                </div>
-            </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label>Mijoz ID</label>
+                                {{ form.customer_unique_id }}
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label>Xaridor Nomi</label>
+                                {{ form.customer_name }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label>Mahsulot Nomi</label>
+                            {{ form.product_name }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-danger font-weight-bold">Ish Turi (Navbatdagi Usta)</label>
+                            {{ form.worker_type }}
+                        </div>
+                    </div>
 
-            <button type="submit" class="btn-submit-modern">
-                <i class="fas fa-cloud-upload-alt me-2"></i> Buyurtmani Yuklash va Kiritish
-            </button>
-        </form>
+                    <div class="col-md-6">
+                        <h5 class="text-secondary border-bottom pb-2">Texnik Parametrlar</h5>
+                        
+                        <div id="eshik_fields" style="display:none;" class="p-3 bg-warning-light border rounded mb-3">
+                            <h6><i class="fas fa-door-open"></i> Eshik Ma'lumotlari</h6>
+                            <div class="mb-2">
+                                <label>Eshik Turi</label>
+                                {{ form.eshik_turi }}
+                            </div>
+                            <div class="form-check">
+                                {{ form.zamokli_eshik }}
+                                <label class="form-check-label">Zamokli eshikmi?</label>
+                            </div>
+                        </div>
+
+                        <div id="panel_fields" style="display:none;" class="p-3 bg-info-light border rounded mb-3">
+                            <h6><i class="fas fa-layer-group"></i> Panel Ma'lumotlari</h6>
+                            <div class="row">
+                                <div class="col-6 mb-2">{{ form.panel_type.label }}{{ form.panel_type }}</div>
+                                <div class="col-6 mb-2">{{ form.panel_subtype.label }}{{ form.panel_subtype }}</div>
+                                <div class="col-6 mb-2">{{ form.panel_thickness.label }}{{ form.panel_thickness }}</div>
+                                <div class="col-6 mb-2">Kvadrat (m²){{ form.panel_kvadrat }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Ustalar (Bir nechta tanlash mumkin)</label>
+                            <div class="border p-2 rounded bg-light" style="max-height: 150px; overflow-y: auto;">
+                                {{ form.assigned_workers }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3"><label>Umumiy Narx</label>{{ form.total_price }}</div>
+                    <div class="col-md-4 mb-3"><label>Zalog</label>{{ form.prepayment }}</div>
+                    <div class="col-md-4 mb-3"><label>Deadline</label>{{ form.deadline }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <label>Admin Izohi</label>
+                    {{ form.comment }}
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'order_list' %}" class="btn btn-secondary me-2">Bekor qilish</a>
+                    <button type="submit" class="btn btn-success px-5">Buyurtmani Saqlash</button>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const workerTypeSelect = document.getElementById('id_worker_type');
+        const eshikFields = document.getElementById('eshik_fields');
+        const panelFields = document.getElementById('panel_fields');
+
+        function toggleFields() {
+            const val = workerTypeSelect.value;
+            // ESHIK yoki LIST_ESHIK bo'lsa eshik maydonlarini ko'rsat
+            if (val === 'ESHIK' || val === 'LIST_ESHIK') {
+                eshikFields.style.display = 'block';
+            } else {
+                eshikFields.style.display = 'none';
+            }
+
+            // LIST yoki LIST_ESHIK bo'lsa panel maydonlarini ko'rsat
+            if (val === 'LIST' || val === 'LIST_ESHIK') {
+                panelFields.style.display = 'block';
+            } else {
+                panelFields.style.display = 'none';
+            }
+        }
+
+        workerTypeSelect.addEventListener('change', toggleFields);
+        toggleFields(); // Sahifa yuklanganda ishlashi uchun
+    });
+</script>
+
+<style>
+    .bg-warning-light { background-color: #fff9e6; }
+    .bg-info-light { background-color: #e6f7ff; }
+    label { font-weight: 500; font-size: 0.9rem; }
+</style>
 {% endblock %}
