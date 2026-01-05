@@ -261,7 +261,7 @@ def order_list(request):
     
     # Hammasini vaqt bo'yicha ko'rsatadi (asosiy va child birlashtirilgan)
     orders = Order.objects.all().order_by('-created_at')
-    
+    customers_count = Order.objects.values('customer_unique_id').distinct().count()
     # Filtrlash
     now = timezone.now()
     if filter_type == 'completed':
@@ -435,6 +435,7 @@ def order_list(request):
         'panel_completed': panel_completed,
         'ugul_completed': ugul_completed,
         'is_storekeeper': request.user.username.lower() == 'omborchi' or 'store' in request.user.username.lower(),
+        'customers_count': customers_count,
     }
     return render(request, 'orders/order_list.html', context)
 
@@ -763,25 +764,22 @@ def worker_panel(request):
         return redirect('order_list')
     
     # Barcha ustalarni olish
-    workers = Worker.objects.all().select_related('user')
-    
-    # Har bir usta uchun statistikani hisoblash
-    for worker in workers:
-        worker.completed_orders_count = Order.objects.filter(
-            assigned_workers=worker,
-            status__in=['TAYYOR', 'BAJARILDI']
-        ).count()
-        
-        worker.total_kvadrat = Order.objects.filter(
-            assigned_workers=worker,
-            status__in=['TAYYOR', 'BAJARILDI']
-        ).aggregate(Sum('panel_kvadrat'))['panel_kvadrat__sum'] or 0
-    
+    workers = Worker.objects.all().select_related('user').annotate(
+        completed_orders_count=Count(
+            'orders', 
+            filter=Q(orders__status__in=['TAYYOR', 'BAJARILDI'])
+        ),
+        total_kvadrat=Sum(
+            'orders__panel_kvadrat', 
+            filter=Q(orders__status__in=['TAYYOR', 'BAJARILDI'])
+        )
+    )
+
     context = {
         'workers': workers,
         'is_glavniy_admin': is_glavniy_admin,
         'is_production_boss': is_production_boss,
-        'is_observer': is_observer,  # ✅ YANGI
+        'is_observer': is_observer,
     }
     
     return render(request, 'orders/worker_panel.html', context)
@@ -812,7 +810,13 @@ def worker_orders(request, worker_id):
     status_filter = request.GET.get('status', '')
     
     # Ustaning buyurtmalari
-    orders = Order.objects.filter(assigned_workers=worker).order_by('-created_at')
+    # orders = Order.objects.filter(assigned_workers=worker).order_by('-created_at')
+    # select_related - bog'langan model ma'lumotlarini bitta so'rovda oladi
+# prefetch_related - ManyToMany (ustalar) bog'liqligini tezlashtiradi
+    orders = Order.objects.filter(assigned_workers=worker)\
+        .select_related('parent_order')\
+        .prefetch_related('assigned_workers')\
+        .order_by('-created_at')
     
     # Filtrlash
     if start_date:
@@ -850,14 +854,13 @@ def worker_orders(request, worker_id):
 # ----------------------------------------------------------------------
 # QOLGAN FUNKSIYALAR
 # views.py - order_create funksiyasini yangilang
-
 @login_required
 @user_passes_test(
     lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin') or is_in_group(u, 'Manager'),
     login_url='/login/'
 )
 def order_create(request):
-    """Buyurtma yaratish - eshik qo'shish imkoniyati bilan"""
+    """Buyurtma yaratish - mijoz uchun bir martalik unikal raqam bilan"""
     
     if request.method == 'POST':
         form = OrderForm(request.POST, request.FILES)
@@ -867,65 +870,83 @@ def order_create(request):
                 order = form.save(commit=False)
                 order.created_by = request.user
                 
+                # -------------------------------
+                # CUSTOMER LOGIC: mijoz ID bilan
+                customer_unique_id = form.cleaned_data.get('customer_unique_id', '').strip()
+                customer_name = form.cleaned_data.get('customer_name', '').strip()
+                customer_phone = form.cleaned_data.get('customer_phone', '').strip() or None
+
+                if not customer_unique_id:
+                    messages.error(request, "❌ Iltimos, mijoz uchun unikal raqam kiriting.")
+                    return render(request, 'orders/order_create.html', {'form': form})
+
+                # Mijoz mavjudligini tekshirish
+                customer, created = Customer.objects.get_or_create(
+                    unique_id=customer_unique_id,
+                    defaults={
+                        'name': customer_name,
+                        'phone': customer_phone
+                    }
+                )
+
+                # Orderga bog'lash
+                order.customer = customer
+                # -------------------------------
+
                 # Ish turi bo'yicha holatni belgilash
                 worker_type = form.cleaned_data.get('worker_type', 'LIST')
-                
-                # Admin uchun status har doim KIRITILDI bo'ladi
                 order.status = 'KIRITILDI'
-                
-                # ✅ Eshik uchun maxsus saqlash - TO'G'RI ISHLASHI UCHUN
+
+                # ✅ Eshik maxsus saqlash
                 if worker_type == 'ESHIK':
                     eshik_turi = form.cleaned_data.get('eshik_turi', '')
                     zamokli_eshik = form.cleaned_data.get('zamokli_eshik', False)
                     
-                    # Agar eshik turi allaqachon formatlangan bo'lsa (F1 (Zamokli))
                     if '(' in str(eshik_turi):
                         order.eshik_turi = eshik_turi
                     else:
-                        # Formatlash kerak
                         zamok_status = "Zamokli" if zamokli_eshik else "Zamoksiz"
                         order.eshik_turi = f"{eshik_turi} ({zamok_status})" if eshik_turi else ""
                 
-                # Menejer tasdiqlash sozlamasi
+                # Menejer tasdiqlash
                 order.needs_manager_approval = form.cleaned_data.get('needs_manager_approval', True)
-                
-                # Panel qalinligini saqlash
                 order.panel_thickness = form.cleaned_data.get('panel_thickness')
                 
                 # Buyurtmani saqlash
                 order.save()
-                form.save_m2m()  # Many-to-many maydonlarini saqlash
+                form.save_m2m()
                 
-                # Bildirishnomalarni yuborish
+                # Bildirishnomalar
                 send_notifications_for_new_order(order)
-                
-                # Agar List usta uchun bo'lsa, eslatma berish
+
                 if worker_type == 'LIST':
-                    messages.info(request, 
-                        f"⚠️ List usta ishni tugatgandan so'ng, "
-                        f"Panel va Ugol ustalari uchun avtomatik buyurtmalar yaratiladi."
+                    messages.info(
+                        request,
+                        "⚠️ List usta ishni tugatgandan so'ng, "
+                        "Panel va Ugol ustalari uchun avtomatik buyurtmalar yaratiladi."
                     )
                 
-                messages.success(request, 
+                messages.success(
+                    request,
                     f"✅ Buyurtma №{order.order_number} muvaffaqiyatli kiritildi! "
-                    f"Ish turi: {order.get_worker_type_display()}"
+                    f"Mijoz: {customer.name} | Unikal raqam: {customer.unique_id} | Ish turi: {order.get_worker_type_display()}"
                 )
                 
                 return redirect('order_list')
-                
+            
             except Exception as e:
-                messages.error(request, 
+                messages.error(
+                    request,
                     f"❌ Xatolik yuz berdi: {str(e)}"
                 )
                 return render(request, 'orders/order_create.html', {'form': form})
         else:
-            # Formada xatolik bo'lsa
-            messages.error(request, 
+            messages.error(
+                request,
                 "❌ Formani to'ldirishda xatoliklar mavjud. "
                 "Iltimos, barcha majburiy maydonlarni to'ldiring."
             )
     else:
-        # GET so'rovi
         form = OrderForm()
     
     context = {
@@ -933,7 +954,8 @@ def order_create(request):
         'title': 'Yangi Buyurtma Kiritish',
     }
     return render(request, 'orders/order_create.html', context)
-@login_required
+
+
 @login_required
 def order_edit(request, pk):
     order = get_object_or_404(Order, pk=pk)
@@ -941,15 +963,17 @@ def order_edit(request, pk):
         form = OrderForm(request.POST, request.FILES, instance=order)
         if form.is_valid():
             form.save()
-            messages.success(request, "Buyurtma tahrirlandi.")
+            messages.success(request, f"#{order.customer_unique_id} buyurtma muvaffaqiyatli yangilandi.")
             return redirect('order_detail', pk=order.pk)
     else:
         form = OrderForm(instance=order)
-        # Tahrirlashda ham faqat kerakli ustalarni ko'rsatish
+        # Faqat kerakli ustalarni filtrlab ko'rsatish
         form.fields['assigned_workers'].queryset = Worker.objects.filter(
             Q(user__groups__name="List usta") | Q(user__groups__name="Eshik usta")
         ).distinct()
-    return render(request, 'orders/order_create.html', {'form': form, 'is_edit': True})
+        
+    # Fayl nomi order_edit.html ga o'zgardi
+    return render(request, 'orders/order_edit.html', {'form': form, 'is_edit': True})
 
 
 @login_required
@@ -1105,7 +1129,6 @@ def order_start_production(request, pk):
 @login_required
 def order_finish(request, pk):
     """4-Bosqich: Buyurtmani yakunlash."""
-    # Kuzatuvchi tekshiruvi
     if is_observer(request.user):
         messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
         return redirect('order_list')
@@ -1117,53 +1140,43 @@ def order_finish(request, pk):
         return redirect('order_list')
 
     if order.status in ['ISHDA', 'USTA_TUGATDI']:
-        order.status = 'TAYYOR'
-        order.save()
+        # DIQQAT: Zanjir ishlashi uchun statusni USTA_TUGATDI qilib saqlash kerak
+        # Agar hozir TAYYOR qilsangiz, modeldagi 'if status == USTA_TUGATDI' sharti ishlamay qoladi.
         
-        # 🔴 Agar List usta ishini tugatgan bo'lsa, Panel va Ugol ustalar uchun yangi buyurtmalar yaratish
-        if order.worker_type == 'LIST':
-            try:
-                order.create_panel_ugol_orders()
-                messages.info(request, 
-                    f"List usta ishini tugatdi. Panel va Ugol ustalariga yangi buyurtmalar avtomatik yaratildi."
-                )
-            except Exception as e:
-                messages.warning(request, f"Panel/Ugol buyurtmalarini yaratishda xato: {e}")
+        order.status = 'USTA_TUGATDI' 
+        order.save() # Shu yerda modeldagi save() ishlaydi va yangi order ochadi
         
+        # 🔴 Eski create_panel_ugol_orders() metodini o'chirib tashladik!
+        # Chunki hamma ishni yuqoridagi order.save() avtomat bajaradi.
+        
+        if order.worker_type in ['LIST', 'ESHIK', 'LIST_ESHIK']:
+            messages.info(request, "Usta ishini tugatdi. Navbatdagi bosqich (Panel) avtomatik yaratildi.")
+
         LogEntry.objects.log_action(
             user_id=request.user.id,
             content_type_id=ContentType.objects.get_for_model(order).pk,
             object_id=order.pk,
             object_repr=str(order),
             action_flag=CHANGE,
-            change_message=f"Status o'zgartirildi: {order.get_status_display()} -> TAYYOR"
+            change_message=f"Status o'zgartirildi: {order.get_status_display()}"
         )
         
-        messages.success(request, f"Buyurtma №{order.order_number} **Tayyor** deb belgilandi. Jarayon yakunlandi.")
+        messages.success(request, f"Buyurtma №{order.order_number} yakunlandi.")
         
-        # Manager/Tasdiqlovchi guruhiga bildirishnoma yuborish
+        # Notificationlar qismi (o'zgarishsiz qoladi)
         try:
             manager_group = Group.objects.get(name='Menejer/Tasdiqlovchi') 
             for manager in manager_group.user_set.all():
                 Notification.objects.create(
                     user=manager,
                     order=order,
-                    message=f"Buyurtma №{order.order_number} Tayyor! Yakuniy Bajarildi deb belgilash talab qilinadi."
+                    message=f"Buyurtma №{order.order_number} usta tomonidan tugatildi."
                 )
         except Group.DoesNotExist:
             pass
-            
-        # Buyurtmaga biriktirilgan ishchilarga bildirishnoma yuborish
-        if order.assigned_workers.exists():
-            for worker in order.assigned_workers.all():
-                Notification.objects.create(
-                    user=worker.user,
-                    order=order,
-                    message=f"Sizning buyurtmangiz №{order.order_number} Tayyor deb belgilandi."
-                )
 
     else:
-        messages.warning(request, "Buyurtma Tayyor deb belgilanishi uchun u ishlab chiqarish jarayonida bo'lishi kerak.")
+        messages.warning(request, "Buyurtmani yakunlash uchun u jarayonda bo'lishi kerak.")
         
     return redirect('order_list')
 
@@ -1207,12 +1220,10 @@ def order_complete(request, pk):
         messages.warning(request, "Buyurtma Bajarildi deb belgilanishi uchun u avval 'Tayyor' bo'lishi kerak.")
         
     return redirect('order_list')
-
 @login_required
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def order_create(request):
     """1-Bosqich: Buyurtmani yuklash/kiritish."""
-    # Kuzatuvchi tekshiruvi
     if is_observer(request.user):
         messages.error(request, "Kuzatuvchi rejimida bu amalni bajarish mumkin emas.")
         return redirect('order_list')
@@ -1224,47 +1235,43 @@ def order_create(request):
             order.created_by = request.user
             order.status = 'KIRITILDI' 
             
-            # 🔴 Ish turini saqlash
-            worker_type = form.cleaned_data.get('worker_type', 'LIST')
-            order.worker_type = worker_type
-            
+            # Formadagi worker_type modelga o'tadi (LIST, ESHIK yoki LIST_ESHIK)
             order.save()
-            form.save_m2m() 
-            
+            form.save_m2m() # 🔴 assigned_workers shu yerda saqlanadi
+
+            # Log yozish
             LogEntry.objects.log_action(
                 user_id=request.user.id,
                 content_type_id=ContentType.objects.get_for_model(order).pk,
                 object_id=order.pk,
                 object_repr=str(order),
                 action_flag=ADDITION,
-                change_message=f"Yangi buyurtma kiritildi: №{order.order_number} (Ish turi: {order.get_worker_type_display()})"
+                change_message=f"Yangi buyurtma kiritildi: №{order.order_number} (Turi: {order.get_worker_type_display()})"
             )
 
-            messages.success(request, 
-                f"Buyurtma №{order.order_number} muvaffaqiyatli kiritildi. "
-                f"Ustalar tayinlandi. Ish turi: {order.get_worker_type_display()}"
-            )
-            
-            # 🔴 Notification yuborish
+            messages.success(request, f"Buyurtma №{order.order_number} kiritildi. Ish turi: {order.get_worker_type_display()}")
+
+            # 🔴 Notification 1: Menejerlarga
             try:
                 manager_group = Group.objects.get(name='Menejer/Tasdiqlovchi') 
                 for manager in manager_group.user_set.all():
                     Notification.objects.create(
                         user=manager,
                         order=order,
-                        message=f"Yangi buyurtma kiritildi: №{order.order_number}. "
-                                f"Ish turi: {order.get_worker_type_display()}. Tasdiqlash talab qilinadi."
+                        message=f"Yangi buyurtma: №{order.order_number}. Tasdiqlash talab qilinadi."
                     )
             except Group.DoesNotExist:
-                messages.warning(request, "Menejer/Tasdiqlovchi guruhi topilmadi.")
+                pass
 
-            if order.assigned_workers.exists():
-                for worker in order.assigned_workers.all():
+            # 🔴 Notification 2: Biriktirilgan ustalarga (Universal usta ham shu yerda)
+            # save_m2m() dan keyin chaqirish kerak!
+            workers = order.assigned_workers.all()
+            if workers.exists():
+                for worker in workers:
                     Notification.objects.create(
                         user=worker.user,
                         order=order,
-                        message=f"Buyurtma №{order.order_number} sizga tayinlandi. "
-                                f"Ish turi: {order.get_worker_type_display()}. Tasdiqlanishini kuting."
+                        message=f"№{order.order_number} buyurtmasi sizga tayinlandi. Rolingiz: {worker.get_role_display()}"
                     )
             
             return redirect('order_list')
@@ -1272,7 +1279,6 @@ def order_create(request):
         form = OrderForm()
     
     return render(request, 'orders/order_create.html', {'form': form})
-
 @login_required
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def order_delete(request, pk):
@@ -2490,3 +2496,75 @@ def export_audit_log_csv(request):
         ])
 
     return response
+
+from django.db.models import F
+
+@login_required
+def debt_report(request):
+    # Shart: 
+    # 1. prepayment > 0 (Zalog bergan bo'lishi shart)
+    # 2. total_price > prepayment (Hali qarzi bo'lishi shart)
+    # 3. Status bekor qilinmagan bo'lishi shart
+    debts = Order.objects.filter(
+        prepayment__gt=0,                      # Zalog 0 dan katta bo'lsin
+        total_price__gt=F('prepayment')         # Jami pul zalogdan katta bo'lsin
+    ).exclude(status='BEKOR_QILINDI').order_by('-created_at')
+
+    total_debt = sum(order.remaining_amount for order in debts)
+
+    context = {
+        'debts': debts,
+        'total_debt': total_debt,
+    }
+    return render(request, 'orders/debt_report.html', context)
+
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from .models import Order
+
+def add_prepayment(request, order_id):
+    if request.method == 'POST':
+        order = get_object_or_404(Order, id=order_id)
+        try:
+            amount = float(request.POST.get('amount', 0))
+            if amount > 0:
+                # Matematik qo'shish: eski zalog + yangi to'lov
+                current_prepayment = float(order.prepayment or 0)
+                order.prepayment = current_prepayment + amount
+                order.save()
+                messages.success(request, f"{order.customer_name} uchun {amount} USD qo'shildi. Umumiy zalog: {order.prepayment} USD")
+        except ValueError:
+            messages.error(request, "Noto'g'ri summa kiritildi.")
+            
+    return redirect('debt_report')
+
+
+
+from django.db.models import Sum, Count
+from django.shortcuts import render
+from .models import Order
+from django.db.models import Sum, Count, Max
+def customer_rating(request):
+    # Faqat ID bo'yicha guruhlaymiz
+    ratings = Order.objects.values('customer_unique_id') \
+        .annotate(
+            # Ismlar har xil bo'lsa, eng uzunini yoki oxirgisini tanlab oladi
+            display_name=Max('customer_name'), 
+            total_m2=Sum('panel_kvadrat'),
+            order_count=Count('id')
+        ) \
+        .order_by('-total_m2')
+
+    return render(request, 'orders/customer_rating.html', {'ratings': ratings})
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def get_customer_orders(request, customer_id):
+    orders = Order.objects.filter(customer_unique_id=customer_id).values(
+        'order_number', 'product_name', 'panel_kvadrat', 'status', 'created_at'
+    ).order_by('-created_at')
+    
+    return JsonResponse({'orders': list(orders)})
