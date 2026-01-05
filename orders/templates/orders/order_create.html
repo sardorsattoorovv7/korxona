@@ -1,1186 +1,322 @@
-{% extends "orders/base.html" %}
+{% extends "orders/base.html" %} 
 {% load static %}
 
 {% block title %}Yangi Buyurtma Kiritish{% endblock %}
 
 {% block content %}
-<style>
-    :root {
-        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        --card-bg: #ffffff;
-        --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 10px 20px rgba(0, 0, 0, 0.04);
-        --input-bg: #f8fafc;
-        --border-color: #e2e8f0;
-        --text-primary: #1e293b;
-        --text-secondary: #64748b;
-        --accent-purple: #8b5cf6;
-        --accent-blue: #3b82f6;
-        --accent-green: #10b981;
-        --danger: #ef4444;
-        --radius: 12px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    
-    body {
-        background: linear-gradient(135deg, #f6f7ff 0%, #f0f2f5 100%);
-        min-height: 100vh;
-        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        color: var(--text-primary);
-        line-height: 1.6;
-    }
-    
-    .container-modern {
-        max-width: 1000px;
-        margin: 2rem auto;
-        padding: 0 1.5rem;
-    }
-    
-    /* Header Styling */
-    .header-modern {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2.5rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 2px solid var(--border-color);
-        background: var(--card-bg);
-        padding: 2rem;
-        border-radius: var(--radius);
-        box-shadow: var(--card-shadow);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .header-modern::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 5px;
-        background: var(--primary-gradient);
-    }
-    
-    .header-content h1 {
-        font-size: 2.2rem;
-        font-weight: 800;
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 0.5rem;
-    }
-    
-    .header-content .subtitle {
-        color: var(--text-secondary);
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .btn-back-modern {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.875rem 1.5rem;
-        background: var(--card-bg);
-        border: 2px solid var(--border-color);
-        color: var(--text-primary);
-        text-decoration: none;
-        border-radius: var(--radius);
-        font-weight: 600;
-        transition: var(--transition);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    }
-    
-    .btn-back-modern:hover {
-        border-color: var(--accent-blue);
-        color: var(--accent-blue);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(59, 130, 246, 0.1);
-    }
-    
-    /* Form Container */
-    .form-container-modern {
-        background: var(--card-bg);
-        border-radius: var(--radius);
-        box-shadow: var(--card-shadow);
-        padding: 2.5rem;
-        margin-bottom: 2rem;
-        position: relative;
-    }
-    
-    .form-container-modern::before {
-        content: '📋';
-        position: absolute;
-        top: -20px;
-        right: -20px;
-        font-size: 5rem;
-        opacity: 0.05;
-        z-index: 0;
-    }
-    
-    /* Error Messages */
-    .error-message-modern {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        border: 2px solid var(--danger);
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        animation: slideDown 0.4s ease;
-    }
-    
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
+    <style>
+        /* SIZNING STIL KODINGIZ O'ZGARISHSIZ QOLADI */
+        :root {
+            --primary-color: #0d9488;
+            --primary-action: #10b981;
+            --secondary-color: #0ea5e9;
+            --background-light: #f9fafb;
+            --card-bg: #ffffff;
+            --text-dark: #1f2937;
+            --input-border: #d1d5db;
+            --alert-danger-bg: #fef2f2;
+            --alert-danger-text: #b91c1c;
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
+        
+        body {
+            background-color: var(--background-light);
         }
-    }
-    
-    .error-message-modern h4 {
-        color: var(--danger);
-        margin-bottom: 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 1.1rem;
-    }
-    
-    .error-message-modern ul {
-        margin-left: 1.5rem;
-        color: #7f1d1d;
-    }
-    
-    /* Form Grid */
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    .form-section {
-        background: #f8fafc;
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        border: 2px solid var(--border-color);
-        transition: var(--transition);
-    }
-    
-    .form-section:hover {
-        border-color: var(--accent-blue);
-        box-shadow: 0 5px 15px rgba(59, 130, 246, 0.1);
-    }
-    
-    .section-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid var(--border-color);
-    }
-    
-    .section-icon {
-        width: 40px;
-        height: 40px;
-        background: var(--primary-gradient);
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.2rem;
-    }
-    
-    .section-title {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-    
-    /* Form Fields */
-    .form-field {
-        margin-bottom: 1.5rem;
-        position: relative;
-    }
-    
-    .form-field label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        font-size: 0.95rem;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-    
-    .required-star {
-        color: var(--danger);
-    }
-    
-    .field-hint {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        margin-top: 0.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    input[type="text"],
-    input[type="number"],
-    input[type="datetime-local"],
-    select,
-    textarea {
-        width: 100%;
-        padding: 0.875rem 1rem;
-        background: white;
-        border: 2px solid var(--border-color);
-        border-radius: 8px;
-        font-size: 1rem;
-        color: var(--text-primary);
-        transition: var(--transition);
-    }
-    
-    input:focus,
-    select:focus,
-    textarea:focus {
-        outline: none;
-        border-color: var(--accent-blue);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    }
-    
-    /* Select Styling */
-    select {
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 1rem center;
-        background-size: 1.25rem;
-        padding-right: 3rem;
-    }
-    
-    /* Workers Selection - Filtered by Work Type */
-    .workers-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .worker-checkbox {
-        position: relative;
-    }
-    
-    .worker-checkbox input[type="checkbox"] {
-        display: none;
-    }
-    
-    .worker-checkbox label {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1rem;
-        background: white;
-        border: 2px solid var(--border-color);
-        border-radius: 8px;
-        cursor: pointer;
-        transition: var(--transition);
-        user-select: none;
-    }
-    
-    .worker-checkbox input[type="checkbox"]:checked + label {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        border-color: var(--accent-blue);
-        color: var(--accent-blue);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-    }
-    
-    .worker-checkbox input[type="checkbox"]:checked + label::before {
-        content: '✓';
-        width: 24px;
-        height: 24px;
-        background: var(--accent-blue);
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.875rem;
-        flex-shrink: 0;
-    }
-    
-    /* Worker type badges */
-    .worker-badge {
-        font-size: 0.7rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        margin-left: auto;
-        flex-shrink: 0;
-    }
-    
-    .badge-list { background: #dbeafe; color: #1e40af; }
-    .badge-eshik { background: #dcfce7; color: #166534; }
-    
-    /* Submit Button */
-    .submit-section {
-        text-align: center;
-        margin-top: 3rem;
-        padding-top: 2rem;
-        border-top: 2px solid var(--border-color);
-    }
-    
-    .btn-submit-modern {
-        display: inline-flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1.25rem 3rem;
-        background: var(--success-gradient);
-        color: white;
-        border: none;
-        border-radius: 50px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: var(--transition);
-        box-shadow: 0 8px 20px rgba(79, 172, 254, 0.3);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .btn-submit-modern::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: 0.5s;
-    }
-    
-    .btn-submit-modern:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 25px rgba(79, 172, 254, 0.4);
-    }
-    
-    .btn-submit-modern:hover::before {
-        left: 100%;
-    }
-    
-    .btn-submit-modern:active {
-        transform: translateY(-1px);
-    }
-    
-    /* Progress Indicator */
-    .progress-indicator {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 2rem;
-        margin: 2rem 0;
-        position: relative;
-    }
-    
-    .progress-step {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        position: relative;
-        z-index: 1;
-    }
-    
-    .progress-step .step-number {
-        width: 40px;
-        height: 40px;
-        background: var(--border-color);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        color: var(--text-secondary);
-        margin-bottom: 0.5rem;
-        transition: var(--transition);
-    }
-    
-    .progress-step.active .step-number {
-        background: var(--accent-blue);
-        color: white;
-        transform: scale(1.1);
-    }
-    
-    .progress-step .step-label {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        font-weight: 500;
-    }
-    
-    .progress-step.active .step-label {
-        color: var(--accent-blue);
-        font-weight: 600;
-    }
-    
-    /* Alert Message */
-    .alert-info {
-        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-        border: 2px solid #7dd3fc;
-        border-radius: var(--radius);
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        color: #0369a1;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    
-    /* Work Type Card */
-    .work-type-card {
-        background: white;
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        transition: var(--transition);
-    }
-    
-    .work-type-card:hover {
-        border-color: var(--accent-blue);
-        box-shadow: 0 5px 15px rgba(59, 130, 246, 0.1);
-    }
-    
-    .work-type-card h4 {
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .work-type-card p {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-        margin: 0;
-    }
-    
-    /* Eshik Specific Styles */
-    .eshik-fields {
-        background: rgb(255, 255, 255);
-        border: 2px solid #c5c5c5;
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        margin-top: 1rem;
-        display: block;
-    }
-    
-    .eshik-fields.show {
-        display: block;
-        animation: fadeIn 0.3s ease;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .eshik-fields h4 {
-        color: #0369a1;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .checkbox-modern {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        cursor: pointer;
-        user-select: none;
-    }
-    
-    .checkbox-modern input[type="checkbox"] {
-        width: 15px;
-        height: 15px;
-        cursor: pointer;
-        margin-left: 1px;
-    }
-    
-    .checkbox-modern label {
-        font-weight: 500;
-        color: var(--text-primary);
-        cursor: pointer;
-        margin-bottom: 0;
-        margin-left: 25px;
-    }
-    
-    /* File Input */
-    .file-input-wrapper {
-        position: relative;
-    }
-    
-    .file-input-label {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: white;
-        border: 2px dashed var(--border-color);
-        border-radius: 8px;
-        cursor: pointer;
-        transition: var(--transition);
-        pointer-events: none;
-    }
-    
-    .file-input-wrapper input[type="file"]:hover + .file-input-label {
-        border-color: var(--accent-blue);
-        background: #f8fafc;
-    }
-    
-    /* Responsive Design */
-    @media (max-width: 768px) {
         .container-modern {
+            width: 100%;
+            max-width: 700px;
+            margin: 2rem auto;
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); 
+        }
+
+        .header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--input-border);
+            padding-bottom: 1rem;
+        }
+        h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .btn-back-modern {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--input-border);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-back-modern:hover {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            background-color: #eff6ff;
+        }
+        
+        .form-field {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 1rem;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="file"],
+        input[type="datetime-local"],
+        select,
+        textarea { /* textarea ham qo'shildi */
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--input-border);
+            border-radius: 0.5rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-size: 1rem;
+            color: var(--text-dark);
+            background-color: white;
+        }
+        input:focus, select:focus, textarea:focus { /* textarea ham focusga qo'shildi */
+            border-color: var(--secondary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        }
+
+        input[type="file"] {
+            padding: 0.8rem;
+            cursor: pointer;
+        }
+        
+        .checkbox-container {
+            border: 1px solid var(--input-border);
             padding: 1rem;
+            border-radius: 0.5rem;
+            background-color: var(--background-light);
+            max-height: 250px; 
+            overflow-y: auto;
         }
-        
-        .header-modern {
-            flex-direction: column;
-            gap: 1.5rem;
-            text-align: center;
+        .checkbox-container::-webkit-scrollbar {
+            width: 6px;
         }
-        
-        .header-content h1 {
-            font-size: 1.8rem;
+        .checkbox-container::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 3px;
         }
-        
-        .form-grid {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            margin: 0;
+            border-radius: 4px;
+            transition: background-color 0.2s;
         }
-        
-        .form-container-modern {
-            padding: 1.5rem;
+        .checkbox-item:hover {
+            background-color: #f0fdf4;
+            cursor: pointer;
         }
-        
-        .workers-grid {
-            grid-template-columns: 1fr;
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 12px;
+            accent-color: var(--primary-color);
         }
-    }
-    
-    /* Animation for form sections */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
+        .checkbox-item label {
+            margin-bottom: 0;
+            font-weight: 400;
+            cursor: pointer;
+            color: var(--text-dark);
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .form-section {
-        animation: fadeInUp 0.5s ease forwards;
-    }
-    
-    .form-section:nth-child(1) { animation-delay: 0.1s; }
-    .form-section:nth-child(2) { animation-delay: 0.2s; }
-    .form-section:nth-child(3) { animation-delay: 0.3s; }
-    
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: var(--accent-purple);
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: #7c3aed;
-    }
-    
-    /* Loading Spinner */
-    .loading-spinner {
-        width: 20px;
-        height: 20px;
-        border: 3px solid rgba(255,255,255,0.3);
-        border-radius: 50%;
-        border-top-color: white;
-        animation: spin 1s ease-in-out infinite;
-    }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-</style>
 
-<div class="container-modern">
-    <!-- Header Section -->
-    <div class="header-modern">
-        <div class="header-content">
-            <h1>🎯 Yangi Buyurtma Kiritish</h1>
-            <div class="subtitle">
-                <span>📋 Barcha maydonlarni to'ldiring va buyurtmangizni yuboring</span>
-            </div>
+        .error-message-modern {
+            background-color: var(--alert-danger-bg);
+            color: var(--alert-danger-text);
+            border: 1px solid #fca5a5;
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+        .error-message-modern p {
+            font-weight: 700;
+            margin-top: 0;
+        }
+        .error-message-modern ul {
+            margin: 0.5rem 0 0 1.25rem;
+            padding: 0;
+            list-style-type: disc;
+        }
+        
+        .btn-submit-modern {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary-action);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.15rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 2rem;
+            transition: background-color 0.3s ease, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+        }
+        .btn-submit-modern:hover {
+            background-color: #059669;
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.6);
+        }
+        .btn-submit-modern:active {
+            transform: translateY(1px);
+        }
+
+        @media (max-width: 600px) {
+            .container-modern {
+                margin: 10px;
+                padding: 1.5rem;
+                border-radius: 0.75rem;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+
+    <div class="container-modern">
+        
+        <div class="header-box">
+            <h1>Buyurtma Kiritish 📝</h1>
+            <a href="{% url 'order_list' %}" class="btn-back-modern">⬅️ Ro'yxatga Qaytish</a>
         </div>
-        <a href="{% url 'order_list' %}" class="btn-back-modern">
-            <span>←</span>
-            <span>Ro'yxatga Qaytish</span>
-        </a>
-    </div>
 
-    <!-- Error Messages -->
-    {% if form.errors %}
-    <div class="error-message-modern">
-        <h4>⚠️ Xatolik Aniqlangan</h4>
-        <p>Quyidagi maydonlarda xatoliklar mavjud:</p>
-        <ul>
-            {% for field in form %}
-                {% for error in field.errors %}
-                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-                {% endfor %}
-            {% endfor %}
-            {% for error in form.non_field_errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-
-    <!-- Info Alert -->
-    <div class="alert-info">
-        <span>💡 Eslatma:</span>
-        <span>Admin faqat List va Eshik ustalarga buyurtma bera oladi.</span>
-    </div>
-
-    <!-- Progress Indicator -->
-    <div class="progress-indicator">
-        <div class="progress-step active">
-            <div class="step-number">1</div>
-            <div class="step-label">Asosiy Ma'lumotlar</div>
-        </div>
-        <div class="progress-step">
-            <div class="step-number">2</div>
-            <div class="step-label">Ish Turi va Ustalar</div>
-        </div>
-        <div class="progress-step">
-            <div class="step-number">3</div>
-            <div class="step-label">Texnik Tafsilotlar</div>
-        </div>
-    </div>
-
-    <!-- Form -->
-    <form method="post" enctype="multipart/form-data" id="order-form" class="form-container-modern">
-        {% csrf_token %}
-        
-        <div class="form-grid">
-            <!-- Section 1: Basic Information -->
-            <div class="form-section">
-                <div class="section-header">
-                    <div class="section-icon">📄</div>
-                    <h3 class="section-title">Asosiy Ma'lumotlar</h3>
-                </div>
-                
-                <div class="form-field">
-                    <label for="{{ form.order_number.id_for_label }}">
-                        Buyurtma Raqami
-                        <span class="required-star">*</span>
-                    </label>
-                    {{ form.order_number }}
-                    <div class="field-hint">
-                        <span>📌 Unikal raqam kiriting</span>
-                    </div>
-                </div>
-                
-                <div class="form-field">
-                    <label for="{{ form.customer_name.id_for_label }}">
-                        Xaridor Nomi
-                        <span class="required-star">*</span>
-                    </label>
-                    {{ form.customer_name }}
-                </div>
-                
-                <div class="form-field">
-                    <label for="{{ form.product_name.id_for_label }}">Mahsulot Nomi</label>
-                    {{ form.product_name }}
-                </div>
-                
-                <div class="form-field">
-                    <label for="{{ form.total_price.id_for_label }}">Umumiy Narx (So'm)</label>
-                    {{ form.total_price }}
-                    <div class="field-hint">
-                        <span>💰 Ixtiyoriy maydon</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 2: Work Type and Workers -->
-            <div class="form-section">
-                <div class="section-header">
-                    <div class="section-icon">🛠️</div>
-                    <h3 class="section-title">Ish Turi va Ustalar</h3>
-                </div>
-              
-                <!-- Ish Turi (Worker Type) -->
-                <div class="form-field">
-                    <label for="{{ form.worker_type.id_for_label }}">
-                        Ish Turini Tanlang
-                        <span class="required-star">*</span>
-                    </label>
-                    {{ form.worker_type }}
-                    <div class="field-hint">
-                        <span>🔧 Admin faqat List yoki Eshik tanlashi mumkin</span>
-                    </div>
-                </div>
-                
-                
-                <!-- Ustalarni Tanlash -->
-                <div class="form-field">
-                    <label for="{{ form.assigned_workers.id_for_label }}">
-                        Ustalar Tanlang
-                        <span class="required-star">*</span>
-                    </label>
-                    
-                    {{ form.assigned_workers.errors }}
-                    
-                    <div class="workers-grid" id="workers-container">
-                        {% for choice in form.assigned_workers %}
-                        <div class="worker-checkbox" data-worker-type="{{ choice.choice_label }}">
-                            {{ choice.tag }}
-                            <label for="{{ choice.id_for_label }}">
-                                <span>{{ choice.choice_label }}</span>
-                                {% if "List" in choice.choice_label %}
-                                    <span class="worker-badge badge-list">List</span>
-                                {% elif "Eshik" in choice.choice_label %}
-                                    <span class="worker-badge badge-eshik">Eshik</span>
-                                {% endif %}
-                            </label>
-                        </div>
-                        {% empty %}
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; background: #fef2f2; border-radius: 8px;">
-                            <p style="color: #dc2626; font-weight: 500;">
-                                ⚠️ Tizimda ustalar ro'yxati mavjud emas.
-                                <br>
-                                <small>Iltimos, admin panel orqali ustalar qo'shing.</small>
-                            </p>
-                        </div>
+        {# Xato Xabarlari #}
+        {% if form.errors %}
+            <div class="error-message-modern">
+                <p>⚠️ **Forma yuborishda xato yuz berdi.** Iltimos, quyidagi xatolarni tekshiring:</p>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>**{{ field.label }}**: {{ error }}</li>
                         {% endfor %}
-                    </div>
-                    
-                    <div class="field-hint">
-                        <span>👷 Ish turiga mos ustalarni tanlang</span>
-                    </div>
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %} 
+            
+            <div class="form-field">
+                <label for="{{ form.order_number.id_for_label }}">Buyurtma Raqami: <span style="color:red">*</span></label>
+                {{ form.order_number }}
+            </div>
+            
+            <div class="form-field">
+                <label for="{{ form.customer_name.id_for_label }}">Xaridor Nomi: <span style="color:red">*</span></label>
+                {{ form.customer_name }}
+            </div>
+
+            {# 💡 YANGI QO'SHILGAN MAYDON: product_name #}
+            <div class="form-field">
+                <label for="{{ form.product_name.id_for_label }}">Mahsulot Nomi:</label>
+                {{ form.product_name }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.panel_kvadrat.id_for_label }}">Panel Kvadrat Metri (m²):</label>
+                {{ form.panel_kvadrat }}
+            </div>
+            
+            <div class="form-field">
+                <label for="{{ form.total_price.id_for_label }}">Umumiy Narx (Summa):</label>
+                {{ form.total_price }}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ form.deadline.id_for_label }}">⏳ Belgilangan Muddat (Deadline):</label>
+                {{ form.deadline }}
+                <small style="display: block; color: #6b7280; margin-top: 5px;">
+                    Usta buyurtmani shu sana va vaqtgacha tugatishi kerak.
+                </small>
+            </div>
+            
+            <div class="form-field">
+                <label for="{{ form.pdf_file.id_for_label }}">PDF Fayl (Chizma): <span style="color:red">*</span></label>
+                {{ form.pdf_file }}
+            </div>
+
+            {# 💡 YANGI QO'SHILGAN MAYDON: comment (Ixtiyoriy bo'lishi kerak) #}
+            <div class="form-field">
+                <label for="{{ form.comment.id_for_label }}">Izoh (Menejer uchun):</label>
+                {{ form.comment }}
+            </div>
+            
+            {# 💡 YANGI QO'SHILGAN MAYDON: worker_comment (Odatda bo'sh qoladi) #}
+            <div class="form-field" style="display:none;"> 
+                <label for="{{ form.worker_comment.id_for_label }}">Usta Izohlari:</label>
+                {{ form.worker_comment }}
+            </div>
+            
+            {# 💡 YANGI QO'SHILGAN MAYDONLAR: Boshlash/Tugatish vaqtlari va Rasmlar (Odatda bo'sh qoladi) #}
+            <div class="form-field" style="display:none;"> 
+                <label for="{{ form.worker_started_at.id_for_label }}">Ish boshlash vaqti:</label>
+                {{ form.worker_started_at }}
+            </div>
+            <div class="form-field" style="display:none;"> 
+                <label for="{{ form.worker_finished_at.id_for_label }}">Ish tugatish vaqti:</label>
+                {{ form.worker_finished_at }}
+            </div>
+            <div class="form-field" style="display:none;"> 
+                <label for="{{ form.start_image.id_for_label }}">Boshlash rasmi:</label>
+                {{ form.start_image }}
+            </div>
+            <div class="form-field" style="display:none;"> 
+                <label for="{{ form.finish_image.id_for_label }}">Tugatish rasmi:</label>
+                {{ form.finish_image }}
+            </div>
+            
+            {# 💡 YANGI QO'SHILGAN MAYDON: status (Kirgizishda default bo'lishi kerak) #}
+            <div class="form-field" style="display:none;"> 
+                <label for="{{ form.status.id_for_label }}">Status:</label>
+                {{ form.status }}
+            </div>
+
+            <div class="form-field">
+                <label class="checkbox-label">🛠️ Buyurtmaga Tayinlanadigan Ustalar:</label>
+                
+                <div class="checkbox-container">
+                    {# Checkbox'lar ro'yxatini to'g'ri render qilish #}
+                    {% for checkbox in form.assigned_workers %}
+                        <div class="checkbox-item">
+                            {{ checkbox.tag }} 
+                            <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                        </div>
+                    {% empty %}
+                        <p style="color:var(--alert-danger-text); margin: 0; font-weight: 500;">⚠️ Tizimda hali ustalar ro'yxati yaratilmagan. Ustalar Admin Panelda qo'shilishi kerak.</p>
+                    {% endfor %}
                 </div>
             </div>
 
-            <!-- Section 3: Technical Details -->
-            <div class="form-section">
-                <div class="section-header">
-                    <div class="section-icon">⚙️</div>
-                    <h3 class="section-title">Texnik Tafsilotlar</h3>
-                </div>
-                
-                <div class="form-field">
-                    <label for="{{ form.panel_thickness.id_for_label }}">
-                        Panel Qalinligi (sm)
-                        <span class="required-star">*</span>
-                    </label>
-                    {{ form.panel_thickness }}
-                    <div class="field-hint">
-                        <span>📏 Panel qalinligini tanlang</span>
-                    </div>
-                </div>
-                
-                <div class="form-field">
-                    <label for="{{ form.panel_kvadrat.id_for_label }}">Panel Kvadrat Metri (m²)</label>
-                    {{ form.panel_kvadrat }}
-                </div>
-                
-                <div class="form-field">
-                    <label for="{{ form.deadline.id_for_label }}">Muddati</label>
-                    {{ form.deadline }}
-                    <div class="field-hint">
-                        <span>⏰ Usta tugatish muddati</span>
-                    </div>
-                </div>
-                
-                <div class="form-field">
-                    <label for="{{ form.pdf_file.id_for_label }}">Chizma Fayli (PDF)</label>
-                    <div class="file-input-wrapper">
-                        {{ form.pdf_file }}
-                        <div class="file-input-label">
-                            <span>📎 Faylni tanlash</span>
-                            <span>yoki bu erga tashlang</span>
-                        </div>
-                    </div>
-                    {% if form.pdf_file.errors %}
-                        <div class="text-danger small mt-1">
-                            {{ form.pdf_file.errors }}
-                        </div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-field">
-                    <label for="{{ form.comment.id_for_label }}">Menejer Izohi</label>
-                    {{ form.comment }}
-                    <div class="field-hint">
-                        <span>📝 Ixtiyoriy izoh qoldiring</span>
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- Eshik uchun maxsus maydonlar -->
-                <div class="eshik-fields" id="eshik-fields">
-                    <h4>🚪 Eshik Tafsilotlari</h4>
-                    
-                    <div class="form-field">
-                        <label for="{{ form.eshik_turi.id_for_label }}">
-                            Eshik Turi
-                            <span class="required-star">*</span>
-                        </label>
-                        {{ form.eshik_turi }}
-                        <div class="field-hint">
-                            <span>🔑 F1 dan F8 gacha eshik turlaridan birini tanlang</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-field">
-                        <div class="checkbox-modern">
-                            {{ form.zamokli_eshik }}
-                            <label for="{{ form.zamokli_eshik.id_for_label }}">
-                                Zamokli Eshik
-                            </label>
-                        </div>
-                        <div class="field-hint">
-                            <span>🔒 Eshikda zamok borligini belgilang</span>
-                        </div>
-                    </div>
-                </div>
-                
-        </div>
-
-        <!-- Hidden Fields -->
-        <div style="display: none;">
-            {{ form.worker_comment }}
-            {{ form.worker_started_at }}
-            {{ form.worker_finished_at }}
-            {{ form.start_image }}
-            {{ form.finish_image }}
-            {{ form.status }}
-            {{ form.needs_manager_approval }}
-        </div>
-
-        <!-- Submit Section -->
-        <div class="submit-section">
             <button type="submit" class="btn-submit-modern">
-                <span>📤</span>
-                <span>Buyurtmani Saqlash va Jo'natish</span>
+                <i class="fas fa-cloud-upload-alt me-2"></i> Buyurtmani Yuklash va Kiritish
             </button>
-            <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.875rem;">
-                ⚡ Buyurtma darhol muvaffaqiyatli yaratiladi va tanlangan ustalarga yuboriladi
-            </p>
-        </div>
-    </form>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Ish turi tanlanganda ustalarni filtr qilish
-        const workerTypeSelect = document.getElementById('id_worker_type');
-        const eshikFields = document.getElementById('eshik-fields');
-        const eshikTuriField = document.getElementById('id_eshik_turi');
-        const zamokliEshikField = document.getElementById('id_zamokli_eshik');
-        const workerCheckboxes = document.querySelectorAll('.worker-checkbox');
-        
-        // Ish turi o'zgarganda
-        if (workerTypeSelect) {
-            workerTypeSelect.addEventListener('change', function() {
-                const selectedWorkType = this.value;
-                toggleEshikFields(selectedWorkType);
-                updateWorkersVisibility(selectedWorkType);
-                
-                // Eslatma chiqarish
-                if (selectedWorkType === 'LIST') {
-                    setTimeout(() => {
-                        alert('💡 Eslatma: List usta ishni tugatgandan so\'ng, Panel va Ugol ustalarga avtomatik buyurtma yuboriladi.');
-                    }, 300);
-                }
-                
-                // Admin uchun faqat List va Eshik ish turlarini tanlash imkoniyati
-                if (selectedWorkType === 'PANEL' || selectedWorkType === 'UGOL') {
-                    alert('⚠️ Eslatma: Admin faqat List yoki Eshik ish turini tanlashi mumkin!');
-                    workerTypeSelect.value = '';
-                    toggleEshikFields('');
-                    updateWorkersVisibility('');
-                }
-            });
-            
-            // Boshlang'ich holatni tekshirish
-             if (workerTypeSelect.value) {
-        toggleEshikFields(workerTypeSelect.value);
-            } else {
-                // Default: optional ko‘rsatish, required emas
-                eshikFields.classList.add('show');
-                if (eshikTuriField) eshikTuriField.required = false;
-                if (zamokliEshikField) zamokliEshikField.disabled = false;
-            }
-        }
-        
-        function toggleEshikFields(workType) {
-            if (workType === 'ESHIK') {
-                eshikFields.classList.add('show');
-                if (eshikTuriField) {
-                    eshikTuriField.required = true;
-                    eshikTuriField.closest('.form-field').querySelector('label .required-star').style.display = 'inline';
-                }
-                if (zamokliEshikField) {
-                    zamokliEshikField.disabled = false;
-                    zamokliEshikField.closest('.checkbox-modern').style.opacity = '1';
-                }
-            } else {
-                eshikFields.classList.remove('show');
-                if (eshikTuriField) {
-                    eshikTuriField.required = false;
-                    eshikTuriField.value = '';
-                    eshikTuriField.closest('.form-field').querySelector('label .required-star').style.display = 'none';
-                }
-                if (zamokliEshikField) {
-                    zamokliEshikField.checked = false;
-                    zamokliEshikField.disabled = true;
-                    zamokliEshikField.closest('.checkbox-modern').style.opacity = '0.5';
-                }
-            }
-        }
-        
-        function updateWorkersVisibility(workType) {
-            workerCheckboxes.forEach(checkbox => {
-                const label = checkbox.querySelector('label span:first-child');
-                if (!label) return;
-                
-                const badge = checkbox.querySelector('.worker-badge');
-                let workerTypeFromBadge = '';
-                
-                if (badge) {
-                    workerTypeFromBadge = badge.textContent.trim().toUpperCase();
-                } else if (label.textContent.includes('List')) {
-                    workerTypeFromBadge = 'LIST';
-                } else if (label.textContent.includes('Eshik')) {
-                    workerTypeFromBadge = 'ESHIK';
-                }
-                
-                if (workType && workerTypeFromBadge) {
-                    if (workerTypeFromBadge === workType) {
-                        checkbox.style.display = 'block';
-                        checkbox.style.opacity = '1';
-                        const checkboxInput = checkbox.querySelector('input[type="checkbox"]');
-                        if (checkboxInput) {
-                            checkboxInput.disabled = false;
-                            checkboxInput.style.opacity = '1';
-                        }
-                    } else {
-                        checkbox.style.display = 'none';
-                        checkbox.style.opacity = '0.5';
-                        const checkboxInput = checkbox.querySelector('input[type="checkbox"]');
-                        if (checkboxInput) {
-                            checkboxInput.checked = false;
-                            checkboxInput.disabled = true;
-                            checkboxInput.style.opacity = '0.3';
-                        }
-                    }
-                } else if (!workType) {
-                    // Agar ish turi tanlanmagan bo'lsa, barcha ustalarni ko'rsatish
-                    checkbox.style.display = 'block';
-                    checkbox.style.opacity = '0.5';
-                    const checkboxInput = checkbox.querySelector('input[type="checkbox"]');
-                    if (checkboxInput) {
-                        checkboxInput.disabled = true;
-                        checkboxInput.style.opacity = '0.3';
-                    }
-                }
-            });
-            
-            // Agar hech qanday usta ko'rinmasa, xabar chiqarish
-            const visibleWorkers = Array.from(workerCheckboxes).filter(cb => 
-                cb.style.display !== 'none' && cb.style.opacity === '1'
-            );
-            
-            if (visibleWorkers.length === 0 && workerTypeSelect && workerTypeSelect.value) {
-                const container = document.getElementById('workers-container');
-                const existingMessage = container.querySelector('.no-workers-message');
-                
-                if (!existingMessage) {
-                    const message = document.createElement('div');
-                    message.className = 'no-workers-message';
-                    message.style.gridColumn = '1 / -1';
-                    message.style.textAlign = 'center';
-                    message.style.padding = '2rem';
-                    message.style.background = '#fef3c7';
-                    message.style.borderRadius = '8px';
-                    message.innerHTML = `
-                        <p style="color: #92400e; font-weight: 500;">
-                            ⚠️ Bu ish turi uchun mavjud usta yo'q.
-                            <br>
-                            <small>Iltimos, admin panel orqali "${workerTypeSelect.value}" turidagi ustalar qo'shing.</small>
-                        </p>
-                    `;
-                    container.appendChild(message);
-                }
-            } else {
-                const existingMessage = document.querySelector('.no-workers-message');
-                if (existingMessage) {
-                    existingMessage.remove();
-                }
-            }
-        }
-        
-        // Progress indicator updates
-        const progressSteps = document.querySelectorAll('.progress-step');
-        
-        // File input preview
-        const fileInput = document.querySelector('#id_pdf_file');
-        
-        if (fileInput) {
-            fileInput.addEventListener('change', function(e) {
-                if (this.files && this.files[0]) {
-                    const fileName = this.files[0].name;
-                    const fileLabel = this.nextElementSibling;
-                    if (fileLabel) {
-                        const span = fileLabel.querySelector('span:first-child');
-                        if (span) {
-                            span.textContent = `📎 ${fileName}`;
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Form validation and progress update
-        const form = document.getElementById('order-form');
-        
-        function updateProgress() {
-            let stepsCompleted = 0;
-            
-            // Step 1: Asosiy maydonlar
-            const orderNumber = form.querySelector('[name="order_number"]');
-            const customerName = form.querySelector('[name="customer_name"]');
-            
-            if (orderNumber && orderNumber.value.trim() !== '' &&
-                customerName && customerName.value.trim() !== '') {
-                stepsCompleted++;
-            }
-            
-            // Step 2: Ish turi va ustalar
-            const workerType = document.querySelector('[name="worker_type"]');
-            const workersSelected = document.querySelectorAll('.worker-checkbox input[type="checkbox"]:checked');
-            
-            if (workerType && workerType.value !== '' && workersSelected.length > 0) {
-                stepsCompleted++;
-            }
-            
-            // Step 3: Texnik tafsilotlar
-            const panelThickness = form.querySelector('[name="panel_thickness"]');
-            if (panelThickness && panelThickness.value !== '') {
-                stepsCompleted++;
-            }
-            
-            // Eshik uchun qo'shimcha tekshirish
-            if (workerType && workerType.value === 'ESHIK') {
-                const eshikTuri = document.querySelector('[name="eshik_turi"]');
-                if (eshikTuri && eshikTuri.value === '') {
-                    // Eshik turi tanlanmagan bo'lsa, progressni kamaytirish
-                    stepsCompleted = Math.min(stepsCompleted, 2);
-                }
-            }
-            
-            // Update progress steps
-            progressSteps.forEach((step, index) => {
-                if (index < stepsCompleted) {
-                    step.classList.add('active');
-                } else {
-                    step.classList.remove('active');
-                }
-            });
-        }
-        
-        // Listen to input changes
-        form.addEventListener('input', updateProgress);
-        form.addEventListener('change', updateProgress);
-        
-        // Initial progress check
-        updateProgress();
-        
-        // Smooth scrolling to error fields
-        const errorFields = form.querySelectorAll('.errorlist');
-        if (errorFields.length > 0) {
-            errorFields[0].closest('.form-field').scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-        }
-        
-        // Form submission animation
-        form.addEventListener('submit', function(e) {
-            // Ish turini tekshirish
-            const workerType = document.querySelector('[name="worker_type"]');
-            if (workerType && (workerType.value === 'PANEL' || workerType.value === 'UGOL')) {
-                e.preventDefault();
-                alert('❌ Xatolik: Admin faqat List yoki Eshik ish turini tanlashi mumkin!');
-                workerType.focus();
-                return false;
-            }
-            
-            // Eshik turi tanlashni tekshirish
-            if (workerType && workerType.value === 'ESHIK') {
-                const eshikTuri = document.querySelector('[name="eshik_turi"]');
-                if (!eshikTuri || eshikTuri.value === '') {
-                    e.preventDefault();
-                    alert('❌ Xatolik: Eshik turini tanlash majburiy!');
-                    eshikTuri.focus();
-                    return false;
-                }
-            }
-            
-            const submitBtn = this.querySelector('.btn-submit-modern');
-            if (submitBtn) {
-                submitBtn.innerHTML = `
-                    <div class="loading-spinner"></div>
-                    <span>Yuklanmoqda...</span>
-                `;
-                submitBtn.disabled = true;
-            }
-        });
-    });
-</script>
+        </form>
+    </div>
 {% endblock %}
