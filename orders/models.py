@@ -133,6 +133,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 class Order(models.Model):
     STATUS_CHOICES = [
@@ -150,7 +154,7 @@ class Order(models.Model):
     WORKER_TYPE_CHOICES = [
         ('LIST', 'List Ustasi'),
         ('ESHIK', 'Eshik Ustasi'),
-        ('LIST_ESHIK', 'List va Eshik Ustasi'), # Universal rol buyurtma turi sifatida
+        ('LIST_ESHIK', 'List va Eshik Ustasi'),
         ('PANEL', 'Panel Ustasi'),
         ('UGOL', 'Ugol Ustasi'),
     ]
@@ -172,167 +176,141 @@ class Order(models.Model):
         ('10', '10 sm'),
         ('15', '15 sm')
     ]
-
-    ESHIK_TURI_CHOICES  = [
-        ('F1','F1'),('F2','F2'),('F3','F3'),('F4','F4'),
-        ('F5','F5'),('F6','F6'),('F7','F7'),('F8','F8')
-    ]
-
-    # models.py ichidagi Order klasiga qo'shing:
+    @property
+    def remaining_amount(self):
+        """
+        Qolgan qarz summasini hisoblash: Jami narx - Zalog
+        """
+        total = self.total_price or 0
+        paid = self.prepayment or 0
+        return total - paid
+    ESHIK_TURI_CHOICES  = [(f'F{i}', f'F{i}') for i in range(1, 9)]
+    PAROG_CHOICES = [('PAROGLI', 'Parogli'), ('PAROGSIZ', 'Parogsiz')]
+    DIRECTION_CHOICES = [('ONG', "O'ng"), ('CHAP', 'Chap')]
 
     product_name = models.CharField(max_length=255, verbose_name="Mahsulot nomi", blank=True, null=True)
     worker_comment = models.TextField(blank=True, null=True, verbose_name="Usta izohi")
     worker_started_at = models.DateTimeField(null=True, blank=True, verbose_name="Ish boshlangan vaqt")
     worker_finished_at = models.DateTimeField(null=True, blank=True, verbose_name="Ish yakunlangan vaqt")
     needs_manager_approval = models.BooleanField(default=False, verbose_name="Menejer tasdig'i kerak")
-    # models.py ichida
     parent_order = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='sub_orders')
-    # 1. Asosiy identifikatsiya
-    order_number = models.CharField(
-        max_length=50, 
-        unique=True, 
-        verbose_name="Buyurtma Raqami",
-        editable=False
-    )
-    customer_unique_id = models.CharField(
-        max_length=50, 
-        verbose_name="Mijoz ID", 
-        help_text="Ko'p martalik mijoz identifikatori"
-    )
+    
+    order_number = models.CharField(max_length=50, unique=True, verbose_name="Buyurtma Raqami", editable=False)
+    customer_unique_id = models.CharField(max_length=50, verbose_name="Mijoz ID", help_text="Ko'p martalik mijoz identifikatori")
     customer_name = models.CharField(max_length=150, verbose_name="Xaridor Nomi")
     
-
-    @property
-    def remaining_amount(self):
-        """Qoldiq summani hisoblaydi"""
-        total = self.total_price or 0
-        prepaid = self.prepayment or 0
-        return total - prepaid
-    
-    def add_payment(self, amount):
-        """Mavjud zalog ustiga yangi to'lovni qo'shadi"""
-        if amount > 0:
-            self.prepayment = (self.prepayment or 0) + amount
-            self.save()
-            return True
-        return False
-    # 2. Ish turi va texnik parametrlar
     worker_type = models.CharField(max_length=15, choices=WORKER_TYPE_CHOICES, default='LIST')
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='KIRITILDI')
     
-    # Eshik uchun
-    eshik_turi = models.CharField(max_length=5, choices=ESHIK_TURI_CHOICES , blank=True, null=True)
+    # Eshik parametrlari
+    eshik_turi = models.CharField(max_length=255, choices=ESHIK_TURI_CHOICES , blank=True, null=True)
     zamokli_eshik = models.BooleanField(default=False, verbose_name="Zamokli")
+    parog_turi = models.CharField(max_length=10, choices=PAROG_CHOICES, blank=True, null=True)
+    eshik_yonalishi = models.CharField(max_length=5, choices=DIRECTION_CHOICES, blank=True, null=True)
+    balandligi = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    eni = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-    # Panel uchun
+    # Panel parametrlari
     panel_type = models.CharField(max_length=10, choices=PANEL_TYPE_CHOICES, blank=True, null=True)
     panel_subtype = models.CharField(max_length=20, choices=PANEL_SUBTYPE_CHOICES, blank=True, null=True)
     panel_thickness = models.CharField(max_length=3, choices=PANEL_THICKNESS_CHOICES, blank=True, null=True)
     panel_kvadrat = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
-    # 3. Moliyaviy qism
     total_price = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Umumiy Narx")
     prepayment = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Zalog (Oldindan to'lov)")
-
-    # 4. Fayl va muddat
     pdf_file = models.FileField(upload_to='order_pdfs/', verbose_name="PDF Chizma", blank=True, null=True)
     deadline = models.DateTimeField(null=True, blank=True, verbose_name="Tugallanish muddati")
     
-    # 5. Jarayon nazorati
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='KIRITILDI')
     assigned_workers = models.ManyToManyField('Worker', related_name='assigned_orders', blank=True)
     comment = models.TextField(blank=True, null=True, verbose_name="Admin izohi")
     
-    # Rasmlar va vaqtlar
     start_image = models.ImageField(upload_to='order_photos/start/', null=True, blank=True)
     finish_image = models.ImageField(upload_to='order_photos/finish/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     def clean(self):
-        # 1. Panel uchun tekshiruv
-        if self.worker_type == 'PANEL' and not self.panel_type:
-            raise ValidationError("Panel turi kiritilishi shart.")
-
-        # 2. ESHIK yoki LIST_ESHIK (Universal) uchun tekshiruv (SHU YERNI O'ZGARTIRDIK)
-        if self.worker_type in ['ESHIK', 'LIST_ESHIK'] and not self.eshik_turi:
-            raise ValidationError("Eshik yoki Universal usta tanlanganda eshik turi kiritilishi shart.")
-
-        # 3. Panel qalinligi (thickness) bo'yicha maxsus tekshiruvlar
-        if self.panel_type == 'PIR':
-            if self.panel_subtype == 'SOVUTGICH' and self.panel_thickness not in ['5','10','15']:
-                raise ValidationError("PIR Sovutgich uchun thickness 5, 10 yoki 15 sm bo‘lishi kerak.")
-            
-            if self.panel_subtype == 'SECRETPIR' and self.panel_thickness not in ['5','8']:
-                raise ValidationError("SecretPir uchun thickness 5 yoki 8 sm bo‘lishi kerak.")
-            
-            if self.panel_subtype == 'TOM' and self.panel_thickness != '5':
-                raise ValidationError("Tom panel uchun thickness 5 sm bo‘lishi kerak.")
+        super().clean()
         
-        if self.panel_type == 'PUR' and self.panel_thickness != '5':
-            raise ValidationError("PUR panel uchun thickness 5 sm bo‘lishi kerak.")
+        # 1. PUR uchun mantiq (Tanlanganda qalinliklari 5, 8, 10, 15 bo'lishi kerak)
+        if self.panel_type == 'PUR':
+            if self.panel_thickness not in ['5', '8', '10', '15']:
+                raise ValidationError("PUR panel uchun faqat 5, 8, 10 yoki 15 sm tanlash mumkin.")
 
+        # 2. PIR uchun mantiq (Tom: 5sm, SecretFix: 5,8sm, Sovutgich: 5,10,15sm)
+        if self.panel_type == 'PIR':
+            if self.panel_subtype == 'TOM' and self.panel_thickness != '5':
+                raise ValidationError("PIR Tom panel uchun faqat 5 sm qalinlik tanlash mumkin.")
+            
+            if self.panel_subtype == 'SECRETPIR' and self.panel_thickness not in ['5', '8']:
+                raise ValidationError("PIR SecretFix uchun faqat 5 yoki 8 sm qalinlik tanlash mumkin.")
+            
+            if self.panel_subtype == 'SOVUTGICH' and self.panel_thickness not in ['5', '10', '15']:
+                raise ValidationError("PIR Sovutgich uchun faqat 5, 10 yoki 15 sm qalinlik tanlash mumkin.")
 
+        # 3. Eshik yoki LIST_ESHIK (Universal) mantiqi
+        if self.worker_type in ['ESHIK', 'LIST_ESHIK']:
+            if not self.eshik_turi:
+                raise ValidationError("Eshik turi tanlanishi shart.")
+            if not self.parog_turi:
+                raise ValidationError("Parog turi tanlanishi shart.")
+            if not self.eshik_yonalishi:
+                raise ValidationError("Eshik yo'nalishi (o'ng/chap) tanlanishi shart.")
+            if self.balandligi is None or self.eni is None:
+                raise ValidationError("Eshik/Prayom o'lchamlari (balandlik va eni) kiritilishi shart.")
+            # Eshik qalinligi tekshiruvi
+            if self.panel_thickness not in ['5', '8', '10', '15']:
+                raise ValidationError("Eshik qalinligi uchun faqat 5, 8, 10 yoki 15 sm tanlash mumkin.")
 
     def save(self, *args, **kwargs):
-        # 1. Avtomatik buyurtma raqami (Siz yozgan qism)
+        # 1. Order Number yaratish
         if not self.order_number:
             today = timezone.now()
             year_prefix = today.strftime("%Y")
             last_order = Order.objects.filter(order_number__startswith=f"ORD-{year_prefix}").order_by('-id').first()
-            if last_order:
-                try:
-                    last_num = int(last_order.order_number.split('-')[-1])
-                    new_num = last_num + 1
-                except (ValueError, IndexError):
-                    new_num = 1
-            else:
-                new_num = 1
-            self.order_number = f"ORD-{year_prefix}-{new_num:04d}"
+            num = (int(last_order.order_number.split('-')[-1]) + 1) if last_order else 1
+            self.order_number = f"ORD-{year_prefix}-{num:04d}"
 
-        # 2. Status o'zgarganini aniqlash (Zanjir uchun eng muhim joy)
-        old_status = None
-        if self.pk:
-            # Bazadagi eski holatini olamiz
-            old_instance = Order.objects.filter(pk=self.pk).first()
-            if old_instance:
-                old_status = old_instance.status
-
-        # Shart: Status endi 'USTA_TUGATDI' bo'ldi va avval bunaqa emas edi
+        old_status = Order.objects.filter(pk=self.pk).values_list('status', flat=True).first() if self.pk else None
         should_create_next = (self.status == 'USTA_TUGATDI' and old_status != 'USTA_TUGATDI')
-        
-        # Asosiy saqlash amali
+
         super().save(*args, **kwargs)
 
-        # 3. KEYINGI BOSQICH (Zanjir)
-        if should_create_next:
-            # Takrorlanishni oldini olish: bitta buyurtmadan faqat bitta sub_order ochish
-            has_sub_orders = Order.objects.filter(parent_order=self).exists()
-            if not has_sub_orders:
-                next_worker_type = None
-                
-                if self.worker_type in ['LIST', 'ESHIK', 'LIST_ESHIK']:
-                    next_worker_type = 'PANEL'
-                elif self.worker_type == 'PANEL':
-                    next_worker_type = 'UGOL'
+        if should_create_next and not Order.objects.filter(parent_order=self).exists():
+            next_worker_type = None
+            if self.worker_type in ['LIST', 'ESHIK', 'LIST_ESHIK']:
+                next_worker_type = 'PANEL'
+            elif self.worker_type == 'PANEL':
+                next_worker_type = 'UGOL'
 
-                if next_worker_type:
-                    Order.objects.create(
-                        customer_unique_id=self.customer_unique_id,
-                        customer_name=self.customer_name,
-                        # Mahsulot nomini chiroyli qilish
-                        product_name=f"{self.product_name} (Navbat: {next_worker_type})",
-                        worker_type=next_worker_type,
-                        parent_order=self,
-                        panel_type=self.panel_type,
-                        panel_subtype=self.panel_subtype,
-                        panel_thickness=self.panel_thickness,
-                        panel_kvadrat=self.panel_kvadrat,
-                        eshik_turi=self.eshik_turi, # Eshik turi ham o'tsin (kerak bo'lishi mumkin)
-                        pdf_file=self.pdf_file,
-                        status='KIRITILDI',
-                        created_by=self.created_by
-                    )
+            if next_worker_type:
+                # 1. Yangi sub-order yaratish
+                new_order = Order.objects.create(
+                    customer_unique_id=self.customer_unique_id,
+                    customer_name=self.customer_name,
+                    product_name=f"{self.product_name} ({next_worker_type})",
+                    worker_type=next_worker_type,
+                    parent_order=self,
+                    panel_type=self.panel_type,
+                    panel_subtype=self.panel_subtype,
+                    panel_thickness=self.panel_thickness,
+                    panel_kvadrat=self.panel_kvadrat,
+                    eshik_turi=self.eshik_turi,
+                    pdf_file=self.pdf_file,
+                    status='KIRITILDI',
+                    created_by=self.created_by
+                )
+
+                # 2. Ustalarni topish
+                from .models import Worker
+                # Role mos kelishini aniq tekshirish
+                target_workers = Worker.objects.filter(role=next_worker_type)
+                
+                if target_workers.exists():
+                    # 3. Many-to-Many ni bog'lash (.add ishlatish xavfsizroq)
+                    new_order.assigned_workers.add(*target_workers)
+                    # 4. Tasdiqlash
+                    print(f"DEBUG: {next_worker_type} ustalari biriktirildi.")
 # =======================================================================
 # 5. MATERIAL TRANSACTION MODELI
 # =======================================================================
