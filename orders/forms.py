@@ -37,12 +37,6 @@ PANEL_THICKNESS_CHOICES = [
     ('15', '15 sm'),
 
 ]
-
-from django import forms
-from django.utils import timezone
-from django.core.exceptions import ValidationError
-from .models import Order, Worker
-
 from django import forms
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -54,7 +48,7 @@ class OrderForm(forms.ModelForm):
             ('', '--- Ish Turini Tanlang ---'),
             ('LIST', 'List Ustasi (PIR/PUR Panel)'),
             ('ESHIK', 'Eshik Ustasi'),
-            ('LIST_ESHIK', 'List va Eshik Ustasi (Universal)'), # Yangi qo'shildi
+            ('LIST_ESHIK', 'List va Eshik Ustasi (Universal)'),
         ],
         required=True,
         label="Ish Turi",
@@ -65,7 +59,8 @@ class OrderForm(forms.ModelForm):
         model = Order
         fields = [
             'pdf_file', 'customer_unique_id','customer_name', 'product_name', 
-            'worker_type', 'eshik_turi', 'zamokli_eshik',
+            'worker_type', 'eshik_turi', 'parog_turi', 'eshik_yonalishi', 
+            'balandligi', 'eni', 'zamokli_eshik',
             'panel_type', 'panel_subtype', 'panel_thickness', 'panel_kvadrat',
             'total_price', 'prepayment', 'deadline', 'assigned_workers', 
             'comment', 'status', 'needs_manager_approval'
@@ -81,9 +76,13 @@ class OrderForm(forms.ModelForm):
             'panel_subtype': forms.Select(attrs={'class': 'form-control', 'id': 'id_panel_subtype'}),
             'panel_thickness': forms.Select(attrs={'class': 'form-control', 'id': 'id_panel_thickness'}),
             'panel_kvadrat': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'total_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'prepayment': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'total_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'id': 'id_total_price'}),
+            'prepayment': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'id': 'id_prepayment'}),
             'eshik_turi': forms.Select(attrs={'class': 'form-control', 'id': 'id_eshik_turi'}),
+            'parog_turi': forms.Select(attrs={'class': 'form-control'}),
+            'eshik_yonalishi': forms.Select(attrs={'class': 'form-control'}),
+            'balandligi': forms.NumberInput(attrs={'class': 'form-control'}),
+            'eni': forms.NumberInput(attrs={'class': 'form-control'}),
             'zamokli_eshik': forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_zamokli_eshik'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'pdf_file': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf'}),
@@ -93,84 +92,72 @@ class OrderForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # 1. Status xatosini yo'qotish: formaga default qiymat beramiz
+        
+        # Faqat LIST, ESHIK va LIST_ESHIK rolli ustalarni olish
+        target_roles = ['LIST', 'ESHIK', 'LIST_ESHIK']
+        filtered_workers = Worker.objects.filter(role__in=target_roles)
+        
+        # Maydonni filtrlangun queryset bilan to'ldirish
+        self.fields['assigned_workers'].queryset = filtered_workers
+        self.fields['assigned_workers'].label_from_instance = lambda obj: f"{str(obj)} ({obj.role})"
+        
         self.fields['status'].initial = 'KIRITILDI'
         
-        # 2. Majburiy emas deb belgilash (JS boshqarayotgani uchun)
-        self.fields['panel_type'].required = False
-        self.fields['panel_thickness'].required = False
-        self.fields['eshik_turi'].required = False
-        self.fields['panel_subtype'].required = False
-        self.fields['status'].required = False # Status xatosini oldini olish
+        # Majburiy emas deb belgilash
+        optional_fields = ['panel_type', 'panel_thickness', 'eshik_turi', 
+                           'panel_subtype', 'status', 'parog_turi', 
+                           'eshik_yonalishi', 'balandligi', 'eni', 'prepayment']
+        for field in optional_fields:
+            if field in self.fields:
+                self.fields[field].required = False
 
-        # Filtrlash mantiqi: LIST_ESHIK ustalari har doim ko'rinishi kerak
+       
         worker_type = self.data.get('worker_type') if self.data else (self.instance.worker_type if self.instance else None)
-        
-        if worker_type == 'LIST':
-            # Faqat Listchilar va Universalchilar
-            self.fields['assigned_workers'].queryset = Worker.objects.filter(role__in=['LIST', 'LIST_ESHIK'])
-        elif worker_type == 'ESHIK':
-            # Faqat Eshikchilar va Universalchilar
-            self.fields['assigned_workers'].queryset = Worker.objects.filter(role__in=['ESHIK', 'LIST_ESHIK'])
-        elif worker_type == 'LIST_ESHIK':
-            # Universal usta tanlansa, hamma Start ustalari chiqishi mumkin
-            self.fields['assigned_workers'].queryset = Worker.objects.filter(role__in=['LIST', 'ESHIK', 'LIST_ESHIK'])
-        else:
-            self.fields['assigned_workers'].queryset = Worker.objects.filter(role__in=['LIST', 'ESHIK', 'LIST_ESHIK'])
+        all_workers = Worker.objects.all()
+
+        # if worker_type == 'LIST':
+        #     self.fields['assigned_workers'].queryset = all_workers.filter(role__in=['LIST', 'LIST_ESHIK'])
+        # elif worker_type == 'ESHIK':
+        #     self.fields['assigned_workers'].queryset = all_workers.filter(role__in=['ESHIK', 'LIST_ESHIK'])
+        # elif worker_type == 'LIST_ESHIK':
+        #     self.fields['assigned_workers'].queryset = all_workers.filter(role__in=['LIST', 'ESHIK', 'LIST_ESHIK'])
+        # else:
+        #     self.fields['assigned_workers'].queryset = all_workers
+
+    def clean_prepayment(self):
+        """Zalog kiritilmasa yoki bo'sh bo'lsa, uni 0 deb qaytaradi"""
+        prepayment = self.cleaned_data.get('prepayment')
+        if prepayment is None:
+            return 0
+        return prepayment
 
     def clean(self):
         cleaned_data = super().clean()
         worker_type = cleaned_data.get('worker_type')
         assigned_workers = cleaned_data.get('assigned_workers')
+        total_price = cleaned_data.get('total_price') or 0
+        prepayment = cleaned_data.get('prepayment') or 0
 
-        # 1. Ustalar tanlangani tekshiruvi
+        # Zalog mantiqi: Agar zalog kiritilmagan bo'lsa, u avtomatik 0 bo'ladi
+        # Shunda qarz (Total - Prepayment) avtomatik Total summaning o'ziga teng bo'ladi
         if not assigned_workers:
             self.add_error('assigned_workers', "Kamida bitta usta tanlashingiz shart!")
 
-        # 2. Eshik mantiqi (Nomini o'zgartirmasdan, faqat tanlanganini tekshiramiz)
+        # 1. Eshik mantiqi tekshiruvi
         if worker_type in ['ESHIK', 'LIST_ESHIK']:
-            eshik_turi = cleaned_data.get('eshik_turi')
-            if not eshik_turi:
-                self.add_error('eshik_turi', "Eshik turi tanlanishi shart!")
-            # BU YERDA NOMNI O'ZGARTIRADIGAN QATORLARNI O'CHIRIB TASHLADIK
+            required_eshik_fields = ['eshik_turi', 'parog_turi', 'eshik_yonalishi', 'balandligi', 'eni']
+            for field in required_eshik_fields:
+                if not cleaned_data.get(field):
+                    self.add_error(field, "Ushbu maydon to'ldirilishi shart!")
 
-        # 3. Panel mantiqi
+        # 2. Panel mantiqi tekshiruvi
         if worker_type in ['LIST', 'LIST_ESHIK']:
-            p_type = cleaned_data.get('panel_type')
-            thick = cleaned_data.get('panel_thickness')
-            if not p_type:
+            if not cleaned_data.get('panel_type'):
                 self.add_error('panel_type', "Panel turini tanlang!")
-            if not thick:
+            if not cleaned_data.get('panel_thickness'):
                 self.add_error('panel_thickness', "Panel qalinligini tanlang!")
 
         return cleaned_data
-
-class StartImageUploadForm(forms.ModelForm):
-    class Meta:
-        model = Order
-        fields = ['start_image']
-        widgets = {
-            'start_image': forms.FileInput(attrs={
-                'accept': 'image/*',
-                'class': 'form-control',
-                'required': True
-            })
-        }
-    
-    def clean_start_image(self):
-        start_image = self.cleaned_data.get('start_image')
-        if not start_image:
-            raise ValidationError("Boshlash rasmi majburiy") 
-        if start_image.size > 5 * 1024 * 1024:
-            raise ValidationError("Rasm hajmi 5MB dan oshmasligi kerak (Maks. 5MB)")
-        allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-        ext = os.path.splitext(start_image.name)[1].lower()
-        if ext not in allowed_extensions:
-            raise ValidationError("Faqat rasm fayllarini yuklash mumkin (JPG, PNG, GIF, BMP, WebP)")
-        return start_image
-    
-# forms.py faylida EshikForm classini yangilang yoki qo'shing
-# forms.py - EshikForm classini yangilang
 
 class EshikForm(forms.ModelForm):
     """Eshik buyurtmalari uchun maxsus form"""
@@ -210,6 +197,33 @@ class EshikForm(forms.ModelForm):
     class Meta:
         model = Order
         fields = ['eshik_turi', 'zamokli_eshik']
+class StartImageUploadForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['start_image']
+        widgets = {
+            'start_image': forms.FileInput(attrs={
+                'accept': 'image/*',
+                'class': 'form-control',
+                'required': True
+            })
+        }
+    
+    def clean_start_image(self):
+        start_image = self.cleaned_data.get('start_image')
+        if not start_image:
+            raise ValidationError("Boshlash rasmi majburiy") 
+        if start_image.size > 5 * 1024 * 1024:
+            raise ValidationError("Rasm hajmi 5MB dan oshmasligi kerak (Maks. 5MB)")
+        allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+        ext = os.path.splitext(start_image.name)[1].lower()
+        if ext not in allowed_extensions:
+            raise ValidationError("Faqat rasm fayllarini yuklash mumkin (JPG, PNG, GIF, BMP, WebP)")
+        return start_image
+    
+# forms.py faylida EshikForm classini yangilang yoki qo'shing
+# forms.py - EshikForm classini yangilang
+
 
 class FinishImageUploadForm(forms.ModelForm):
     class Meta:
