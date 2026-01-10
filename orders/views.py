@@ -409,9 +409,28 @@ def order_list(request):
     
     panel_completed = panel_child_orders.filter(status__in=['TAYYOR', 'BAJARILDI']).count()
     ugul_completed = ugul_child_orders.filter(status__in=['TAYYOR', 'BAJARILDI']).count()
+    unpaid_orders = Order.objects.none() # Bo'sh queryset
+    total_unpaid_amount = 0
+    unpaid_orders_count = 0
+
+
+    if is_glavniy_admin or is_manager_or_confirmer:
     
+        unpaid_orders = Order.objects.filter(
+            parent_order__isnull=True,
+            total_price__gt=F('prepayment')
+        ).exclude(status='BEKOR_QILINDI')
+    
+    unpaid_orders_count = unpaid_orders.count()
+    total_unpaid_amount = sum(order.remaining_amount for order in unpaid_orders)
+    
+    unpaid_orders_count = unpaid_orders.count()
+    # Har birining remaining_amount'ini qo'shib chiqamiz
+    total_unpaid_amount = sum(order.remaining_amount for order in unpaid_orders)
     context = {
         'orders': orders,
+        'unpaid_orders_count': unpaid_orders_count,
+        'total_unpaid_amount': total_unpaid_amount,
         'main_orders': main_orders,
         'panel_child_orders': panel_child_orders,
         'ugul_child_orders': ugul_child_orders,
@@ -1204,6 +1223,8 @@ def order_complete(request, pk):
         messages.warning(request, "Buyurtma Bajarildi deb belgilanishi uchun u avval 'Tayyor' bo'lishi kerak.")
         
     return redirect('order_list')
+
+
 @login_required
 @user_passes_test(lambda u: u.is_superuser or is_in_group(u, 'Glavniy Admin'), login_url='/login/')
 def order_create(request):
@@ -2483,17 +2504,19 @@ def export_audit_log_csv(request):
 
 from django.db.models import F
 
+from django.db.models import F, Q
+
 @login_required
 def debt_report(request):
-    # Shart: 
-    # 1. prepayment > 0 (Zalog bergan bo'lishi shart)
-    # 2. total_price > prepayment (Hali qarzi bo'lishi shart)
-    # 3. Status bekor qilinmagan bo'lishi shart
+    # Shartlar: 
+    # 1. Jami pul to'langan puldan (zalogdan) katta bo'lsin (Qarz bor degani)
+    # 2. Status bekor qilinmagan bo'lishi shart
     debts = Order.objects.filter(
-        prepayment__gt=0,                      # Zalog 0 dan katta bo'lsin
-        total_price__gt=F('prepayment')         # Jami pul zalogdan katta bo'lsin
+        total_price__gt=F('prepayment')
     ).exclude(status='BEKOR_QILINDI').order_by('-created_at')
 
+    # Umumiy qarz summasini hisoblash
+    # remaining_amount modeldagi property yoki metod bo'lishi kerak
     total_debt = sum(order.remaining_amount for order in debts)
 
     context = {
@@ -2503,45 +2526,263 @@ def debt_report(request):
     return render(request, 'orders/debt_report.html', context)
 
 
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
-from .models import Order
-
 def add_prepayment(request, order_id):
     if request.method == 'POST':
         order = get_object_or_404(Order, id=order_id)
         try:
-            amount = float(request.POST.get('amount', 0))
-            if amount > 0:
-                # Matematik qo'shish: eski zalog + yangi to'lov
-                current_prepayment = float(order.prepayment or 0)
-                order.prepayment = current_prepayment + amount
+            amount_str = request.POST.get('amount', '0').replace(',', '.') # Vergulni nuqtaga almashtirish
+            amount = float(amount_str)
+            
+            if amount <= 0:
+                messages.error(request, "To'lov summasi 0 dan katta bo'lishi kerak.")
+            else:
+                # Qarzdan ko'p to'lov kiritilayotganini tekshirish (ixtiyoriy)
+                remaining = float(order.total_price) - float(order.prepayment or 0)
+                if amount > remaining:
+                    messages.warning(request, f"E'tibor bering: Kiritilgan summa qarzdan ({remaining}) ko'proq.")
+
+                # Yangi zalog summasini hisoblash
+                order.prepayment = float(order.prepayment or 0) + amount
                 order.save()
-                messages.success(request, f"{order.customer_name} uchun {amount} USD qo'shildi. Umumiy zalog: {order.prepayment} USD")
+                
+                messages.success(request, f"{order.customer_name} uchun {amount} qo'shildi. Umumiy to'langan: {order.prepayment}")
+        
         except ValueError:
-            messages.error(request, "Noto'g'ri summa kiritildi.")
+            messages.error(request, "Xato: Noto'g'ri raqam kiritildi.")
             
     return redirect('debt_report')
-
 
 
 from django.db.models import Sum, Count
 from django.shortcuts import render
 from .models import Order
 from django.db.models import Sum, Count, Max
+
+from django.db.models import Sum, Count, Max, F
+
+from django.shortcuts import render
+from django.db.models import Sum, Count, Max, F
+from django.http import JsonResponse
+from .models import Order
+
+from django.shortcuts import render
+from django.db.models import Sum, Count, Max, F, Value, DecimalField, ExpressionWrapper
+from django.db.models.functions import Coalesce
+from django.http import JsonResponse
+from .models import Order
+
+from django.shortcuts import render
+from django.db.models import Sum, Count, Max, F, Value, DecimalField, ExpressionWrapper, Q
+from django.db.models.functions import Coalesce
+from django.http import JsonResponse
+from .models import Order
+
+from django.shortcuts import render
+from django.db.models import Sum, Count, Max, F, Value, DecimalField, ExpressionWrapper, Q
+from django.db.models.functions import Coalesce
+from django.http import JsonResponse
+from .models import Order
+
+from django.db.models import Q, Sum, Count, Max, Value, DecimalField
+from django.db.models.functions import Coalesce
+from django.http import JsonResponse
+from django.shortcuts import render
+from .models import Order
+
+from django.db.models import (
+    F, Sum, Count, Max, Avg, Q, 
+    Value, DecimalField, Case, When, FloatField
+)
+from django.db.models.functions import Coalesce, Round, TruncMonth
+from django.http import JsonResponse
+import json
+from datetime import datetime, timedelta
+from decimal import Decimal
+
+from django.db.models import (
+    F, Sum, Count, Max, Min, Avg, Q, 
+    Value, DecimalField, Case, When, FloatField, 
+    CharField, ExpressionWrapper, DurationField
+)
+import json
+from datetime import datetime, timedelta
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.db.models import (
+    F, Sum, Count, Max, Min, Avg, Q, 
+    Value, DecimalField, Case, When, FloatField, 
+    CharField, ExpressionWrapper, DurationField
+)
+from django.db.models.functions import Coalesce, TruncMonth
+from .models import Order
+
+import json
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.db.models import (
+    Sum, Count, Avg, Max, Min, F, Q, 
+    Case, When, Value, FloatField, DecimalField, ExpressionWrapper, CharField
+)
+from django.db.models.functions import Coalesce
+from .models import Order
+
 def customer_rating(request):
-    # Faqat ID bo'yicha guruhlaymiz
-    ratings = Order.objects.values('customer_unique_id') \
-        .annotate(
-            # Ismlar har xil bo'lsa, eng uzunini yoki oxirgisini tanlab oladi
-            display_name=Max('customer_name'), 
-            total_m2=Sum('panel_kvadrat'),
-            order_count=Count('id')
-        ) \
-        .order_by('-total_m2')
+    """
+    To'liq biznes analitika: Mijozlar reytingi, Mahsulotlar tahlili, 
+    PIR panellar, Eshiklar va Panel qalinligi statistikasi.
+    """
+    
+    # ======================== 1. AJAX SO'ROVLAR ========================
+    customer_id = request.GET.get('get_orders')
+    if customer_id:
+        orders = Order.objects.filter(
+            customer_unique_id=customer_id, 
+            parent_order__isnull=True
+        ).order_by('-created_at')
+        
+        orders_list = [{
+            'order_number': o.order_number,
+            'product_name': o.product_name or "Eshik/Mebel",
+            'panel_kvadrat': float(o.panel_kvadrat or 0),
+            'status': o.status,
+            'total_price': float(o.total_price or 0),
+            'prepayment': float(o.prepayment or 0),
+            'created_at': o.created_at.strftime('%Y-%m-%d %H:%M') if o.created_at else '',
+        } for o in orders]
+        
+        customer_stats = orders.aggregate(
+            total_orders=Count('id'),
+            total_amount=Coalesce(Sum('total_price'), Value(0, output_field=DecimalField())),
+            total_paid=Coalesce(Sum('prepayment'), Value(0, output_field=DecimalField())),
+            total_area=Coalesce(Sum('panel_kvadrat'), Value(0, output_field=DecimalField())),
+            avg_order_value=Coalesce(Avg('total_price'), Value(0, output_field=DecimalField()))
+        )
+        
+        return JsonResponse({
+            'orders': orders_list,
+            'stats': customer_stats,
+            'customer_id': customer_id
+        })
 
-    return render(request, 'orders/customer_rating.html', {'ratings': ratings})
+    # ======================== 2. MIJOZLAR REYTINGI (Annotate) ========================
+    ratings_query = Order.objects.filter(parent_order__isnull=True).values('customer_unique_id').annotate(
+        display_name=Max('customer_name'),
+        order_count=Count('id'),
+        first_order_date=Min('created_at'),
+        last_order_date=Max('created_at'),
+        total_m2=Coalesce(Sum('panel_kvadrat'), Value(0, output_field=DecimalField())),
+        total_billed=Coalesce(Sum('total_price'), Value(0, output_field=DecimalField())),
+        total_paid=Coalesce(Sum('prepayment'), Value(0, output_field=DecimalField())),
+    ).annotate(
+        payment_ratio=Case(
+            When(total_billed__gt=0, then=100.0 * F('total_paid') / F('total_billed')),
+            default=Value(0.0),
+            output_field=FloatField()
+        ),
+        avg_order_value=ExpressionWrapper(F('total_billed') / F('order_count'), output_field=DecimalField())
+    ).annotate(
+        loyalty_score=Case(
+            When(Q(order_count__gt=5) & Q(payment_ratio__gt=80), then=Value('A')),
+            When(Q(order_count__gt=2) & Q(payment_ratio__gt=60), then=Value('B')),
+            default=Value('C'),
+            output_field=CharField()
+        )
+    )
 
+    m2_ratings = list(ratings_query.order_by('-total_m2')[:15])
+    sum_ratings = list(ratings_query.order_by('-total_paid')[:15])
+    order_count_ratings = list(ratings_query.order_by('-order_count')[:10])
+    loyal_customers = list(ratings_query.filter(loyalty_score='A').order_by('-total_paid')[:10])
+
+    # ======================== 3. UMUMIY STATISTIKA ========================
+    base_aggregate = Order.objects.filter(parent_order__isnull=True).aggregate(
+        total_orders=Count('id'),
+        total_customers=Count('customer_unique_id', distinct=True),
+        total_revenue=Coalesce(Sum('total_price'), Value(0, output_field=DecimalField())),
+        total_prepayment=Coalesce(Sum('prepayment'), Value(0, output_field=DecimalField())),
+        total_area=Coalesce(Sum('panel_kvadrat'), Value(0, output_field=DecimalField())),
+        avg_order_value=Coalesce(Avg('total_price'), Value(0, output_field=DecimalField())),
+    )
+
+    overall_stats = base_aggregate
+    if overall_stats['total_revenue'] > 0:
+        overall_stats['avg_prepayment_ratio'] = (float(overall_stats['total_prepayment']) * 100) / float(overall_stats['total_revenue'])
+    else:
+        overall_stats['avg_prepayment_ratio'] = 0
+
+    completed_orders = Order.objects.filter(parent_order__isnull=True, status__in=['completed', 'delivered']).count()
+    overall_stats['completion_rate'] = (completed_orders * 100 / overall_stats['total_orders']) if overall_stats['total_orders'] > 0 else 0
+
+    # ======================== 4. PANEL QALINLIGI STATISTIKASI ========================
+    thickness_stat = Order.objects.filter(
+        parent_order__isnull=True
+    ).exclude(
+        Q(panel_thickness__isnull=True) | Q(panel_thickness='')
+    ).values('panel_thickness').annotate(
+        count=Count('id'),
+        total_area=Coalesce(Sum('panel_kvadrat'), Value(0, output_field=DecimalField())),
+        eshik_types=Count('product_name', distinct=True)
+    ).order_by('panel_thickness')
+
+  # ... (oldingi hisob-kitoblar) ...
+
+    # ======================== 5. PIR PANELLAR TAHLILI ========================
+    pir_all = Order.objects.filter(panel_type__icontains='PIR')
+    
+    pir_stats = pir_all.values('panel_type').annotate(
+        count=Count('id'),
+        total_m2=Coalesce(Sum('panel_kvadrat'), Value(0, output_field=DecimalField())),
+        total_revenue=Coalesce(Sum('total_price'), Value(0, output_field=DecimalField()))
+    ).order_by('-total_m2')
+
+    pir_details = {
+        'total_pir': pir_all.count(),
+        'total_area': pir_all.aggregate(s=Sum('panel_kvadrat'))['s'] or 0,
+        'tom_panels': pir_all.filter(Q(panel_subtype__icontains='TOM') | Q(product_name__icontains='TOM')).count(),
+        'secret_panels': pir_all.filter(Q(panel_subtype__icontains='SECRET') | Q(product_name__icontains='SECRET')).count(),
+        'sovut_panels': pir_all.filter(Q(panel_subtype__icontains='SOVUT') | Q(product_name__icontains='SOVUT')).count(),
+    }
+
+    # ======================== 6. ESHIKLAR TAHLILI ========================
+    eshik_stat = Order.objects.filter(parent_order__isnull=True).exclude(
+        Q(eshik_turi__isnull=True) | Q(eshik_turi='')
+    ).values('eshik_turi').annotate(
+        eshik_soni=Count('id'),
+        total_revenue=Sum('total_price')
+    ).order_by('-eshik_soni')
+
+    # ======================== 7. MASHHUR MAHSULOTLAR ========================
+    product_rankings = Order.objects.filter(parent_order__isnull=True).values('product_name').annotate(
+        order_count=Count('id'),
+        total_m2=Coalesce(Sum('panel_kvadrat'), Value(0, output_field=DecimalField())),
+        total_revenue=Coalesce(Sum('total_price'), Value(0, output_field=DecimalField()))
+    ).order_by('-order_count')[:15]
+
+    if product_rankings:
+        max_orders = max(p['order_count'] for p in product_rankings)
+        for p in product_rankings:
+            p['popularity_score'] = (p['order_count'] * 100) / max_orders if max_orders > 0 else 0
+
+    # ======================== 8. CONTEXT (TO'G'IRLANGAN) ========================
+    # DIQQAT: Bu yerda context = {} deb yangidan ochmang, hamma o'zgaruvchini shu yerga jamlang
+    context = {
+        'm2_ratings': m2_ratings,
+        'sum_ratings': sum_ratings,
+        'order_count_ratings': order_count_ratings,
+        'loyal_customers': loyal_customers,
+        'overall_stats': overall_stats,
+        'product_rankings': list(product_rankings),
+        'thickness_stat': list(thickness_stat),
+        'pir_stats': list(pir_stats),
+        'pir_details': pir_details,  # <--- BU ENDI O'CHIB KETMAYDI
+        'eshik_stat': list(eshik_stat),
+        'json_data': {
+            'm2_ratings': json.dumps(list(m2_ratings), default=str),
+            'sum_ratings': json.dumps(list(sum_ratings), default=str),
+        }
+    }
+
+    return render(request, 'orders/customer_rating.html', context)
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 
