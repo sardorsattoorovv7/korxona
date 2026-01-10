@@ -2,399 +2,963 @@
 {% load humanize %}
 
 {% block content %}
-<div class="container mt-4 mb-5">
-    <!-- Sarlavha qismi -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-gradient-primary text-white border-0 shadow-lg">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="mb-2"><i class="fas fa-trophy me-3"></i>Mijozlar Reytingi</h1>
-                            <p class="mb-0 opacity-75">Har bir mijozning buyurtmalari bo'yicha reyting jadvali</p>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge bg-white text-primary fs-6 p-3">
-                                <i class="fas fa-users me-2"></i>Jami: {{ ratings|length }} mijoz
-                            </span>
-                        </div>
+<style>
+    :root {
+        --primary: #10b981;
+        --primary-dark: #047857;
+        --primary-light: #d1fae5;
+        --secondary: #3b82f6;
+        --success: #059669;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --light: #f8fafc;
+        --dark: #1e293b;
+        --gray: #64748b;
+        --gray-light: #e2e8f0;
+    }
+
+    body {
+        background-color: #f9fafb;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--dark);
+    }
+
+    .dashboard-header {
+        background: white;
+        border-radius: 16px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border-left: 4px solid var(--primary);
+    }
+
+    .smart-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .smart-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-header-modern {
+        padding: 1.5rem;
+        background: var(--primary-light);
+        border-bottom: 1px solid var(--gray-light);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-header-modern h5 {
+        font-weight: 600;
+        margin: 0;
+        color: var(--primary-dark);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .modern-progress {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--gray-light);
+        overflow: hidden;
+    }
+
+    .modern-progress-bar {
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--success));
+        transition: width 0.6s ease;
+    }
+
+    .rank-badge {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        background: white;
+        color: var(--primary);
+        border: 2px solid var(--primary-light);
+    }
+
+    .rank-1 { 
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: white;
+        border: none;
+    }
+    
+    .rank-2 { 
+        background: linear-gradient(135deg, #cbd5e0, #94a3b8);
+        color: white;
+        border: none;
+    }
+    
+    .rank-3 { 
+        background: linear-gradient(135deg, #f472b6, #db2777);
+        color: white;
+        border: none;
+    }
+
+    .data-row {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--gray-light);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: background-color 0.2s ease;
+    }
+
+    .data-row:hover {
+        background-color: #f8fafc;
+    }
+
+    .data-row:last-child {
+        border-bottom: none;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        transition: transform 0.2s ease;
+        height: 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .badge-modern {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--primary-dark);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .icon-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--primary);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .fab {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        cursor: pointer;
+        z-index: 1000;
+        transition: transform 0.2s ease;
+        border: none;
+    }
+
+    .fab:hover {
+        transform: scale(1.1);
+        background: var(--primary-dark);
+    }
+
+    .btn-emerald {
+        background: var(--primary);
+        color: white;
+        border: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        padding: 10px 20px;
+        border-radius: 8px;
+    }
+
+    .btn-emerald:hover {
+        background: var(--primary-dark);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-emerald-outline {
+        background: transparent;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-emerald-outline:hover {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+
+    .metric-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        line-height: 1;
+    }
+
+    .section-divider {
+        padding: 1rem 1.5rem;
+        background: #f8fafc;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        border-top: 1px solid var(--gray-light);
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-header {
+            padding: 1.5rem;
+        }
+        
+        .data-row {
+            padding: 1rem;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .stat-card {
+            padding: 1.25rem;
+        }
+        
+        .card-header-modern {
+            padding: 1.25rem;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+        }
+    }
+
+    .custom-scroll {
+        max-height: 400px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary) #f1f5f9;
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 3px;
+    }
+
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.5rem;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--primary);
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 700;
+        color: var(--dark);
+    }
+
+    .text-primary {
+        color: var(--primary) !important;
+    }
+
+    .shadow-sm {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    }
+</style>
+
+<div class="container-fluid py-4 px-3 px-lg-4">
+    
+    <!-- Dashboard Header -->
+    <div class="dashboard-header shadow-sm">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="icon-circle">
+                        <i class="fas fa-chart-bar fa-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 fw-bold mb-1">Biznes Analitika Dashboard</h1>
+                        <p class="text-muted mb-0">Real-time biznes ko'rsatkichlari va tahlillar</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <span class="badge-modern">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        Real-time yangilanadi
+                    </span>
+                    <span class="text-primary fw-semibold">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        {{ current_period.month }}
+                    </span>
+                    <div class="d-flex gap-2">
+                        {% for period in available_periods %}
+                        <button class="btn btn-sm btn-emerald-outline period-btn rounded-pill px-3 py-1" 
+                                data-period="{{ period.value }}">
+                            {{ period.label }}
+                        </button>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Reyting kartalar -->
-    <div class="row mb-4">
-        {% for item in ratings|slice:":3" %}
-        <div class="col-md-4 mb-3">
-            <div class="card border-0 shadow-sm h-100 hover-shadow transition-all" onclick="showCustomerOrders('{{ item.customer_unique_id }}', '{{ item.display_name }}')" style="cursor: pointer;">
-                <div class="card-body p-4 text-center">
-                    <div class="position-relative mb-3">
-                        {% if forloop.counter == 1 %}
-                        <div class="trophy-badge bg-warning text-dark">
-                            <i class="fas fa-crown fa-2x"></i>
-                        </div>
-                        {% elif forloop.counter == 2 %}
-                        <div class="trophy-badge bg-secondary text-white">
-                            <i class="fas fa-medal fa-2x"></i>
-                        </div>
-                        {% elif forloop.counter == 3 %}
-                        <div class="trophy-badge bg-danger text-white">
-                            <i class="fas fa-award fa-2x"></i>
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <h3 class="text-primary mb-2">{{ item.display_name|default:"Noma'lum" }}</h3>
-                    <p class="text-muted mb-3">ID: #{{ item.customer_unique_id }}</p>
-                    
-                    <div class="d-flex justify-content-center gap-4 mb-3">
-                        <div class="text-center">
-                            <span class="d-block fs-4 fw-bold text-info">{{ item.order_count }}</span>
-                            <small class="text-muted">Buyurtma</small>
-                        </div>
-                        <div class="text-center">
-                            <span class="d-block fs-4 fw-bold text-success">{{ item.total_m2|floatformat:2 }}</span>
-                            <small class="text-muted">m²</small>
-                        </div>
-                    </div>
-                    
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-gradient-info" style="width: {% widthratio item.total_m2 ratings.0.total_m2 100 %}%"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- Asosiy jadval -->
-    <div class="card border-0 shadow-lg">
-        <div class="card-header bg-white border-0 py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 text-dark">
-                    <i class="fas fa-list-ol me-2 text-primary"></i>To'liq Reyting Jadvali
-                </h5>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-primary btn-sm" onclick="window.print()">
-                        <i class="fas fa-print me-1"></i>Print
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <div class="d-flex gap-2 justify-content-lg-end">
+                    <button class="btn btn-outline-primary d-flex align-items-center gap-2 rounded-pill px-3 py-2">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Filtrlash</span>
                     </button>
-                    <a href="{% url 'order_list' %}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-arrow-left me-1"></i>Orqaga
-                    </a>
+                    <button class="btn btn-emerald d-flex align-items-center gap-2 rounded-pill px-3 py-2">
+                        <i class="fas fa-file-export"></i>
+                        <span>Eksport</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h6 class="text-muted mb-2">Umumiy Daromad</h6>
+                        <div class="metric-value">
+                            {{ overall_stats.total_revenue|default:0|floatformat:0|intcomma }}
+                        </div>
+                    </div>
+                    <div class="icon-circle">
+                        <i class="fas fa-money-bill-wave fa-lg"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-success bg-opacity-10 text-success d-flex align-items-center gap-1 me-2 px-2 py-1 rounded">
+                        <i class="fas fa-arrow-up"></i>
+                        {{ growth_stats.revenue_growth|floatformat:1 }}%
+                    </span>
+                    <small class="text-muted">O'tgan oyga nisbatan</small>
                 </div>
             </div>
         </div>
         
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-4 text-center" style="width: 80px;">O'rin</th>
-                            <th>Mijoz</th>
-                            <th class="text-center">Buyurtmalar</th>
-                            <th class="text-end pe-4">Umumiy Maydon</th>
-                            <th class="text-center" style="width: 150px;">Harakatlar</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in ratings %}
-                        <tr class="hover-row">
-                            <td class="ps-4 text-center">
-                                <div class="rank-badge 
-                                    {% if forloop.counter == 1 %}rank-gold
-                                    {% elif forloop.counter == 2 %}rank-silver
-                                    {% elif forloop.counter == 3 %}rank-bronze
-                                    {% else %}rank-normal{% endif %}">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h6 class="text-muted mb-2">Jami Buyurtmalar</h6>
+                        <div class="metric-value">
+                            {{ overall_stats.total_orders|default:0|intcomma }}
+                        </div>
+                    </div>
+                    <div class="icon-circle" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                        <i class="fas fa-shopping-bag fa-lg"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-success bg-opacity-10 text-success d-flex align-items-center gap-1 me-2 px-2 py-1 rounded">
+                        <i class="fas fa-arrow-up"></i>
+                        {{ growth_stats.order_growth|floatformat:1 }}%
+                    </span>
+                    <small class="text-muted">O'tgan oyga nisbatan</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h6 class="text-muted mb-2">Faol Mijozlar</h6>
+                        <div class="metric-value">
+                            {{ overall_stats.total_customers|default:0 }}
+                        </div>
+                    </div>
+                    <div class="icon-circle" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                        <i class="fas fa-users fa-lg"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-info bg-opacity-10 text-info px-2 py-1 rounded">
+                        {{ loyal_customers|length }} ta sodiq mijoz
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h6 class="text-muted mb-2">Umumiy Maydon</h6>
+                        <div class="metric-value">
+                            {{ overall_stats.total_area|default:0|floatformat:1|intcomma }} m²
+                        </div>
+                    </div>
+                    <div class="icon-circle" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                        <i class="fas fa-crop-alt fa-lg"></i>
+                    </div>
+                </div>
+                <div class="modern-progress mt-2">
+                    <div class="modern-progress-bar" style="width: 75%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="row g-4">
+        
+        <!-- Left Column -->
+        <div class="col-xl-6">
+            
+            <!-- Top Customers by Revenue -->
+            <div class="smart-card mb-4">
+                <div class="card-header-modern">
+                    <h5>
+                        <i class="fas fa-trophy"></i>
+                        Eng Sodiq Mijozlar
+                        <small class="text-muted">(Daromad bo'yicha)</small>
+                    </h5>
+                    <span class="badge-modern">TOP {{ sum_ratings|length }}</span>
+                </div>
+                
+                <div class="custom-scroll">
+                    {% for client in sum_ratings %}
+                    <div class="data-row">
+                        <div class="d-flex align-items-center" style="flex: 1;">
+                            <div class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% endif %} me-3">
+                                {{ forloop.counter }}
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="fw-bold mb-1">{{ client.display_name }}</div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-hashtag me-1"></i>{{ client.customer_unique_id|truncatechars:8 }}
+                                    </small>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1 rounded">
+                                        {{ client.order_count }} buyurtma
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-success mb-1">
+                                {{ client.total_paid|default:0|floatformat:0|intcomma }} $
+                            </div>
+                            <div class="modern-progress" style="width: 120px;">
+                                {% with max_total=sum_ratings.0.total_paid %}
+                                <div class="modern-progress-bar" 
+                                     style="width: {% widthratio client.total_paid max_total 100 %}%;">
+                                </div>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="section-divider">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-users me-2"></i>
+                            Jami {{ sum_ratings|length }} ta mijoz
+                        </span>
+                        <small class="text-muted fw-semibold">
+                            Umumiy: {{ overall_stats.total_revenue|default:0|floatformat:0|intcomma }} $
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Customers by Area -->
+            <div class="smart-card">
+                <div class="card-header-modern">
+                    <h5>
+                        <i class="fas fa-expand-arrows-alt"></i>
+                        Maydon Bo'yicha Liderlar
+                    </h5>
+                    <span class="badge-modern">TOP {{ m2_ratings|length }}</span>
+                </div>
+                
+                <div class="custom-scroll">
+                    {% for client in m2_ratings %}
+                    <div class="data-row">
+                        <div class="d-flex align-items-center">
+                            <div class="rank-badge me-3">{{ forloop.counter }}</div>
+                            <div>
+                                <div class="fw-bold mb-1">{{ client.display_name }}</div>
+                                <small class="text-muted">
+                                    <i class="fas fa-boxes me-1"></i>{{ client.order_count }} ta buyurtma
+                                </small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-primary mb-1">
+                                {{ client.total_m2|default:0|floatformat:1 }} m²
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                {{ client.m2_per_order|default:0|floatformat:1 }} m²/o'rtacha
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-xl-6">
+            
+            <!-- Doors Statistics -->
+            <div class="smart-card mb-4">
+                <div class="card-header-modern">
+                    <h5>
+                        <i class="fas fa-door-closed"></i>
+                        Eshiklar Statistikasi
+                    </h5>
+                    <span class="badge-modern">{{ eshik_stat|length }} tur</span>
+                </div>
+                
+                <div class="row g-2 p-3">
+                    {% for door in eshik_stat|slice:":4" %}
+                    <div class="col-6 col-md-3">
+                        <div class="text-center p-2 rounded border">
+                            <div class="fs-5 fw-bold text-primary mb-1">{{ door.count }}</div>
+                            <small class="text-muted d-block text-truncate" style="font-size: 0.75rem;">
+                                {{ door.eshik_turi|upper }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="p-3">
+                    <h6 class="fw-semibold text-primary mb-3">Turlar bo'yicha taqsimot</h6>
+                    
+                    {% for door in eshik_stat %}
+                    <div class="d-flex align-items-center justify-content-between mb-2 p-2 rounded border">
+                        
+                        <div class="d-flex align-items-center" style="flex: 1;">
+                            <div class="me-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" 
+                                     style="width: 32px; height: 32px; background: var(--primary); color: white; font-size: 0.8rem;">
                                     {{ forloop.counter }}
                                 </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-circle bg-light-primary text-primary me-3">
-                                        {{ item.display_name|first|default:"?" }}
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0 text-dark">{{ item.display_name|default:"Noma'lum mijoz" }}</h6>
-                                        <small class="text-muted">ID: #{{ item.customer_unique_id }}</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge rounded-pill bg-info text-white fs-6 px-3 py-2">
-                                    {{ item.order_count }}
-                                </span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="fas fa-ruler-combined text-success me-2"></i>
-                                    <h4 class="mb-0 fw-bold text-success">{{ item.total_m2|floatformat:2 }} <small class="fs-6">m²</small></h4>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-primary" onclick="showCustomerOrders('{{ item.customer_unique_id }}', '{{ item.display_name }}')">
-                                    <i class="fas fa-eye me-1"></i>Ko'rish
-                                </button>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center py-5">
-                                <div class="text-muted">
-                                    <i class="fas fa-inbox fa-3x mb-3"></i>
-                                    <h4>Ma'lumot topilmadi</h4>
-                                    <p>Hozircha mijozlar reytingi mavjud emas</p>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="customerOrdersModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-gradient-primary text-white">
-                <div class="d-flex align-items-center">
-                    <div class="avatar-circle bg-white text-primary me-3">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div>
-                        <h5 class="modal-title mb-0" id="modalCustomerName"></h5>
-                        <small>Mijozning barcha buyurtmalari</small>
-                    </div>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Buyurtma raqami</th>
-                                <th>Mahsulot</th>
-                                <th class="text-center">Kvadrat</th>
-                                <th class="text-center">Holati</th>
-                                <th class="text-center">Sana</th>
-                                <th class="text-center">Narxi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="modalOrdersBody">
-                            <!-- Ma'lumotlar JavaScript orqali yuklanadi -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Yopish</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-.hover-shadow {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.hover-shadow:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
-}
-.trophy-badge {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    border: 5px solid white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-.rank-badge {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    margin: 0 auto;
-}
-.rank-gold {
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    color: #000;
-    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
-}
-.rank-silver {
-    background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
-    color: white;
-    box-shadow: 0 4px 10px rgba(192, 192, 192, 0.3);
-}
-.rank-bronze {
-    background: linear-gradient(135deg, #CD7F32, #A0522D);
-    color: white;
-    box-shadow: 0 4px 10px rgba(205, 127, 50, 0.3);
-}
-.rank-normal {
-    background: #f8f9fa;
-    color: #6c757d;
-    border: 2px solid #e9ecef;
-}
-.avatar-circle {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1.2rem;
-}
-.bg-light-primary {
-    background-color: rgba(13, 110, 253, 0.1);
-}
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-.bg-gradient-info {
-    background: linear-gradient(90deg, #17a2b8, #20c997);
-}
-.hover-row:hover {
-    background-color: rgba(13, 110, 253, 0.05) !important;
-}
-.transition-all {
-    transition: all 0.3s ease;
-}
-.progress {
-    background-color: #e9ecef;
-    border-radius: 10px;
-    overflow: hidden;
-}
-@media print {
-    .btn, .hover-shadow, .hover-row {
-        box-shadow: none !important;
-    }
-    .table {
-        border: 1px solid #dee2e6;
-    }
-}
-</style>
-
-<script>
-function showCustomerOrders(customerId, customerName) {
-    // Modalni tayyorlash
-    const modalName = document.getElementById('modalCustomerName');
-    const avatarLetter = customerName ? customerName.charAt(0).toUpperCase() : '?';
-    
-    modalName.innerHTML = `
-        ${customerName}
-        <small class="d-block opacity-75">ID: #${customerId}</small>
-    `;
-    
-    const tbody = document.getElementById('modalOrdersBody');
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="6" class="text-center py-5">
-                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                    <span class="visually-hidden">Yuklanmoqda...</span>
-                </div>
-                <p class="mt-3 text-muted">Buyurtmalar yuklanmoqda...</p>
-            </td>
-        </tr>
-    `;
-    
-    // Modalni ochish
-    const myModal = new bootstrap.Modal(document.getElementById('customerOrdersModal'));
-    myModal.show();
-
-    // Ma'lumotlarni olish
-    fetch(`/orders/get-customer-orders/${customerId}/`)
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-        })
-        .then(data => {
-            tbody.innerHTML = '';
-            
-            if (!data.orders || data.orders.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center py-4">
-                            <div class="text-muted">
-                                <i class="fas fa-inbox fa-2x mb-2"></i>
-                                <p class="mb-0">Buyurtmalar topilmadi</p>
                             </div>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
+                            <div class="text-truncate">
+                                <div class="fw-bold">{{ door.eshik_turi }}</div>
+                                {% if door.total_revenue %}
+                                <small class="text-muted">
+                                    <i class="fas fa-coins me-1"></i>{{ door.total_revenue|default:0 }} $
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
 
-            // Jami hisoblash
-            let totalKvadrat = 0;
-            let totalPrice = 0;
-            
-            data.orders.forEach(order => {
-                const date = new Date(order.created_at).toLocaleDateString('ru-RU');
-                const kvadrat = parseFloat(order.panel_kvadrat) || 0;
-                const price = parseFloat(order.price) || 0;
+                        <div class="d-flex align-items-center" style="width: 40%;">
+                            <div class="modern-progress w-100 me-3">
+                                {% with max_val=eshik_stat.0.eshik_soni %}
+                                <div class="modern-progress-bar" 
+                                     style="width: {% widthratio door.eshik_soni max_val 100 %}%;">
+                                </div>
+                                {% endwith %}
+                            </div>
+                            <span class="fw-bold" style="min-width: 40px;">
+                                {{ door.eshik_soni }} ta
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Thickness & PIR Panels Grid -->
+            <div class="row g-3">
                 
-                totalKvadrat += kvadrat;
-                totalPrice += price;
+                <!-- Thickness Analysis -->
+                <div class="col-md-6">
+                    <div class="smart-card h-100">
+                        <div class="card-header-modern">
+                            <h5>
+                                <i class="fas fa-layer-group"></i>
+                                Panel Qalinligi Tahlili
+                            </h5>
+                        </div>
+                        
+                        <div class="p-3">
+                            {% for th in thickness_stat %}
+                            <div class="d-flex align-items-center p-2 mb-2 rounded border">
+                                <div class="d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 48px; height: 48px; border-radius: 8px; background: var(--primary); color: white;">
+                                    <div class="text-center">
+                                        <span class="fw-bold">{{ th.panel_thickness }}</span>
+                                        <small style="font-size: 0.6rem;">sm</small>
+                                    </div>
+                                </div>
+                                
+                                <div style="flex: 1;">
+                                    <div class="fw-semibold">Panel Qalinligi</div>
+                                    <div class="small text-muted">
+                                        {{ th.eshik_types }} turdagi mahsulot
+                                    </div>
+                                </div>
+                                
+                                <div class="text-end">
+                                    <div class="fw-bold text-primary">{{ th.count }} ta</div>
+                                    <small class="text-muted">buyurtma</small>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                <p>Ma'lumot mavjud emas</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PIR Analysis -->
+                <div class="col-md-6">
+                    <div class="smart-card h-100" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
+                        <div class="card-header-modern border-0" style="background: rgba(255,255,255,0.15);">
+                            <h5 class="text-white mb-0">
+                                <i class="fas fa-snowflake me-2"></i>
+                                PIR Panellar Tahlili
+                            </h5>
+                        </div>
+                        
+                        <div class="p-3">
+                            <div class="text-center py-3 mb-3 rounded" style="background: rgba(255,255,255,0.1);">
+                                <small class="opacity-75 d-block mb-1">Jami PIR Panellar</small>
+                                <h2 class="fw-bold text-white mb-2">{{ pir_details.total_pir|default:0 }}</h2>
+                                <span class="badge bg-white text-primary rounded-pill px-3">
+                                    {{ pir_details.total_area|default:0|floatformat:1 }} m²
+                                </span>
+                            </div>
+                            
+                            <div class="row text-center g-2">
+                                <div class="col-4">
+                                    <div class="p-2 rounded border border-white border-opacity-25">
+                                        <div class="fw-bold">{{ pir_details.tom_panels|default:0 }}</div>
+                                        <small class="opacity-75">Tom</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 rounded border border-white border-opacity-25">
+                                        <div class="fw-bold">{{ pir_details.secret_panels|default:0 }}</div>
+                                        <small class="opacity-75">Sekret</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 rounded border border-white border-opacity-25">
+                                        <div class="fw-bold">{{ pir_details.sovut_panels|default:0 }}</div>
+                                        <small class="opacity-75">Sovutgich</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
-                // Holat rangini aniqlash
-                let statusClass = 'bg-secondary';
-                if (order.status.includes('tugatil')) statusClass = 'bg-success';
-                if (order.status.includes('jarayonda')) statusClass = 'bg-warning text-dark';
-                if (order.status.includes('bekor')) statusClass = 'bg-danger';
+            </div>
+        </div>
+    </div>
+
+    <!-- Popular Products Section -->
+    <div class="mt-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-circle" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <h4 class="fw-bold mb-0">Eng Mashhur Mahsulotlar</h4>
+            </div>
+            <span class="badge-modern">
+                TOP {{ product_rankings|length }}
+            </span>
+        </div>
+
+        <div class="row g-3">
+            {% for product in product_rankings %}
+            <div class="col-md-6 col-lg-4">
+                <div class="smart-card h-100">
+                    <div class="position-absolute top-0 end-0">
+                        <div class="bg-warning text-dark fw-bold px-3 py-1" 
+                             style="border-bottom-left-radius: 8px; font-size: 0.8rem;">
+                            #{{ forloop.counter }}
+                        </div>
+                    </div>
+                    
+                    <div class="p-3">
+                        <h6 class="fw-bold mb-2" title="{{ product.product_name }}">
+                            {{ product.product_name|default:"Nomsiz mahsulot" }}
+                        </h6>
+                        
+                        <div class="row g-0 mb-3 rounded overflow-hidden">
+                            <div class="col-6 border-end">
+                                <div class="p-2 text-center" style="background: #f8fafc;">
+                                    <div class="fs-5 fw-bold text-primary mb-1">{{ product.total_m2|default:0|floatformat:1 }}</div>
+                                    <small class="text-muted">m² Maydon</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 text-center" style="background: #f8fafc;">
+                                    <div class="fs-5 fw-bold text-success mb-1">{{ product.total_revenue|default:0|floatformat:0|intcomma }}</div>
+                                    <small class="text-muted">Daromad</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-muted">
+                                {{ product.order_count }} buyurtma
+                            </span>
+                            <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-2">
+                                {{ product.popularity_score|floatformat:0 }}%
+                            </span>
+                        </div>
+                        <div class="modern-progress">
+                            <div class="modern-progress-bar" 
+                                 style="width: {{ product.popularity_score }}%; background: linear-gradient(90deg, #f59e0b, #fbbf24);">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-4">
+                <i class="fas fa-box-open fa-2x text-primary mb-2"></i>
+                <h6 class="text-muted">Hozircha mahsulotlar bo'yicha ma'lumot yo'q</h6>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Status & Recent Customers -->
+    <!-- <div class="row g-3 mt-4">
+        <div class="col-md-6">
+            <div class="smart-card h-100">
+                <div class="card-header-modern">
+                    <h5>
+                        <i class="fas fa-clipboard-list-check"></i>
+                        Buyurtma Holatlari
+                    </h5>
+                </div>
                 
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="ps-4 fw-bold text-primary">${order.order_number || '---'}</td>
-                        <td>${order.product_name || '---'}</td>
-                        <td class="text-center fw-bold">${kvadrat.toFixed(2)} m²</td>
-                        <td class="text-center">
-                            <span class="badge ${statusClass}">${order.status}</span>
-                        </td>
-                        <td class="text-center">${date}</td>
-                        <td class="text-center fw-bold text-success">
-                            ${price.toLocaleString()} so'm
-                        </td>
-                    </tr>
-                `;
+                <div class="p-3">
+                    {% for stat in status_stats %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold">
+                                {{ stat.status|default:"Noma'lum" }}
+                            </span>
+                            <span class="fw-bold text-primary">{{ stat.count }} ta</span>
+                        </div>
+                        <div class="modern-progress">
+                            {% with total=overall_stats.total_orders %}
+                            <div class="modern-progress-bar" 
+                                 style="width: {% widthratio stat.count total 100 %}%;">
+                            </div>
+                            {% endwith %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="smart-card h-100">
+                <div class="card-header-modern">
+                    <h5>
+                        <i class="fas fa-user-clock"></i>
+                        Oxirgi Faol Mijozlar
+                    </h5>
+                </div>
+                
+                <div class="p-3 custom-scroll" style="max-height: 250px;">
+                    {% for customer in recent_active_customers %}
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ customer.display_name }}</h6>
+                                <small class="text-muted">
+                                    {{ customer.recent_orders }} ta buyurtma
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-success">{{ customer.recent_revenue|default:0|floatformat:0|intcomma }} $</div>
+                                <small class="text-muted">So'nggi 90 kun</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+</div>
+
+<!-- Floating Action Button -->
+<button class="fab" id="refreshData" title="Ma'lumotlarni yangilash">
+    <i class="fas fa-sync-alt"></i>
+</button>
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tooltips
+        const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
+        
+        // Period filter buttons
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const period = this.dataset.period;
+                
+                // Remove active class from all buttons
+                document.querySelectorAll('.period-btn').forEach(b => {
+                    b.classList.remove('active', 'btn-emerald');
+                    b.classList.add('btn-emerald-outline');
+                });
+                
+                // Add active class to clicked button
+                this.classList.remove('btn-emerald-outline');
+                this.classList.add('active', 'btn-emerald');
+                
+                // Fetch period data
+                fetch(`?period=${period}&X-Requested-With=XMLHttpRequest`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.period_stats) {
+                            updatePeriodStats(data.period_stats);
+                            showNotification('Davr ma\'lumotlari yangilandi', 'success');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification('Xatolik yuz berdi', 'error');
+                    });
             });
-            
-            // Jami qator
-            tbody.innerHTML += `
-                <tr class="table-active fw-bold">
-                    <td colspan="2" class="text-end">JAMI:</td>
-                    <td class="text-center text-primary">${totalKvadrat.toFixed(2)} m²</td>
-                    <td></td>
-                    <td></td>
-                    <td class="text-center text-success">${totalPrice.toLocaleString()} so'm</td>
-                </tr>
-            `;
-        })
-        .catch(error => {
-            console.error('Xatolik:', error);
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-4 text-danger">
-                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                        <p class="mb-0">Ma'lumot yuklashda xatolik yuz berdi</p>
-                        <small>${error.message}</small>
-                    </td>
-                </tr>
-            `;
         });
-}
+        
+        // Refresh button
+        const refreshBtn = document.getElementById('refreshData');
+        refreshBtn.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            const originalClass = icon.className;
+            
+            // Start spinning animation
+            icon.className = 'fas fa-spinner fa-spin';
+            
+            setTimeout(() => {
+                icon.className = originalClass;
+                showNotification('Barcha ma\'lumotlar yangilandi', 'success');
+                
+                // Add checkmark animation
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                }, 1000);
+            }, 1000);
+        });
+        
+        // Notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `position-fixed top-3 end-3 p-3`;
+            notification.style.zIndex = '9999';
+            
+            const bgColor = type === 'success' ? 'var(--primary)' : 
+                           type === 'error' ? 'var(--danger)' : 
+                           type === 'warning' ? 'var(--warning)' : 
+                           'var(--primary)';
+            
+            notification.innerHTML = `
+                <div class="toast show" style="border-left: 4px solid ${bgColor}; background: white;">
+                    <div class="toast-body d-flex align-items-center p-3">
+                        <div class="me-3" style="color: ${bgColor};">
+                            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong class="me-auto">${type === 'success' ? 'Muvaffaqiyat' : type === 'error' ? 'Xatolik' : 'Bildirishnoma'}</strong>
+                            <div class="mt-1">${message}</div>
+                        </div>
+                        <button type="button" class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()"></button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+        
+        // Update stats function
+        function updatePeriodStats(stats) {
+            console.log('Updating stats:', stats);
+            // Implement actual data update logic here
+        }
+    });
 </script>
 {% endblock %}
