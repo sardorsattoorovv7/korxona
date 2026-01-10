@@ -1796,21 +1796,22 @@
             </span>
         </div>
 
-        {% if order.eshik_turi %}
-        <div class="detail-row">
-            <span class="detail-label">
-                <i class="fas fa-door-open"></i>
-                <span>Eshik Turi</span>
-            </span>
-            <span class="detail-value text-primary" style="font-weight: 600;">
-                {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
-                    ***
-                {% else %}
-                    {{ order.eshik_turi }}
-                {% endif %}
-            </span>
-        </div>
+      {% if order.eshik_turi %}
+<div class="detail-row">
+    <span class="detail-label">
+        <i class="fas fa-door-open"></i>
+        <span>Eshik Turi</span>
+    </span>
+    <span class="detail-value">
+        {% if is_worker and request.user.worker_profile not in order.assigned_workers.all %}
+            <span class="text-muted">***</span>
+        {% else %}
+            {# Agar sizda 'F1, F2' matni bo'lsa, shunchaki chiqarish eng xavfsiz yo'l #}
+            <span class="text-primary" style="font-weight: 600;">{{ order.eshik_turi }}</span>
         {% endif %}
+    </span>
+</div>
+{% endif %}
 
         {% if order.panel_type %}
         <div class="detail-row">
@@ -1855,23 +1856,31 @@
             </span>
         </div>
 
-        <div class="detail-row">
-            <span class="detail-label">
-                <i class="fas fa-hand-holding-usd"></i>
-                <span>Zalog</span>
-            </span>
-            <span class="detail-value text-success" style="font-weight: bold;">
-                {{ order.prepayment|default:"0"|floatformat:0 }} USD
-            </span>
-        </div>
-
-        <div class="detail-row">
+        <div class="detail-row d-flex justify-content-between border-bottom py-2">
     <span class="detail-label">
-        <i class="fas fa-calculator"></i>
-        <span>Qoldiq</span>
+        <i class="fas fa-hand-holding-usd me-2"></i>
+        <span>Zalog (To'langan)</span>
     </span>
-    <span class="detail-value text-danger" style="font-weight: bold;">
-        {{ order.remaining_amount|floatformat:0 }} USD
+    <span class="detail-value {% if order.prepayment > 0 %}text-success{% else %}text-muted{% endif %}" style="font-weight: bold;">
+        {% if order.prepayment > 0 %}
+            {{ order.prepayment|floatformat:0 }} USD
+        {% else %}
+            0 USD (To'lanmagan)
+        {% endif %}
+    </span>
+</div>
+
+<div class="detail-row d-flex justify-content-between border-bottom py-2">
+    <span class="detail-label">
+        <i class="fas fa-calculator me-2"></i>
+        <span>Qoldiq (Qarz)</span>
+    </span>
+    <span class="detail-value {% if order.remaining_amount > 0 %}text-danger{% else %}text-primary{% endif %}" style="font-weight: bold;">
+        {% if order.remaining_amount > 0 %}
+            {{ order.remaining_amount|floatformat:0 }} USD
+        {% else %}
+            <span class="badge bg-success text-white">To'liq to'langan</span>
+        {% endif %}
     </span>
 </div>
         <hr style="grid-column: 1 / -1; margin: 10px 0; border: 0; border-top: 1px solid #eee;">
