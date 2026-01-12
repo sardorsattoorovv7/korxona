@@ -477,63 +477,53 @@ def rankings_view(request):
 # ----------------------------------------------------------------------
 # BUYURTMA TAHSILOTLARI
 # ----------------------------------------------------------------------
+import requests
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from django.http import JsonResponse
+from .models import Order
+from .forms import OrderForm
+
+# TELEGRAM BOT CONFIG
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from .models import Order
+from .forms import OrderForm
+import requests
+
+# TELEGRAM CONFIG
+TELEGRAM_BOT_TOKEN = "8593760936:AAGAeS-Dj9OHcRnJPcyu1o1pkW3ow0W7dDk"
+TELEGRAM_GROUP_ID = "-1003274223599"
+
+def is_in_group(user, group_name):
+    return user.groups.filter(name=group_name).exists()
+
 @login_required
 def order_detail(request, pk):
     order = get_object_or_404(Order, pk=pk)
-    
+
     # Ruxsatlarni tekshirish
     is_glavniy_admin = request.user.is_superuser or is_in_group(request.user, 'Glavniy Admin')
     is_manager = is_in_group(request.user, 'Menejer/Tasdiqlovchi')
     is_production_boss = is_in_group(request.user, "Ishlab Chiqarish Boshlig'i")
     is_worker = is_in_group(request.user, 'Usta') 
-    is_observer = is_in_group(request.user, 'Kuzatuvchi')  # ✅ YANGI
-    
-    # ✅ KUZATUVCHI UCHUN ALTERNATIV RENDER
+    is_observer = is_in_group(request.user, 'Kuzatuvchi')
+
+    # Kuzatuvchi uchun readonly
     if is_observer:
-        context = {
-            'order': order,
-            'order_form': None,
-            'is_glavniy_admin': False,
-            'is_manager': False,
-            'is_production_boss': False,
-            'is_worker': False,
-            'is_observer': True,
-            'start_image_form': None,
-            'finish_image_form': None,
-            'readonly': True,
-        }
+        context = {'order': order, 'readonly': True}
         return render(request, 'orders/order_detail.html', context)
-    
-    # Usta tayinlanganligini TO'G'RI tekshirish
+
+    # Usta tayinlanganligini tekshirish
     is_assigned_worker = False
     if is_worker:
         try:
-            # Worker modeli orqali tekshirish
             worker_profile = request.user.worker_profile
             is_assigned_worker = order.assigned_workers.filter(pk=worker_profile.pk).exists()
-        except Worker.DoesNotExist:
-            # Agar worker profile yo'q bo'lsa
-            is_assigned_worker = False
-        except Exception as e:
-            print(f"Xatolik: {e}")
-            is_assigned_worker = False
-
-    # DEBUG: Konsolga chiqaramiz
-    print(f"User: {request.user}")
-    print(f"Is worker: {is_worker}")
-    print(f"Is assigned worker: {is_assigned_worker}")
-    print(f"Assigned workers: {list(order.assigned_workers.all())}")
-
-    # Ruxsat tekshiruvi
-    if is_worker and not is_assigned_worker and not is_production_boss:
-        messages.error(request, "Siz faqat o'zingizga tayinlangan buyurtma tafsilotlarini ko'rishingiz mumkin.")
-        return redirect('order_list')
-    
-    is_assigned_worker = False
-    if is_worker:
-        try:
-            if order.assigned_workers.filter(user=request.user).exists():
-                is_assigned_worker = True
         except Exception:
             is_assigned_worker = False
 
@@ -541,16 +531,10 @@ def order_detail(request, pk):
         messages.error(request, "Siz faqat o'zingizga tayinlangan buyurtma tafsilotlarini ko'rishingiz mumkin.")
         return redirect('order_list')
 
-    
-    start_image_form = None
-    finish_image_form = None
+    # Admin/Manager/Boss uchun OrderForm
     order_form = None
-    
-    # Admin/Manager/Boss uchun asosiy tahrirlash formasi
-    is_admin_or_manager = is_glavniy_admin or is_manager or is_production_boss
-    if is_admin_or_manager:
-        order_form = OrderForm(request.POST or None, request.FILES or None, instance=order)
-        
+    if is_glavniy_admin or is_manager or is_production_boss:
+        order_form = OrderForm(request.POST or None, instance=order)
         if request.method == 'POST' and 'upload_type' not in request.POST:
             if order_form.is_valid():
                 order_form.save()
@@ -558,69 +542,56 @@ def order_detail(request, pk):
                 return redirect('order_detail', pk=order.pk)
             else:
                 messages.error(request, "Buyurtma ma'lumotlarini saqlashda xatolik yuz berdi.")
-        
-    
-    # GET so'rovi: Rasm yuklash formalarini tayyorlash
-    if is_assigned_worker:
-        if not order.start_image and order.status == 'TASDIQLANDI': 
-            start_image_form = StartImageUploadForm(instance=order) 
-            
-        if not order.finish_image and order.status in ['USTA_BOSHLA', 'ISHDA']:
-            finish_image_form = FinishImageUploadForm(instance=order) 
 
-    # POST so'rovi kelganda (Rasm yuklash)
+    # POST: start / finish rasm yuborish (Telegramga)
     if request.method == 'POST' and is_assigned_worker:
-        
-        upload_type = request.POST.get('upload_type') 
-        
-        # Boshlash Rasmi yuklash
-        if upload_type == 'start_image':
-            form = StartImageUploadForm(request.POST, request.FILES, instance=order) 
-            
-            if order.status == 'TASDIQLANDI' and not order.start_image:
-                if form.is_valid() and request.FILES.get('start_image'): 
-                    order = form.save(commit=False)
-                    order.status = 'USTA_QABUL_QILDI'
-                    order.save(update_fields=['start_image', 'status']) 
-                    messages.success(request, "Boshlash Rasmi muvaffaqiyatli yuklandi. Buyurtma **Qabul Qilindi**.")
-                else:
-                    messages.error(request, "Boshlash Rasmida xato yoki rasm tanlanmadi.")
+        upload_type = request.POST.get('upload_type')  # start_image / finish_image
+        image = request.FILES.get(upload_type)
+
+        if image and upload_type in ['start_image', 'finish_image']:
+            caption = (
+                f"🧾 BUYURTMA: #{order.id}\n"
+                f"👷 Usta: @{request.user.username}\n"
+                f"📌 Holat: {'Boshlash' if upload_type=='start_image' else 'Tugatish'}\n"
+                f"🕒 Vaqt: {timezone.now().strftime('%Y-%m-%d %H:%M')}"
+            )
+
+            # Telegramga yuborish
+            try:
+                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
+                requests.post(url, data={"chat_id": TELEGRAM_GROUP_ID, "caption": caption}, files={"photo": image})
+            except Exception as e:
+                messages.error(request, f"Telegramga yuborishda xatolik: {str(e)}")
+                return redirect('order_detail', pk=order.pk)
+
+            # Ma'lumotlarni saqlash
+            if upload_type == 'start_image':
+                order.start_image = image
+                order.start_confirmed = True
+                order.started_by = request.user
+                order.work_started_at = timezone.now()
+                order.status = 'USTA_QABUL_QILDI'
             else:
-                 messages.warning(request, "Boshlash rasm yuklash uchun holat mos emas.")
-                
-        # Tugatish Rasmi yuklash
-        elif upload_type == 'finish_image':
-            form = FinishImageUploadForm(request.POST, request.FILES, instance=order)
-            
-            if order.status in ['USTA_BOSHLA', 'ISHDA'] and not order.finish_image:
-                if form.is_valid() and request.FILES.get('finish_image'):
-                    order = form.save(commit=False)
-                    order.status = 'USTA_TUGATDI'
-                    order.worker_finished_at = timezone.now()
-                    order.save(update_fields=['finish_image', 'status', 'worker_finished_at']) 
-                    messages.success(request, "Tugatish Rasmi muvaffaqiyatli yuklandi. Buyurtma **Usta Yakunladi**.")
-                else:
-                    messages.error(request, "Tugatish Rasmida xato yoki rasm tanlanmadi.")
-            else:
-                messages.warning(request, "Tugatish rasm yuklash uchun holat mos emas.")
-        
+                order.finish_image = image
+                order.finish_confirmed = True
+                order.finished_by = request.user
+                order.work_finished_at = timezone.now()
+                order.status = 'USTA_TUGATDI'
+
+            order.save()
+            messages.success(request, f"{'Boshlash' if upload_type=='start_image' else 'Tugatish'} rasmi Telegramga yuborildi.")
+        else:
+            messages.error(request, "Rasm yuklanmadi yoki noto‘g‘ri action.")
         return redirect('order_detail', pk=order.pk)
 
+    # GET so‘rov
     context = {
         'order': order,
         'order_form': order_form,
-        'is_glavniy_admin': is_glavniy_admin,
-        'is_manager': is_manager,
-        'is_production_boss': is_production_boss,
         'is_worker': is_worker,
-        'is_observer': is_observer,  # ✅ YANGI
         'is_assigned_worker': is_assigned_worker,
-        'start_image_form': start_image_form, 
-        'finish_image_form': finish_image_form, 
     }
-    
     return render(request, 'orders/order_detail.html', context)
-
 
 # ----------------------------------------------------------------------
 # USTA HARAKATLARI FUNKSIYALARI
