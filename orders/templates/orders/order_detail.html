@@ -5,7 +5,6 @@
 
 {% block content %}
 <style>
-/* Asosiy Stillar */
 :root {
     --primary-color: #047857;
     --primary-darker: #059669;
@@ -21,71 +20,19 @@
     --observer-bg: #f3f4f6;
 }
 
-body {
-    background-color: var(--background-light);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+/* Umumiy stillar */
+body { background-color: var(--background-light); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+.container-detail { max-width: 1200px; margin: 20px auto; padding: 2rem; }
 
-.container-detail {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 2rem;
-}
+/* Observer banner */
+.observer-banner { background-color: var(--observer-bg); border: 1px solid var(--observer-color); color: var(--observer-color); padding: 1rem 1.5rem; border-radius: 0.75rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; font-weight: 600; }
 
-/* Kuzatuvchi banneri */
-.observer-banner {
-    background-color: var(--observer-bg);
-    border: 1px solid var(--observer-color);
-    color: var(--observer-color);
-    padding: 1rem 1.5rem;
-    border-radius: 0.75rem;
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-weight: 600;
-}
-
-/* Header qismi */
-.order-header-card {
-    background: white;
-    border-radius: 1rem;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    border: 1px solid var(--border-color);
-}
-
-.order-header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.order-title-section h1 {
-    color: var(--primary-color);
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.order-meta {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.status-badge {
-    display: inline-block;
-    padding: 8px 16px;
-    border-radius: 1rem;
-    font-weight: 600;
-    font-size: 0.875rem;
-}
-
+/* Order header */
+.order-header-card { background: white; border-radius: 1rem; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+.order-header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.order-title-section h1 { color: var(--primary-color); font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+.order-meta { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.status-badge { display: inline-block; padding: 8px 16px; border-radius: 1rem; font-weight: 600; font-size: 0.875rem; }
 .status-tasdiqlandi { background: #065f46; color: white; }
 .status-usta_boshla, .status-ishda { background: #a16207; color: white; }
 .status-usta_tugatdi, .status-tayyor { background: #10b981; color: white; }
@@ -94,604 +41,105 @@ body {
 .status-rad_etildi { background: #fef2f2; color: var(--danger-text); }
 .status-usta_qabul_qildi { background: #bae6fd; color: #075985; }
 
-.btn-secondary {
-    background: #6b7280;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;
-}
+.btn-secondary { background: #6b7280; color: white; padding: 10px 20px; border: none; border-radius: 0.5rem; font-weight: 600; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
+.btn-secondary:hover { background: #4b5563; transform: translateY(-1px); }
 
-.btn-secondary:hover {
-    background: #4b5563;
-    transform: translateY(-1px);
-}
+/* Info cards */
+.info-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.info-card { background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+.info-card h3 { color: var(--primary-color); font-size: 1.25rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color); }
+.detail-item { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; padding: 0.5rem 0; }
+.detail-label { font-weight: 600; color: var(--text-secondary); flex: 1; }
+.detail-value { color: var(--text-dark); flex: 2; text-align: right; font-weight: 500; }
+.workers-list { list-style: none; padding: 0; margin: 0; }
+.workers-list li { padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; }
+.workers-list li:last-child { border-bottom: none; }
 
-/* Asosiy ma'lumotlar kartalari */
-.info-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
+/* Upload & view section */
+.upload-section, .view-section { background: white; border-radius: 1rem; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+.upload-section { border-left: 4px solid #10b981; background: linear-gradient(135deg, #ecfdf5, #ffffff); }
+.view-section { border-left: 4px solid #3b82f6; background: linear-gradient(135deg, #eff6ff, #ffffff); }
+.section-title { color: var(--primary-color); font-size: 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.images-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+.image-card { background: #f8fafc; border-radius: 0.75rem; padding: 1.5rem; border: 1px solid var(--border-color); text-align: center; }
+.image-card h4 { color: var(--text-dark); margin-bottom: 1rem; font-size: 1.1rem; }
+.image-preview { max-width: 100%; max-height: 250px; border-radius: 0.5rem; border: 2px solid var(--border-color); margin-bottom: 1rem; cursor: pointer; transition: transform 0.2s ease; }
+.image-preview:hover { transform: scale(1.02); }
+.image-info { font-size: 0.875rem; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.no-image { padding: 3rem 2rem; text-align: center; background: #f9fafb; border-radius: 0.5rem; border: 2px dashed #d1d5db; color: var(--text-secondary); }
+.no-image i { font-size: 2rem; margin-bottom: 1rem; display: block; }
 
-.info-card {
-    background: white;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    border: 1px solid var(--border-color);
-}
+/* Upload form */
+.upload-form { background: white; padding: 1.5rem; border-radius: 0.75rem; border: 2px dashed #10b981; margin-top: 1rem; }
+.upload-form h4 { color: var(--text-dark); margin-bottom: 1rem; font-size: 1.1rem; }
+input[type="file"] { width: 100%; padding: 1rem; border: 2px dashed var(--border-color); border-radius: 0.5rem; margin-bottom: 1rem; background: #f9fafb; transition: border-color 0.2s ease; }
+input[type="file"]:hover { border-color: var(--primary-color); }
+.btn-upload { background: #10b981; color: white; padding: 12px 24px; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease; width: 100%; justify-content: center; }
+.btn-upload:hover { background: #059669; transform: translateY(-1px); }
+.btn-upload:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
 
-.info-card h3 {
-    color: var(--primary-color);
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--border-color);
-}
+/* Messages */
+.message { padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-weight: 600; border: 1px solid; display: flex; align-items: center; gap: 0.5rem; }
+.message-success { background-color: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+.message-error { background-color: #fef2f2; color: var(--danger-text); border-color: #fca5a5; }
 
-.detail-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 0.75rem;
-    padding: 0.5rem 0;
-}
-
-.detail-label {
-    font-weight: 600;
-    color: var(--text-secondary);
-    flex: 1;
-}
-
-.detail-value {
-    color: var(--text-dark);
-    flex: 2;
-    text-align: right;
-    font-weight: 500;
-}
-
-.workers-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.workers-list li {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-}
-
-.workers-list li:last-child {
-    border-bottom: none;
-}
-
-/* Rasm yuklash va ko'rish bo'limlari */
-.upload-section, .view-section {
-    background: white;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    border: 1px solid var(--border-color);
-}
-
-.upload-section {
-    border-left: 4px solid #10b981;
-    background: linear-gradient(135deg, #ecfdf5, #ffffff);
-}
-
-.view-section {
-    border-left: 4px solid #3b82f6;
-    background: linear-gradient(135deg, #eff6ff, #ffffff);
-}
-
-.section-title {
-    color: var(--primary-color);
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.images-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-
-.image-card {
-    background: #f8fafc;
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    border: 1px solid var(--border-color);
-    text-align: center;
-}
-
-.image-card h4 {
-    color: var(--text-dark);
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
-}
-
-.image-preview {
-    max-width: 100%;
-    max-height: 250px;
-    border-radius: 0.5rem;
-    border: 2px solid var(--border-color);
-    margin-bottom: 1rem;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.image-preview:hover {
-    transform: scale(1.02);
-}
-
-.image-info {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.no-image {
-    padding: 3rem 2rem;
-    text-align: center;
-    background: #f9fafb;
-    border-radius: 0.5rem;
-    border: 2px dashed #d1d5db;
-    color: var(--text-secondary);
-}
-
-.no-image i {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-    display: block;
-}
-
-/* Yuklash formasi (faqat usta va admin uchun) */
-.upload-form {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 0.75rem;
-    border: 2px dashed #10b981;
-    margin-top: 1rem;
-}
-
-.upload-form h4 {
-    color: var(--text-dark);
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
-}
-
-input[type="file"] {
-    width: 100%;
-    padding: 1rem;
-    border: 2px dashed var(--border-color);
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-    background: #f9fafb;
-    transition: border-color 0.2s ease;
-}
-
-input[type="file"]:hover {
-    border-color: var(--primary-color);
-}
-
-.btn-upload {
-    background: #10b981;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;
-    width: 100%;
-    justify-content: center;
-}
-
-.btn-upload:hover {
-    background: #059669;
-    transform: translateY(-1px);
-}
-
-.btn-upload:disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.upload-progress {
-    width: 100%;
-    height: 6px;
-    background: #e5e7eb;
-    border-radius: 3px;
-    margin-top: 1rem;
-    overflow: hidden;
-    display: none;
-}
-
-.upload-progress-bar {
-    height: 100%;
-    background: var(--primary-color);
-    width: 0%;
-    transition: width 0.3s ease;
-}
-
-/* Xabarlar */
-.message {
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1.5rem;
-    font-weight: 600;
-    border: 1px solid;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.message-success {
-    background-color: #d1fae5;
-    color: #065f46;
-    border-color: #a7f3d0;
-}
-
-.message-error {
-    background-color: #fef2f2;
-    color: var(--danger-text);
-    border-color: #fca5a5;
-}
-
-.message-warning {
-    background-color: #fef9c3;
-    color: var(--warning-text);
-    border-color: #fde68a;
-}
-
-/* Mobil harakatlar (faqat usta va admin uchun) */
-.mobile-actions {
-    display: none;
-    gap: 0.5rem;
-    margin: 1rem 0;
-    flex-wrap: wrap;
-}
-
-.mobile-action-btn {
-    flex: 1;
-    min-width: 140px;
-    padding: 12px;
-    text-align: center;
-    background: var(--primary-color);
-    color: white;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
-}
-
-.mobile-action-btn:hover {
-    background: var(--primary-darker);
-    transform: translateY(-1px);
-}
-
-/* 📱 MOBIL UCHUN ADAPTIV O'ZGARISHLAR */
-@media (max-width: 900px) {
-    .container-detail {
-        padding: 1rem;
-        margin: 10px;
-    }
-    
-    .order-header-card {
-        padding: 1.5rem;
-    }
-    
-    .order-header-content {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-    
-    .order-title-section h1 {
-        font-size: 1.5rem;
-    }
-    
-    .btn-secondary {
-        align-self: stretch;
-        text-align: center;
-        justify-content: center;
-    }
-    
-    .info-cards-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .info-card {
-        padding: 1.25rem;
-    }
-    
-    .detail-item {
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-    
-    .detail-value {
-        text-align: left;
-        width: 100%;
-    }
-    
-    .images-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .upload-section, .view-section {
-        padding: 1.25rem;
-    }
-    
-    .mobile-actions {
-        display: flex;
-    }
-    
-    .section-title {
-        font-size: 1.3rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .container-detail {
-        padding: 0.75rem;
-        margin: 5px;
-    }
-    
-    .order-header-card {
-        padding: 1.25rem;
-    }
-    
-    .order-title-section h1 {
-        font-size: 1.3rem;
-    }
-    
-    .info-card {
-        padding: 1rem;
-    }
-    
-    .upload-section, .view-section {
-        padding: 1rem;
-    }
-    
-    .image-card {
-        padding: 1rem;
-    }
-    
-    .mobile-action-btn {
-        min-width: 100%;
-    }
-    
-    .order-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-}
-
-/* Planshetlar uchun */
-@media (min-width: 768px) and (max-width: 900px) {
-    .info-cards-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .images-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* Modal oyna */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-content {
-    position: relative;
-    max-width: 90%;
-    max-height: 90%;
-}
-
-.modal-image {
-    max-width: 100%;
-    max-height: 90vh;
-    border-radius: 0.5rem;
-}
-
-.modal-close {
-    position: absolute;
-    top: -50px;
-    right: 0;
-    background: var(--danger-text);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.5rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Muddat o'tgan buyurtma uchun */
-.order-expired {
-    border-left: 4px solid var(--danger-text) !important;
-    background: linear-gradient(135deg, #fef2f2, #ffffff) !important;
-}
-
-.expired-badge {
-    background: var(--danger-text) !important;
-    color: white !important;
-}
+/* Modal */
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+.modal-content { position: relative; max-width: 90%; max-height: 90%; }
+.modal-image { max-width: 100%; max-height: 90vh; border-radius: 0.5rem; }
+.modal-close { position: absolute; top: -50px; right: 0; background: var(--danger-text); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 </style>
 
 <div class="container-detail">
-    <!-- Kuzatuvchi banneri -->
     {% if is_observer %}
     <div class="observer-banner">
         <i class="fas fa-eye"></i>
-        <div>
-            <strong>Kuzatuvchi Rejimi</strong> - Siz faqat ma'lumotlarni ko'rish huquqiga egasiz.
-        </div>
+        <div><strong>Kuzatuvchi Rejimi</strong> - Siz faqat ma'lumotlarni ko'rishingiz mumkin.</div>
     </div>
     {% endif %}
 
-    <!-- Sarlavha kartasi -->
-    <div class="order-header-card {% if order.deadline and order.deadline < now and order.status not in 'BAJARILDI,RAD_ETILDI,USTA_TUGATDI' %}order-expired{% endif %}">
+    <!-- Order header -->
+    <div class="order-header-card">
         <div class="order-header-content">
             <div class="order-title-section">
                 <h1>Buyurtma #{{ order.order_number }}</h1>
                 <div class="order-meta">
-                    <span class="status-badge status-{{ order.status|lower }} {% if order.deadline and order.deadline < now and order.status not in 'BAJARILDI,RAD_ETILDI,USTA_TUGATDI' %}expired-badge{% endif %}">
-                        {{ order.get_status_display }}
-                    </span>
-                    {% if order.deadline and order.deadline < now and order.status not in 'BAJARILDI,RAD_ETILDI,USTA_TUGATDI' %}
-                        <span class="status-badge expired-badge">
-                            ⏰ MUDDAT O'TDI!
-                        </span>
-                    {% endif %}
+                    <span class="status-badge status-{{ order.status|lower }}">{{ order.get_status_display }}</span>
                 </div>
             </div>
-            <a href="{% url 'order_list' %}" class="btn-secondary">
-                <i class="fas fa-arrow-left"></i> Orqaga
-            </a>
+            <a href="{% url 'order_list' %}" class="btn-secondary"><i class="fas fa-arrow-left"></i> Orqaga</a>
         </div>
     </div>
 
     {% if messages %}
         {% for message in messages %}
-            <div class="message message-{{ message.tags }}">
-                <i class="fas fa-info-circle"></i> {{ message }}
-            </div>
+            <div class="message message-{{ message.tags }}"><i class="fas fa-info-circle"></i> {{ message }}</div>
         {% endfor %}
     {% endif %}
 
-    <!-- Mobil tezkor harakatlar (faqat usta va admin uchun) -->
-    {% if not is_observer and is_assigned_worker %}
-    <div class="mobile-actions">
-        {% if not order.start_image and order.status == 'TASDIQLANDI' %}
-            <a href="#start-upload" class="mobile-action-btn">
-                <i class="fas fa-camera"></i> Boshlash Rasmi
-            </a>
-        {% endif %}
-        {% if not order.finish_image and order.status in "USTA_BOSHLA,ISHDA" %}
-            <a href="#finish-upload" class="mobile-action-btn">
-                <i class="fas fa-image"></i> Tugatish Rasmi
-            </a>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    <!-- Asosiy ma'lumotlar kartalari -->
+    <!-- Info cards -->
     <div class="info-cards-grid">
         <div class="info-card">
-            <h3><i class="fas fa-info-circle"></i> Asosiy Ma'lumotlar</h3>
-            <div class="detail-item">
-                <span class="detail-label">Xaridor:</span>
-                <span class="detail-value">{{ order.customer_name }}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Mahsulot:</span>
-                <span class="detail-value">{{ order.product_name }}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Kvadrat:</span>
-                <span class="detail-value">{{ order.panel_kvadrat }} m²</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Narx:</span>
-                <span class="detail-value">
-                    {% if is_worker and not is_observer %} 
-                        ***
-                    {% else %} 
-                        <strong style="color: var(--primary-color);">{{ order.total_price|floatformat:0 }}</strong> so'm
-                    {% endif %}
-                </span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Muddat:</span>
-                <span class="detail-value">
-                    {% if order.deadline %}
-                        <div style="font-weight: 600; color: {% if order.deadline < now and order.status not in 'BAJARILDI,RAD_ETILDI,USTA_TUGATDI' %}var(--danger-text){% else %}var(--primary-darker){% endif %};">
-                            {{ order.deadline|date:"Y-m-d H:i" }}
-                        </div>
-                    {% else %}
-                        <span style="color: var(--text-secondary);">Belgilanmagan</span>
-                    {% endif %}
-                </span>
-            </div>
+            <h3>Asosiy Ma'lumotlar</h3>
+            <div class="detail-item"><span class="detail-label">Xaridor:</span><span class="detail-value">{{ order.customer_name }}</span></div>
+            <div class="detail-item"><span class="detail-label">Mahsulot:</span><span class="detail-value">{{ order.product_name }}</span></div>
+            <div class="detail-item"><span class="detail-label">Kvadrat:</span><span class="detail-value">{{ order.panel_kvadrat }} m²</span></div>
+            <div class="detail-item"><span class="detail-label">Narx:</span><span class="detail-value">{{ order.total_price|floatformat:0 }} so'm</span></div>
+            <div class="detail-item"><span class="detail-label">Muddat:</span><span class="detail-value">{{ order.deadline|date:"Y-m-d H:i" }}</span></div>
         </div>
-
         <div class="info-card">
-            <h3><i class="fas fa-history"></i> Jarayon Ma'lumotlari</h3>
-            <div class="detail-item">
-                <span class="detail-label">Yaratilgan:</span>
-                <span class="detail-value">{{ order.created_at|date:"Y-m-d H:i" }}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Yaratuvchi:</span>
-                <span class="detail-value">{{ order.created_by.get_full_name|default:order.created_by.username }}</span>
-            </div>
-            {% if order.worker_started_at %}
-            <div class="detail-item">
-                <span class="detail-label">Boshlangan:</span>
-                <span class="detail-value">{{ order.worker_started_at|date:"Y-m-d H:i" }}</span>
-            </div>
-            {% endif %}
-            {% if order.worker_finished_at %}
-            <div class="detail-item">
-                <span class="detail-label">Tugatilgan:</span>
-                <span class="detail-value">{{ order.worker_finished_at|date:"Y-m-d H:i" }}</span>
-            </div>
-            {% endif %}
+            <h3>Jarayon Ma'lumotlari</h3>
+            <div class="detail-item"><span class="detail-label">Yaratilgan:</span><span class="detail-value">{{ order.created_at|date:"Y-m-d H:i" }}</span></div>
+            <div class="detail-item"><span class="detail-label">Yaratuvchi:</span><span class="detail-value">{{ order.created_by.get_full_name|default:order.created_by.username }}</span></div>
+            {% if order.worker_started_at %}<div class="detail-item"><span class="detail-label">Boshlangan:</span><span class="detail-value">{{ order.worker_started_at|date:"Y-m-d H:i" }}</span></div>{% endif %}
+            {% if order.worker_finished_at %}<div class="detail-item"><span class="detail-label">Tugatilgan:</span><span class="detail-value">{{ order.worker_finished_at|date:"Y-m-d H:i" }}</span></div>{% endif %}
             {% if order.assigned_workers.exists %}
             <div class="detail-item">
                 <span class="detail-label">Tayinlangan Ustalar:</span>
                 <span class="detail-value">
                     <ul class="workers-list">
                         {% for worker in order.assigned_workers.all %}
-                            <li>
-                                <span>{{ worker.user.get_full_name|default:worker.user.username }}</span>
-                                <span style="color: var(--text-secondary); font-size: 0.875rem;">{{ worker.get_role_display }}</span>
-                            </li>
+                        <li>{{ worker.user.get_full_name|default:worker.user.username }} - {{ worker.get_role_display }}</li>
                         {% endfor %}
                     </ul>
                 </span>
@@ -700,161 +148,75 @@ input[type="file"]:hover {
         </div>
     </div>
 
-    <!-- Usta uchun rasm yuklash bo'limi (faqat usta va admin uchun) -->
-    {% if not is_observer and is_assigned_worker %}
+    <!-- Upload section (Usta/Admin) -->
+    {% if is_assigned_worker %}
     <div class="upload-section">
-        <h3 class="section-title"><i class="fas fa-camera"></i> Rasm Yuklash</h3>
-        
-        <!-- Boshlash rasmi -->
+        <h3 class="section-title">Rasm Yuklash</h3>
+
+        <!-- Start Image -->
         <div class="image-card">
-            <h4>Ish Boshlash Rasmi</h4>
+            <h4>Boshlash Rasmi</h4>
             {% if not order.start_image %}
-                {% if order.status == 'TASDIQLANDI' %}
-                    <div class="upload-form" id="start-upload">
-                        <form method="post" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <input type="hidden" name="upload_type" value="start_image">
-                            <input type="file" name="start_image" accept="image/*" required>
-                            <div class="upload-progress">
-                                <div class="upload-progress-bar"></div>
-                            </div>
-                            <button type="submit" class="btn-upload">
-                                <i class="fas fa-upload"></i> Boshlash Rasmini Yuklash
-                            </button>
-                        </form>
-                    </div>
-                {% else %}
-                    <div class="no-image">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Boshlash rasm yuklash uchun holat mos emas</p>
-                    </div>
-                {% endif %}
+            <div class="upload-form">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="upload_type" value="start_image">
+                    <input type="file" name="start_image" accept="image/*" required>
+                    <button type="submit" class="btn-upload"><i class="fas fa-upload"></i> Yuklash</button>
+                </form>
+            </div>
             {% else %}
-                <img src="{{ order.start_image.url }}" class="image-preview" onclick="openImageModal(this.src)">
-                <p class="image-info">
-                    <i class="fas fa-clock"></i> Yuklangan: {{ order.start_image_uploaded_at|date:"Y-m-d H:i" }}
-                </p>
+            <img src="{{ order.start_image.url }}" class="image-preview" onclick="openImageModal(this.src)">
+            <p class="image-info">Yuklangan: {{ order.start_image_uploaded_at|date:"Y-m-d H:i" }}</p>
             {% endif %}
         </div>
 
-        <!-- Tugatish rasmi -->
+        <!-- Finish Image -->
         <div class="image-card">
-            <h4>Ish Tugatish Rasmi</h4>
+            <h4>Tugatish Rasmi</h4>
             {% if not order.finish_image %}
-                {% if order.status in "USTA_BOSHLA,ISHDA" %}
-                    <div class="upload-form" id="finish-upload">
-                        <form method="post" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <input type="hidden" name="upload_type" value="finish_image">
-                            <input type="file" name="finish_image" accept="image/*" required>
-                            <div class="upload-progress">
-                                <div class="upload-progress-bar"></div>
-                            </div>
-                            <button type="submit" class="btn-upload">
-                                <i class="fas fa-upload"></i> Tugatish Rasmini Yuklash
-                            </button>
-                        </form>
-                    </div>
-                {% else %}
-                    <div class="no-image">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Tugatish rasm yuklash uchun holat mos emas</p>
-                    </div>
-                {% endif %}
+            <div class="upload-form">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="upload_type" value="finish_image">
+                    <input type="file" name="finish_image" accept="image/*" required>
+                    <button type="submit" class="btn-upload"><i class="fas fa-upload"></i> Yuklash</button>
+                </form>
+            </div>
             {% else %}
-                <img src="{{ order.finish_image.url }}" class="image-preview" onclick="openImageModal(this.src)">
-                <p class="image-info">
-                    <i class="fas fa-clock"></i> Yuklangan: {{ order.finish_image_uploaded_at|date:"Y-m-d H:i" }}
-                </p>
+            <img src="{{ order.finish_image.url }}" class="image-preview" onclick="openImageModal(this.src)">
+            <p class="image-info">Yuklangan: {{ order.finish_image_uploaded_at|date:"Y-m-d H:i" }}</p>
             {% endif %}
         </div>
     </div>
     {% endif %}
 
-    <!-- Rasm ko'rish bo'limi (barcha foydalanuvchilar uchun) -->
+    <!-- View section -->
     <div class="view-section">
-        <h3 class="section-title"><i class="fas fa-eye"></i> Ish Jarayoni Rasmlari</h3>
+        <h3 class="section-title">Ish Jarayoni Rasmlari</h3>
         <div class="images-grid">
             <div class="image-card">
                 <h4>Boshlash Rasmi</h4>
                 {% if order.start_image %}
-                    <img src="{{ order.start_image.url }}" class="image-preview" onclick="openImageModal(this.src)">
-                    <p class="image-info">
-                        <i class="fas fa-clock"></i> Yuklangan: {{ order.start_image_uploaded_at|date:"Y-m-d H:i" }}
-                    </p>
+                <img src="{{ order.start_image.url }}" class="image-preview" onclick="openImageModal(this.src)">
                 {% else %}
-                    <div class="no-image">
-                        <i class="fas fa-times-circle"></i>
-                        <p>Hali yuklanmagan</p>
-                    </div>
+                <div class="no-image"><i class="fas fa-times-circle"></i><p>Hali yuklanmagan</p></div>
                 {% endif %}
             </div>
             <div class="image-card">
                 <h4>Tugatish Rasmi</h4>
                 {% if order.finish_image %}
-                    <img src="{{ order.finish_image.url }}" class="image-preview" onclick="openImageModal(this.src)">
-                    <p class="image-info">
-                        <i class="fas fa-clock"></i> Yuklangan: {{ order.finish_image_uploaded_at|date:"Y-m-d H:i" }}
-                    </p>
+                <img src="{{ order.finish_image.url }}" class="image-preview" onclick="openImageModal(this.src)">
                 {% else %}
-                    <div class="no-image">
-                        <i class="fas fa-times-circle"></i>
-                        <p>Hali yuklanmagan</p>
-                    </div>
+                <div class="no-image"><i class="fas fa-times-circle"></i><p>Hali yuklanmagan</p></div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- PDF fayl mavjud bo'lsa -->
-    {# orders/order_detail.html - PDF qismini yangilaymiz #}
-
-<!-- PDF fayl mavjud bo'lsa -->
-{% if order.pdf_file %}
-<div class="info-card" style="border-left: 4px solid #3b82f6;">
-    <h3><i class="fas fa-file-pdf"></i> Texnik Hujjatlar (Chizma)</h3>
-    <div class="detail-item">
-        <span class="detail-label">PDF Fayl:</span>
-        <span class="detail-value">
-            {% if order.status in 'USTA_QABUL_QILDI,USTA_BOSHLA,ISHDA,USTA_TUGATDI,TAYYOR,BAJARILDI' or not is_worker %}
-                {# ✅ PDF ko'rish mumkin #}
-                <a href="{{ order.pdf_file.url }}" target="_blank" 
-                   style="color: #3b82f6; text-decoration: none; font-weight: 600; padding: 8px 16px; background: #eff6ff; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-external-link-alt"></i> Chizmani Ko'rish
-                </a>
-            {% else %}
-                {# ❌ Usta hali qabul qilmagan - PDF ko'rinmasin #}
-                <span style="color: var(--text-secondary); padding: 8px 16px; background: #f3f4f6; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-lock"></i> Qabul qilingach ochiladi
-                </span>
-            {% endif %}
-        </span>
-    </div>
-    
-    {# ✅ YANGI: Ogohlantirish #}
-    {% if not is_observer and is_assigned_worker and order.status == 'TASDIQLANDI' %}
-    <div style="margin-top: 1rem; padding: 10px; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
-        <strong><i class="fas fa-info-circle"></i> Ma'lumot:</strong>
-        <p style="margin: 5px 0 0 0; font-size: 0.9rem;">
-            Chizmani ko'rish uchun avval buyurtmani <strong>"Qabul qilish"</strong> tugmasi orqali qabul qiling.
-        </p>
-    </div>
-    {% endif %}
-</div>
-{% endif %}
-
-    <!-- Izohlar mavjud bo'lsa -->
-    {% if order.comment %}
-    <div class="info-card">
-        <h3><i class="fas fa-comment"></i> Izohlar</h3>
-        <div style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color);">
-            {{ order.comment|linebreaks }}
-        </div>
-    </div>
-    {% endif %}
 </div>
 
-<!-- Rasm modal oynasi -->
+<!-- Modal -->
 <div id="imageModal" class="modal">
     <div class="modal-content">
         <button class="modal-close" onclick="closeImageModal()">×</button>
@@ -863,75 +225,10 @@ input[type="file"]:hover {
 </div>
 
 <script>
-// Rasm modal oynasi funksiyalari
-function openImageModal(src) {
-    document.getElementById('modalImage').src = src;
-    document.getElementById('imageModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-
-function closeImageModal() {
-    document.getElementById('imageModal').style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
-
-// Modalni bosganda yopish
-document.getElementById('imageModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeImageModal();
-    }
-});
-
-// Klaviatura orqali modalni yopish
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeImageModal();
-    }
-});
-
-// Yuklash progress bari (faqat usta va admin uchun)
-{% if not is_observer and is_assigned_worker %}
-document.addEventListener('DOMContentLoaded', function() {
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-        form.addEventListener('submit', function() {
-            const progressBar = this.querySelector('.upload-progress-bar');
-            const progressContainer = this.querySelector('.upload-progress');
-            const submitBtn = this.querySelector('button[type="submit"]');
-            
-            if (progressBar && progressContainer && submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yuklanmoqda...';
-                progressContainer.style.display = 'block';
-                
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 5;
-                    progressBar.style.width = progress + '%';
-                    
-                    if (progress >= 90) {
-                        clearInterval(interval);
-                    }
-                }, 100);
-            }
-        });
-    });
-});
-
-// Mobil navigatsiya (faqat usta va admin uchun)
-document.addEventListener('DOMContentLoaded', function() {
-    const mobileLinks = document.querySelectorAll('.mobile-action-btn');
-    mobileLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-                targetElement.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    });
-});
-{% endif %}
+function openImageModal(src){document.getElementById('modalImage').src=src;document.getElementById('imageModal').style.display='flex';document.body.style.overflow='hidden';}
+function closeImageModal(){document.getElementById('imageModal').style.display='none';document.body.style.overflow='auto';}
+document.getElementById('imageModal').addEventListener('click',function(e){if(e.target===this){closeImageModal();}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeImageModal();}});
 </script>
+
 {% endblock %}
