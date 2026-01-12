@@ -226,6 +226,23 @@ class Order(models.Model):
     
     start_image = models.ImageField(upload_to='order_photos/start/', null=True, blank=True)
     finish_image = models.ImageField(upload_to='order_photos/finish/', null=True, blank=True)
+
+    started_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name='started_orders'
+    )
+    work_started_at = models.DateTimeField(null=True, blank=True)
+    start_confirmed = models.BooleanField(default=False)  # Telegramga yuborilganligini belgilash
+
+    # Kim tugatdi / qachon
+    finished_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name='finished_orders'
+    )
+    work_finished_at = models.DateTimeField(null=True, blank=True)
+    finish_confirmed = models.BooleanField(default=False)  # Telegramga yuborilganligini belgilash
+
+    # Optional: agar kerak bo‘lsa log uchun
+    start_telegram_sent = models.BooleanField(default=False)
+    finish_telegram_sent = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
