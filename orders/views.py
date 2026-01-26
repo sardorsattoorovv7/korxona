@@ -427,6 +427,13 @@ def order_list(request):
     unpaid_orders_count = unpaid_orders.count()
     # Har birining remaining_amount'ini qo'shib chiqamiz
     total_unpaid_amount = sum(order.remaining_amount for order in unpaid_orders)
+    can_view_orders = any([
+        is_glavniy_admin, 
+        is_production_boss, 
+        is_manager_or_confirmer, 
+        is_worker, 
+        is_observer
+    ])
     context = {
         'orders': orders,
         'unpaid_orders_count': unpaid_orders_count,
@@ -455,6 +462,7 @@ def order_list(request):
         'ugul_completed': ugul_completed,
         'is_storekeeper': request.user.username.lower() == 'omborchi' or 'store' in request.user.username.lower(),
         'customers_count': customers_count,
+        'can_view_orders': can_view_orders,
     }
     return render(request, 'orders/order_list.html', context)
 
