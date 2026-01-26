@@ -126,9 +126,23 @@ class Material(models.Model):
         if self.product_name:
             base_str += f" → {self.product_name}"
         return f"{base_str} (Qoldiq: {self.quantity:,.3f} {self.unit.upper()})"
+    
 # =======================================================================
 # 4. ORDER MODELI
 # =======================================================================
+
+
+
+
+
+
+class ActiveOrderManager(models.Manager):
+    def get_queryset(self):
+        # Faqat yakunlanmagan statuslarni qaytaradi
+        return super().get_queryset().exclude(status__in=['BAJARILDI', 'TAYYOR'])
+
+
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -187,7 +201,8 @@ class Order(models.Model):
     ESHIK_TURI_CHOICES  = [(f'F{i}', f'F{i}') for i in range(1, 9)]
     PAROG_CHOICES = [('PAROGLI', 'Parogli'), ('PAROGSIZ', 'Parogsiz')]
     DIRECTION_CHOICES = [('ONG', "O'ng"), ('CHAP', 'Chap')]
-
+    objects = models.Manager() # Standart manager
+    active = ActiveOrderManager() # Aktiv buyurtmalar uchun
     product_name = models.CharField(max_length=255, verbose_name="Mahsulot nomi", blank=True, null=True)
     worker_comment = models.TextField(blank=True, null=True, verbose_name="Usta izohi")
     worker_started_at = models.DateTimeField(null=True, blank=True, verbose_name="Ish boshlangan vaqt")
@@ -239,7 +254,9 @@ class Order(models.Model):
     )
     work_finished_at = models.DateTimeField(null=True, blank=True)
     finish_confirmed = models.BooleanField(default=False)  # Telegramga yuborilganligini belgilash
-
+    delivery_img_1 = models.ImageField(upload_to='order_photos/delivery/', null=True, blank=True)
+    delivery_img_2 = models.ImageField(upload_to='order_photos/delivery/', null=True, blank=True)
+    delivery_img_3 = models.ImageField(upload_to='order_photos/delivery/', null=True, blank=True)
     # Optional: agar kerak bo‘lsa log uchun
     start_telegram_sent = models.BooleanField(default=False)
     finish_telegram_sent = models.BooleanField(default=False)
@@ -301,7 +318,9 @@ class Order(models.Model):
                 next_worker_type = 'UGOL'
 
             if next_worker_type:
-                # 1. Yangi sub-order yaratish
+                from .models import Worker
+                
+                # 1. Yangi sub-order (child) yaratish
                 new_order = Order.objects.create(
                     customer_unique_id=self.customer_unique_id,
                     customer_name=self.customer_name,
@@ -314,20 +333,46 @@ class Order(models.Model):
                     panel_kvadrat=self.panel_kvadrat,
                     eshik_turi=self.eshik_turi,
                     pdf_file=self.pdf_file,
-                    status='KIRITILDI',
+                    # SHU YERNI O'ZGARTIRDIK:
+                    status='TASDIQLANDI',  # Child uchun menejer tasdig'i shart emas
                     created_by=self.created_by
                 )
 
-                # 2. Ustalarni topish
-                from .models import Worker
-                # Role mos kelishini aniq tekshirish
+                # 2. Ustalarni topish va biriktirish
                 target_workers = Worker.objects.filter(role=next_worker_type)
                 
                 if target_workers.exists():
-                    # 3. Many-to-Many ni bog'lash (.add ishlatish xavfsizroq)
                     new_order.assigned_workers.add(*target_workers)
-                    # 4. Tasdiqlash
-                    print(f"DEBUG: {next_worker_type} ustalari biriktirildi.")
+                    
+                    # 3. Child ustalarga bildirishnoma yuborish (ixtiyoriy)
+                    # Bu orqali usta o'z telefoniga yoki paneliga xabar oladi
+                    for worker in target_workers:
+                        if worker.user:
+                            from .models import Notification # Agar model boshqa joyda bo'lsa
+                            Notification.objects.create(
+                                user=worker.user,
+                                order=new_order,
+                                message=f"Yangi vazifa: №{new_order.order_number} ({next_worker_type}). Ishni boshlashingiz mumkin!"
+                            )
+
+from django.db import models
+from django.contrib.auth.models import User
+from django.db import models
+from django.contrib.auth.models import User
+
+class GuardPatrol(models.Model):
+    guard = models.ForeignKey(User, on_delete=models.CASCADE)
+    checkpoint_name = models.CharField(max_length=100) # Masalan: "Asosiy darvoza"
+    patrol_time_slot = models.CharField(max_length=50) # Masalan: "05:00 - 05:20"
+    image1 = models.ImageField(upload_to='patrol/%Y/%m/%d/')
+    image2 = models.ImageField(upload_to='patrol/%Y/%m/%d/')
+    image3 = models.ImageField(upload_to='patrol/%Y/%m/%d/')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.guard.username} - {self.patrol_time_slot}"
 # =======================================================================
 # 5. MATERIAL TRANSACTION MODELI
 # =======================================================================
