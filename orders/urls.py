@@ -58,14 +58,14 @@ urlpatterns = [
     # EKSPORT YO'LI
     path('worker-report/export-csv/', views.export_worker_activity_csv, name='export_worker_activity_csv'),
     path('material_report/', views.material_sarfi_report, name='material_report'),
+    path('guard/', views.guard_dashboard, name='guard_dashboard'),
+    path('patrol/', views.guard_patrol_view, name='guard_patrol'),
 
-    path('', views.warehouse_dashboard_view, name='warehouse_dashboard'),
     path('debts/', views.debt_report, name='debt_report'),
     path('add-payment/<int:order_id>/', views.add_prepayment, name='add_prepayment'),
     path('rating/', views.customer_rating, name='customer_rating'), # SHU QATORNI TEKSHIRING
     path('get-customer-orders/<str:customer_id>/', views.get_customer_orders, name='get_customer_orders'),
     # 2. Harakatlar
-    path('transactions/', views.transaction_history_view, name='transaction_history'),
     path('transactions/add/', views.add_transaction_view, name='add_transaction'),
     path('transactions/remove/', views.remove_transaction_view, name='remove_transaction'),
 
@@ -73,6 +73,8 @@ urlpatterns = [
     path('inventory/list/', views.material_list, name='material_list'),
     path('rankings/', views.rankings_view, name='ranking'), # SHU QATORNI QO'SHING
     
+
+    path('warehouse/', views.warehouse_dashboard, name='warehouse_dashboard'),
     # 4. Boshqa inventarizatsiya harakatlari
     path('inventory/transaction/create/', views.material_transaction_create, name='material_transaction_create'),
     path('fast-scanner/', views.fast_scanner_view, name='fast_scanner'),
