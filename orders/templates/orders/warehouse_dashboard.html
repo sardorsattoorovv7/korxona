@@ -1,0 +1,1145 @@
+{% extends "orders/base.html" %} 
+{% load static %}
+{% load humanize %} 
+{% load i18n %}
+
+{% block title %}Omborchi Ish Stoli{% endblock %}
+
+{% block content %}
+    <style>
+        /* Modern Design System */
+        :root {
+            --primary-green: #10b981;
+            --primary-green-hover: #059669;
+            --primary-green-light: #d1fae5;
+            --primary-green-dark: #047857;
+            
+            --secondary-blue: #3b82f6;
+            --secondary-blue-light: #dbeafe;
+            --secondary-blue-dark: #1d4ed8;
+            
+            --accent-purple: #8b5cf6;
+            --accent-purple-light: #ede9fe;
+            --accent-purple-dark: #7c3aed;
+            
+            --background-light: #f8fbf9;
+            --card-bg: #ffffff;
+            --text-dark: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --border-light: #f3f4f6;
+            
+            --neutral-50: #f9fafb;
+            --neutral-100: #f3f4f6;
+            --neutral-200: #e5e7eb;
+            --neutral-300: #d1d5db;
+            --neutral-400: #9ca3af;
+            --neutral-500: #6b7280;
+            --neutral-600: #4b5563;
+            --neutral-700: #374151;
+            --neutral-800: #1f2937;
+            --neutral-900: #111827;
+            
+            --gradient-primary: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            --gradient-secondary: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            --gradient-accent: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+            --gradient-card: linear-gradient(135deg, #ffffff 0%, #f8fbf9 100%);
+            
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.2);
+            
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            background-color: var(--background-light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .container-modern {
+            width: 100%;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        /* Header Styles */
+        .header-modern {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-light);
+            position: relative;
+        }
+
+        .header-modern::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            border-radius: 2px;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-container {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-normal);
+        }
+
+        .logo-container:hover {
+            transform: rotate(-5deg) scale(1.05);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .logo-container i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .brand-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--gradient-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: var(--gradient-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background: white;
+            color: #ef4444;
+            border-color: #fecaca;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Stats Banner */
+        .stats-banner {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #a7f3d0;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 8px;
+            height: 100%;
+            background: var(--gradient-primary);
+        }
+
+        .stats-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stats-text {
+            flex: 1;
+        }
+
+        .stats-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stats-subtitle {
+            color: var(--primary-green-dark);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .stats-count {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+        }
+
+        .count-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-green-dark);
+            line-height: 1;
+        }
+
+        .count-label {
+            font-size: 0.875rem;
+            color: var(--primary-green-dark);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
+        }
+
+        /* Messages */
+        .messages-container {
+            margin-bottom: 2rem;
+        }
+
+        .message {
+            padding: 1.25rem 1.5rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message i {
+            font-size: 1.2rem;
+        }
+
+        .message-success {
+            background: var(--primary-green-light);
+            color: var(--primary-green-dark);
+            border-color: var(--primary-green);
+        }
+
+        .message-error {
+            background: #fef2f2;
+            color: #ef4444;
+            border-color: #fecaca;
+        }
+
+        .message-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .message-info {
+            background: var(--secondary-blue-light);
+            color: var(--secondary-blue-dark);
+            border-color: var(--secondary-blue);
+        }
+
+        /* Orders Grid */
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Order Card */
+        .order-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+            transition: all var(--transition-normal);
+            position: relative;
+        }
+
+        .order-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary-green-light);
+        }
+
+        .order-card.delivered {
+            opacity: 0.8;
+            background: var(--neutral-50);
+        }
+
+        .order-card-header {
+            color: white;
+            padding: 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .order-card-header.pending {
+            background: var(--gradient-primary);
+        }
+
+        .order-card-header.delivered {
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+        }
+
+        .order-card-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+
+        .order-id-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .order-time {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .order-time i {
+            font-size: 0.875rem;
+        }
+
+        .customer-name {
+            font-size: 1.15rem;
+            font-weight: 600;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+            margin-top: 0.5rem;
+        }
+
+        .customer-id {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+
+        .order-card-body {
+            padding: 1.75rem;
+        }
+
+        .detail-grid {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-label i {
+            font-size: 0.875rem;
+            width: 16px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: right;
+            word-break: break-word;
+            font-size: 0.95rem;
+        }
+
+        /* Delivery Info for delivered orders */
+        .delivery-info {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            border: 2px solid var(--neutral-200);
+            margin-top: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .delivery-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--neutral-700);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .delivery-title i {
+            color: var(--neutral-500);
+        }
+
+        .delivery-content {
+            font-size: 0.95rem;
+            color: var(--neutral-700);
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .delivery-time {
+            font-size: 0.85rem;
+            color: var(--neutral-500);
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Form for pending orders */
+        .delivery-form {
+            margin-top: 1.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--neutral-700);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-label i {
+            color: var(--primary-green);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--neutral-300);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            color: var(--neutral-800);
+            transition: all var(--transition-fast);
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: var(--neutral-400);
+        }
+
+        /* Image Upload Section */
+        .image-upload-section {
+            background: var(--neutral-50);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            border: 2px dashed var(--neutral-300);
+            margin-bottom: 1.5rem;
+        }
+
+        .image-upload-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--neutral-700);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .image-upload-title i {
+            color: var(--primary-green);
+        }
+
+        .image-input-group {
+            margin-bottom: 0.75rem;
+        }
+
+        .image-input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .image-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--neutral-300);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            color: var(--neutral-800);
+            background: white;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .image-input:hover {
+            border-color: var(--primary-green);
+            background: var(--primary-green-light);
+        }
+
+        .image-input::-webkit-file-upload-button {
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            margin-right: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+        }
+
+        .image-input::-webkit-file-upload-button:hover {
+            background: var(--primary-green-dark);
+        }
+
+        /* Order Card Footer */
+        .order-card-footer {
+            padding: 1.75rem;
+            background-color: var(--neutral-50);
+            border-top: 1px solid var(--border-light);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1rem;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all var(--transition-fast);
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-details {
+            background: var(--neutral-200);
+            color: var(--neutral-700);
+            border-color: var(--neutral-300);
+        }
+
+        .btn-details:hover {
+            background: var(--neutral-300);
+            color: var(--neutral-800);
+        }
+
+        .btn-submit {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: var(--primary-green);
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-green-dark);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Empty State */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            color: var(--neutral-300);
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            color: var(--neutral-600);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .empty-state-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .container-modern {
+                padding: 1.5rem;
+            }
+            
+            .orders-grid {
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            }
+        }
+
+        @media (max-width: 992px) {
+            .header-modern {
+                flex-direction: column;
+                gap: 1.5rem;
+                align-items: stretch;
+            }
+            
+            .user-section {
+                justify-content: space-between;
+            }
+            
+            .stats-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+            
+            .stats-count {
+                align-items: flex-start;
+            }
+            
+            .orders-grid {
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container-modern {
+                padding: 1rem;
+            }
+            
+            .orders-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-banner {
+                padding: 2rem 1rem;
+            }
+            
+            .order-card-header,
+            .order-card-body,
+            .order-card-footer {
+                padding: 1.25rem;
+            }
+            
+            .detail-row {
+                grid-template-columns: 1fr;
+                gap: 0.25rem;
+            }
+            
+            .detail-value {
+                text-align: left;
+            }
+        }
+    </style>
+
+    <div class="container-modern">
+        
+        <!-- Header -->
+        <div class="header-modern">
+            <div class="brand-section">
+                <div class="logo-container">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                <div class="brand-text">
+                    <div class="brand-name">Omborchi Ish Stoli</div>
+                    <div class="brand-subtitle">Tayyor mahsulotlarni yuklash va topshirish</div>
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {{ request.user.get_full_name|default:request.user.username|first|upper }}
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                        <div class="user-role">Omborchi</div>
+                    </div>
+                </div>
+                
+                <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+                    {% csrf_token %} 
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Chiqish
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stats Banner -->
+        <div class="stats-banner">
+            <div class="stats-content">
+                <div class="stats-text">
+                    <h1 class="stats-title">Tayyor mahsulotlar monitoringi</h1>
+                    <p class="stats-subtitle">
+                        Ombor tayyor holatdagi mahsulotlarni yuklash, rasmga olish va mijozlarga yetkazish jarayonini boshqaring.
+                    </p>
+                </div>
+                <div class="stats-count">
+                    <div class="count-number">{{ ready_count }}</div>
+                    <div class="count-label">TAYYOR MAHSULOT</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                <i class="fas 
+                    {% if message.tags == 'success' %}fa-check-circle
+                    {% elif message.tags == 'error' %}fa-exclamation-circle
+                    {% elif message.tags == 'warning' %}fa-exclamation-triangle
+                    {% else %}fa-info-circle{% endif %}">
+                </i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Orders Grid -->
+        <div class="orders-grid">
+            {% for order in orders %}
+            <div class="order-card {% if order.status == 'BAJARILDI' %}delivered{% endif %}">
+                <div class="order-card-header {% if order.status == 'BAJARILDI' %}delivered{% else %}pending{% endif %}">
+                    <div class="order-id-container">
+                        <div class="order-number">№ {{ order.order_number }}</div>
+                        <span class="status-badge">
+                            {% if order.status == 'BAJARILDI' %}TOPSHIRILGAN{% else %}OMBORDA{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="customer-name">{{ order.customer_name|default:"Noma'lum Mijoz" }}</div>
+                    <div class="customer-id">Mijoz ID: {{ order.customer_unique_id }}</div>
+                    
+                    <div class="order-time">
+                        <i class="far fa-clock"></i>
+                        {{ order.work_finished_at|date:"d.m.Y H:i" }}
+                    </div>
+                </div>
+                
+                <div class="order-card-body">
+                    <div class="detail-grid">
+                        <div class="detail-row">
+                            <span class="detail-label">
+                                <i class="fas fa-box"></i>
+                                <span>Mahsulot</span>
+                            </span>
+                            <span class="detail-value">{{ order.product_name }}</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">
+                                <i class="fas fa-ruler-combined"></i>
+                                <span>O'lchamlar</span>
+                            </span>
+                            <span class="detail-value">{{ order.balandligi }} x {{ order.eni }}</span>
+                        </div>
+                        
+                        {% if order.panel_type %}
+                        <div class="detail-row">
+                            <span class="detail-label">
+                                <i class="fas fa-layer-group"></i>
+                                <span>Panel Turi</span>
+                            </span>
+                            <span class="detail-value">{{ order.get_panel_type_display }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">
+                                <i class="fas fa-th-large"></i>
+                                <span>Maydoni</span>
+                            </span>
+                            <span class="detail-value">{{ order.panel_kvadrat|floatformat:2 }} m²</span>
+                        </div>
+                        
+                        {% if order.eshik_turi %}
+                        <div class="detail-row">
+                            <span class="detail-label">
+                                <i class="fas fa-door-open"></i>
+                                <span>Eshik Turi</span>
+                            </span>
+                            <span class="detail-value">{{ order.eshik_turi }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if order.status == 'BAJARILDI' %}
+                        <!-- Delivered Order - Show Delivery Info -->
+                        <div class="delivery-info">
+                            <div class="delivery-title">
+                                <i class="fas fa-truck"></i>
+                                <span>Yuklash ma'lumotlari</span>
+                            </div>
+                            <div class="delivery-content">
+                                <strong>{{ order.worker_comment }}</strong>
+                            </div>
+                            <div class="delivery-time">
+                                <i class="far fa-clock"></i>
+                                Topshirilgan vaqti: {{ order.work_finished_at|date:"d.m.Y H:i" }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Pending Order - Show Delivery Form -->
+                        <form action="{% url 'warehouse_dashboard' %}" method="POST" enctype="multipart/form-data" 
+                              class="delivery-form" id="form-{{ order.id }}"
+                              onsubmit="return confirm('Tasdiqlash: Yuklash ma\'lumotlarini saqlash va Telegramga yuborishni tasdiqlaysizmi?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="order_id" value="{{ order.id }}">
+                            
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-car"></i>
+                                        <span>Mashina raqami</span>
+                                    </label>
+                                    <input type="text" name="car_number" class="form-control" 
+                                           placeholder="01 A 777 AA" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>Ketish manzili</span>
+                                    </label>
+                                    <input type="text" name="delivery_note" class="form-control" 
+                                           placeholder="Masalan: Buxoro, Toshkent, Samarqand">
+                                </div>
+                            </div>
+                            
+                            <div class="image-upload-section">
+                                <div class="image-upload-title">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Yuklash rasmlari (3 tagacha)</span>
+                                </div>
+                                
+                                <div class="image-input-group">
+                                    <input type="file" name="img1" class="image-input" 
+                                           accept="image/*" capture="environment">
+                                </div>
+                                
+                                <div class="image-input-group">
+                                    <input type="file" name="img2" class="image-input" 
+                                           accept="image/*" capture="environment">
+                                </div>
+                                
+                                <div class="image-input-group">
+                                    <input type="file" name="img3" class="image-input" 
+                                           accept="image/*" capture="environment">
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden submit button for form submission -->
+                            <button type="submit" style="display: none;" id="submit-{{ order.id }}"></button>
+                        </form>
+                    {% endif %}
+                </div>
+                
+                <div class="order-card-footer">
+                    <div class="actions-grid">
+                        <a href="{% url 'order_detail' order.id %}" class="action-btn btn-details">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Tafsilotlar</span>
+                        </a>
+                        
+                        {% if order.status != 'BAJARILDI' %}
+                            <button type="button" class="action-btn btn-submit"
+                                    onclick="document.getElementById('submit-{{ order.id }}').click()">
+                                <i class="fas fa-paper-plane"></i>
+                                <span>Topshirish</span>
+                            </button>
+                        {% else %}
+                            <a href="{% url 'order_detail' order.id %}" class="action-btn btn-details">
+                                <i class="fas fa-eye"></i>
+                                <span>Ko'rish</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <h3 class="empty-state-title">Hozircha omborda tayyor mahsulotlar yo'q</h3>
+                <p class="empty-state-description">
+                    Omborda hozircha tayyor mahsulotlar mavjud emas. 
+                    Yangi tayyor mahsulotlar paydo bo'lgach, ular shu yerda ko'rinadi.
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        // Add animation to cards on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.order-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+
+            // File input styling enhancement
+            const fileInputs = document.querySelectorAll('.image-input');
+            fileInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const fileName = this.files[0] ? this.files[0].name : 'Rasm tanlanmagan';
+                    const label = this.nextElementSibling;
+                    
+                    // Create or update preview label
+                    let previewLabel = this.parentElement.querySelector('.file-preview');
+                    if (!previewLabel) {
+                        previewLabel = document.createElement('div');
+                        previewLabel.className = 'file-preview';
+                        previewLabel.style.fontSize = '0.8rem';
+                        previewLabel.style.color = 'var(--primary-green)';
+                        previewLabel.style.marginTop = '0.5rem';
+                        this.parentElement.appendChild(previewLabel);
+                    }
+                    previewLabel.textContent = `Tanlangan: ${fileName}`;
+                });
+            });
+        });
+
+        // Form submission confirmation
+        document.querySelectorAll('.delivery-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // Validate car number
+                const carNumber = this.querySelector('input[name="car_number"]').value;
+                if (!carNumber.trim()) {
+                    e.preventDefault();
+                    alert('Iltimos, mashina raqamini kiriting!');
+                    return false;
+                }
+                
+                // Check if at least one image is selected
+                const imageInputs = this.querySelectorAll('input[type="file"]');
+                let hasImage = false;
+                imageInputs.forEach(input => {
+                    if (input.files && input.files[0]) {
+                        hasImage = true;
+                    }
+                });
+                
+                if (!hasImage) {
+                    if (!confirm('Hech qanday rasm tanlanmadi. Rasm siz ham davom etasizmi?')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+        });
+    </script>
+{% endblock %}

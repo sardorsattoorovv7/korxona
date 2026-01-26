@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-7">
+            <div class="d-flex align-items-center gap-3">
+                <div class="p-3 bg-primary rounded-circle shadow text-white">
+                    <i class="fas fa-shuttle-van fa-2x"></i>
+                </div>
+                <div>
+                    <h1 class="h3 fw-bold text-dark mb-0">Nazorat Punkti (Qorovul)</h1>
+                    <p class="text-muted mb-0 small">{{ today|date:"d-F, Y" }} | 24/7 Monitoring</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 text-md-end mt-2">
+            <span class="badge bg-white text-dark border p-2 shadow-sm">
+                <i class="fas fa-clock text-warning"></i> Kutilmoqda: {{ orders|length }}
+            </span>
+            <a href="{% url 'order_list' %}" class="btn btn-secondary btn-sm ms-2">
+                <i class="fas fa-arrow-left"></i> Ortga
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="row g-3">
+                {% for order in orders %}
+                <div class="col-md-6">
+                    <div class="card h-100 border-start border-4 shadow-sm 
+                        {% if order.is_late %} border-danger bg-danger bg-opacity-10 animate-pulse-red 
+                        {% elif order.status == 'YUK_YUKLANDI' or order.work_started_at %} border-success 
+                        {% else %} border-primary {% endif %}">
+                        
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-dark">#{{ order.id }}</span>
+                                <div class="text-end">
+                                    <span class="small fw-bold {% if order.is_late %} text-danger {% else %} text-muted {% endif %}">
+                                        Vaqt: {{ order.work_finished_at|date:"H:i" }}
+                                    </span>
+                                    {% if order.is_late %}
+                                        <br><small class="text-danger fw-bold blinker">KECHIKDI!</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6 class="fw-bold mb-1">{{ order.worker_comment|default:"Izoh yo'q" }}</h6>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-car me-1"></i> <strong>{{ order.car_number|default:"Raqamsiz" }}</strong>
+                                </p>
+                            </div>
+
+                            <form method="POST" enctype="multipart/form-data" class="action-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Rasm yuklash:</label>
+                                    <input type="file" name="guard_img" class="form-control form-control-sm border-primary" 
+                                           accept="image/*" capture="environment" required>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    {% if order.status == 'TAYYOR' and not order.work_started_at %}
+                                        <button type="submit" name="action" value="enter" class="btn btn-primary btn-sm fw-bold py-2">
+                                            <i class="fas fa-sign-in-alt me-2"></i> KIRISHNI TASDIQLASH
+                                        </button>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary small">Holat: Tashqarida</span>
+                                    
+                                    {% elif order.status == 'YUK_YUKLANDI' or order.work_started_at %}
+                                        <button type="submit" name="action" value="exit" class="btn btn-success btn-sm fw-bold py-2">
+                                            <i class="fas fa-sign-out-alt me-2"></i> CHIQISHNI TASDIQLASH
+                                        </button>
+                                        <span class="badge bg-success bg-opacity-10 text-success small">Holat: Ichkarida</span>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <h5 class="text-muted">Hozircha transportlar yo'q</h5>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0 text-dark">Bugun chiqqanlar</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
+                        {% for h in history %}
+                        <div class="list-group-item p-3 border-0 border-bottom">
+                            <div class="d-flex justify-content-between">
+                                <strong class="text-dark">#{{ h.id }} - {{ h.car_number }}</strong>
+                                <span class="text-success small fw-bold">{{ h.work_finished_at|date:"H:i" }}</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">{{ h.worker_comment|truncatechars:35 }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Kechikkanlar uchun qizil animatsiya */
+    .animate-pulse-red {
+        animation: pulse-red 2s infinite;
+    }
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+    .blinker {
+        animation: blink 1.2s linear infinite;
+    }
+    @keyframes blink {
+        50% { opacity: 0; }
+    }
+    .card { transition: all 0.3s ease; }
+    .card:hover { transform: translateY(-3px); }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // SweetAlert tasdiqlash xabari
+    document.querySelectorAll('.action-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const action = this.querySelector('button[type="submit"]').value;
+            const text = action === 'enter' ? "KIRISHNI" : "CHIQISHNI";
+            
+            Swal.fire({
+                title: `${text} tasdiqlaysizmi?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ha, tasdiqlayman',
+                cancelButtonText: 'Bekor qilish',
+                confirmButtonColor: action === 'enter' ? '#0d6efd' : '#198754',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

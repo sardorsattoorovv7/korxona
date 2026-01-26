@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+            <i class="fas fa-shield-alt fa-3x mb-2"></i>
+            <h3 class="fw-bold mb-0">Patrul Nazorati</h3>
+        </div>
+
+        <div class="card-body p-4">
+            {% if active_slot %}
+                
+                {% if is_completed %}
+                    <div class="text-center py-5 animated fadeIn">
+                        <div class="mb-4">
+                            <i class="fas fa-check-circle fa-5x text-success"></i>
+                        </div>
+                        <h2 class="fw-bold text-dark">TEKSHIRILDI ✅</h2>
+                        <p class="text-muted fs-5">Siz bugungi <strong>{{ active_slot }}</strong> vaqti uchun hisobotni muvaffaqiyatli topshirdingiz.</p>
+                        <div class="mt-4">
+                            <span class="badge bg-success p-2 px-3 rounded-pill">Status: Qabul qilindi</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-success text-center border-0 mb-4">
+                        <i class="fas fa-clock me-2"></i> <strong>Faol vaqt:</strong> {{ active_slot }}
+                    </div>
+                    
+                    <form id="patrolForm" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="lat" id="lat">
+                        <input type="hidden" name="lng" id="lng">
+
+                        <div class="row g-3 mb-4 text-center">
+                            {% for i in "123" %}
+                            <div class="col-4">
+                                <label class="small fw-bold">Rasm {{ i }}</label>
+                                <div class="upload-area mt-2">
+                                    <div class="file-custom-btn" onclick="document.getElementById('img{{ i }}').click()">
+                                        <i class="fas fa-camera fa-lg"></i>
+                                    </div>
+                                    <input type="file" id="img{{ i }}" name="img{{ i }}" class="form-control file-input d-none" accept="image/*" capture="environment" required>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="btn-patrol-submit" disabled>
+                            <i class="fas fa-check-double"></i> <span>TEKSHIRDIM</span>
+                        </button>
+                    </form>
+                {% endif %}
+
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-hourglass-half fa-4x text-muted mb-3"></i>
+                    <h4 class="text-secondary fw-bold">Patrul vaqti emas</h4>
+                    <p class="text-muted small">Hozirgi vaqt: {{ current_time|date:"H:i" }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .animated { animation-duration: 0.8s; animation-fill-mode: both; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .fadeIn { animation-name: fadeIn; }
+
+    .file-custom-btn {
+        width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center;
+        border: 2px dashed #8b5cf6; border-radius: 12px; color: #8b5cf6; cursor: pointer; transition: 0.3s;
+    }
+    .file-custom-btn.filled { border-style: solid; background: #8b5cf6; color: white; }
+
+    .btn-patrol-submit {
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        width: 100%; padding: 16px; border: none; border-radius: 12px;
+        color: white; font-weight: bold; background: #d1d5db; cursor: not-allowed; transition: 0.3s;
+    }
+    .btn-patrol-submit.active {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        cursor: pointer; box-shadow: 0 10px 15px rgba(124, 58, 237, 0.3);
+    }
+</style>
+
+<script>
+    // GPS olish (Xatolikni aniqroq ko'rsatish bilan)
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        document.getElementById('lat').value = pos.coords.latitude;
+        document.getElementById('lng').value = pos.coords.longitude;
+    }, function(err) {
+        console.warn("GPS aniqlanmadi, koordinatalar 0.0 bo'ladi.");
+    });
+
+    // Rasm yuklanganda dizaynni o'zgartirish
+    const inputs = document.querySelectorAll('.file-input');
+    const btn = document.getElementById('submitBtn');
+
+    inputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const label = this.parentElement.querySelector('.file-custom-btn');
+            if (this.files.length > 0) {
+                label.classList.add('filled');
+                label.innerHTML = '<i class="fas fa-check fa-lg"></i>';
+            }
+            
+            const allFilled = Array.from(inputs).every(i => i.files.length > 0);
+            if (btn) {
+                btn.disabled = !allFilled;
+                allFilled ? btn.classList.add('active') : btn.classList.remove('active');
+            }
+        });
+    });
+</script>
+{% endblock %}
