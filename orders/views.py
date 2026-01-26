@@ -458,17 +458,341 @@ def order_list(request):
     }
     return render(request, 'orders/order_list.html', context)
 
-from django.db.models import Sum, Count
-from django.shortcuts import render
-from .models import Worker, Order
 
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.contrib import messages
+from .models import Order
+@login_required
+def warehouse_dashboard(request):
+    if request.method == 'POST':
+        # ... (POST kodi o'zgarishsiz qoladi) ...
+        order_id = request.POST.get('order_id')
+        if order_id:
+            order = get_object_or_404(Order, id=order_id)
+            car_number = request.POST.get('car_number', 'Noma\'lum')
+            delivery_note = request.POST.get('delivery_note', '')
+
+            img1 = request.FILES.get('img1')
+            img2 = request.FILES.get('img2')
+            img3 = request.FILES.get('img3')
+
+            order.delivery_img_1 = img1
+            order.delivery_img_2 = img2
+            order.delivery_img_3 = img3
+            order.worker_comment = f"Mashina: {car_number} | Manzil: {delivery_note}"
+            order.status = 'BAJARILDI'
+            order.work_finished_at = timezone.now()
+            order.save()
+
+            # Telegram yuborish qismi (o'sha-o'sha qoladi)
+            try:
+                caption = (
+                    f"🚚 #TOPSHIRILDI\n"
+                    f"📦 Buyurtma: #{order.id}\n"
+                    f"👤 Mijoz: {order.customer_name}\n"
+                    f"🚛 Moshina: {car_number}\n"
+                    f"📍 Manzil: {delivery_note}\n"
+                    f"👨‍💼 Mas'ul: @{request.user.username}"
+                )
+                media = []
+                files = {}
+                images = [img1, img2, img3]
+                count = 0
+                for img in images:
+                    if img:
+                        count += 1
+                        file_key = f"p{count}"
+                        img.seek(0)
+                        files[file_key] = (img.name, img.read(), img.content_type)
+                        media.append({'type': 'photo', 'media': f'attach://{file_key}', 'caption': caption if count == 1 else ""})
+
+                if media:
+                    requests.post(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMediaGroup", data={'chat_id': TELEGRAM_GROUP_ID, 'media': json.dumps(media)}, files=files)
+                else:
+                    requests.post(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data={'chat_id': TELEGRAM_GROUP_ID, 'text': caption})
+            except Exception as e:
+                print(f"Telegram error: {e}")
+
+            messages.success(request, f"#{order.id} buyurtma topshirildi.")
+            return redirect('warehouse_dashboard')
+
+    # --- GET SO'ROVI YANGILANDI ---
+    # 1. Hali topshirilmagan (tayyor) buyurtmalar
+    ready_orders = Order.objects.filter(
+        status='USTA_TUGATDI',
+        parent_order__isnull=False
+    ).order_by('-work_finished_at')
+
+    # 2. Topshirib bo'lingan buyurtmalar (oxirgi 20 tasi)
+    delivered_orders = Order.objects.filter(
+        status='BAJARILDI',
+        parent_order__isnull=False
+    ).order_by('-work_finished_at')[:20]
+
+    # Ikkalasini birlashtiramiz (Tayyorlar tepada turadi)
+    all_orders = list(ready_orders) + list(delivered_orders)
+
+    context = {
+        'orders': all_orders,
+        'ready_count': ready_orders.count(),
+    }
+    return render(request, 'orders/warehouse_dashboard.html', context)
+
+
+
+
+
+@login_required
+def guard_dashboard(request):
+    user_lower = request.user.username.lower()
+    if not ("qorovul" in user_lower or "guard" in user_lower or request.user.is_superuser):
+        return HttpResponseForbidden("Sizda qorovul paneliga kirish huquqi yo'q!")
+
+    if request.method == 'POST':
+        order_id = request.POST.get('order_id')
+        action = request.POST.get('action')
+        order = get_object_or_404(Order, id=order_id)
+        img = request.FILES.get('guard_img')
+        now = timezone.now()
+
+        if action == 'enter':
+            status_text = "KIRDI (Yukxonaga)"
+            status_emoji = "📥"
+            # KIRISH VAQTINI MUHRLASH
+            order.work_started_at = now 
+            order.save()
+        elif action == 'exit':
+            status_text = "CHIQDI (Zavoddan)"
+            status_emoji = "📤"
+            # CHIQISH VAQTINI MUHRLASH VA STATUSNI O'ZGARTIRISH
+            order.status = 'YUK_CHIQDI'
+            order.work_finished_at = now
+            order.save()
+
+        # Telegramga yuborish (vaqt bilan)
+        if img:
+            caption = (
+                f"🛡️ #QOROVUL_NAZORATI\n"
+                f"{status_emoji} {status_text}\n"
+                f"📦 Buyurtma: #{order.id}\n"
+                f"🚛 Moshina: {order.worker_comment}\n"
+                f"🕒 Vaqt: {now.strftime('%H:%M')}"
+            )
+            try:
+                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
+                img.seek(0)
+                files = {'photo': (img.name, img.read(), img.content_type)}
+                requests.post(url, data={'chat_id': TELEGRAM_GROUP_ID, 'caption': caption}, files=files)
+            except Exception as e:
+                print(f"Telegram error: {e}")
+
+        messages.success(request, f"#{order.id} {status_text} tasdiqlandi (Vaqt: {now.strftime('%H:%M')}).")
+        return redirect('guard_dashboard')
+    
+
+
+    # 1. KUTILAYOTGANLAR (Hali chiqmagan moshinalar)
+    pending_orders = Order.objects.filter(
+        status='BAJARILDI'
+    ).exclude(
+        Q(worker_comment="") | Q(worker_comment__isnull=True)
+    ).order_by('-work_finished_at')
+
+    # 2. BUGUNGI TARIX (Kirgan va chiqqan moshinalar jadvali)
+    today = timezone.now().date()
+    today_history = Order.objects.filter(
+        Q(work_started_at__date=today) | Q(work_finished_at__date=today)
+    ).filter(
+        status__in=['BAJARILDI', 'YUK_CHIQDI']
+    ).order_by('-id')
+
+    context = {
+        'orders': pending_orders,
+        'history': today_history,
+    }
+    return render(request, 'orders/guard_dashboard.html', context)
+
+
+
+
+
+
+
+
+
+
+from datetime import datetime  # BU MUHIM: importni shunday o'zgartiring
+import requests  
+from django.utils import timezone
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import GuardPatrol
+
+# Telegram bot sozlamalari
+BOT_TOKEN = '7234567890:ABCdefGHIjklMNOpqrSTUvwxYZ' # O'zingizniki bilan almashtiring
+CHAT_ID = '-100123456789' # Guruh ID sini qo'ying
+import json
+import requests
+from datetime import datetime
+from django.utils import timezone
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import GuardPatrol
+
+# Sozlamalarni o'zgaruvchilarga chiqaramiz
+BOT_TOKEN = "8593760936:AAGAeS-Dj9OHcRnJPcyu1o1pkW3ow0W7dDk"
+CHAT_ID = "-1003274223599"
+
+import json
+import requests
+from datetime import datetime
+from django.utils import timezone
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import GuardPatrol
+
+# --- TELEGRAM SOZLAMALARI ---
+BOT_TOKEN = "8593760936:AAGAeS-Dj9OHcRnJPcyu1o1pkW3ow0W7dDk"
+CHAT_ID = "-1003274223599"
+
+def send_patrol_to_telegram(patrol):
+    """Hisobotni va rasmlarni bitta albom qilib Telegramga yuborish"""
+    # Google Maps linki
+    map_url = f"https://www.google.com/maps?q={patrol.latitude},{patrol.longitude}"
+    
+    caption = (
+        f"🚨 *YANGI PATRUL HISOBOTI*\n\n"
+        f"👤 *Qorovul:* {patrol.guard.get_full_name() or patrol.guard.username}\n"
+        f"⏰ *Vaqt:* {patrol.patrol_time_slot}\n"
+        f"📅 *Sana:* {patrol.created_at.strftime('%d.%m.%Y %H:%M')}\n"
+        f"📍 [Xaritada ko'rish]({map_url})"
+    )
+
+    media_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMediaGroup"
+    files = {}
+    media = []
+    
+    image_fields = [patrol.image1, patrol.image2, patrol.image3]
+    for i, img_field in enumerate(image_fields, 1):
+        if img_field and img_field.storage.exists(img_field.name): # Fayl borligini tekshirish
+            file_key = f"pic{i}"
+            try:
+                files[file_key] = open(img_field.path, 'rb')
+                media.append({
+                    "type": "photo",
+                    "media": f"attach://{file_key}",
+                    "caption": caption if i == 1 else "", 
+                    "parse_mode": "Markdown"
+                })
+            except Exception as e:
+                print(f"Rasm ochishda xato: {e}")
+
+    if media:
+        try:
+            # timeout=40 soniya qildik, rasmlar katta bo'lsa uzatishga ulguradi
+            response = requests.post(
+                media_url, 
+                data={"chat_id": CHAT_ID, "media": json.dumps(media)}, 
+                files=files,
+                timeout=40 
+            )
+            return response.json()
+        except requests.exceptions.Timeout:
+            print("Telegram xatosi: Vaqt tugadi (Timeout). Rasmlar juda katta bo'lishi mumkin.")
+        except Exception as e:
+            print(f"Telegram yuborishda kutilmagan xato: {e}")
+        finally:
+            # Fayllarni har qanday holatda yopish
+            for f in files.values():
+                f.close()
+    return None
+
+            
+@login_required
+def guard_patrol_view(request):
+    # Shell'da test qilgan mantiqimiz:
+    if not (request.user.is_staff or request.user.username == 'Qorovul'):
+        messages.error(request, "Sizda bu sahifaga kirish ruxsati yo'q!")
+        return redirect('home')
+    now_dt = timezone.localtime()
+    now = now_dt.time()
+    today = now_dt.date()
+    
+    # Patrul vaqtlari jadvali
+    patrol_slots = [
+        ("02:00", "02:20"), ("04:00", "04:20"), ("05:00", "05:20"),
+        ("12:30", "12:20"), ("14:00", "14:20"), ("18:00", "18:20"), ("22:00", "22:20")
+    ]
+    
+    active_slot = None
+    for start, end in patrol_slots:
+        start_t = datetime.strptime(start, "%H:%M").time()
+        end_t = datetime.strptime(end, "%H:%M").time()
+        if start_t <= now <= end_t:
+            active_slot = f"{start} - {end}"
+            break
+
+    # --- TEKSHIRILDI STATUSINI ANIQLASH ---
+    is_completed = False
+    if active_slot:
+        is_completed = GuardPatrol.objects.filter(
+            guard=request.user,
+            patrol_time_slot=active_slot,
+            created_at__date=today
+        ).exists()
+
+    if request.method == "POST":
+        if not active_slot:
+            messages.error(request, "Hozir patrul vaqti emas!")
+            return redirect('guard_patrol')
+        
+        if is_completed:
+            messages.warning(request, "Siz bu vaqt oralig'i uchun hisobot topshirib bo'lgansiz!")
+            return redirect('guard_patrol')
+
+        img1 = request.FILES.get('img1')
+        img2 = request.FILES.get('img2')
+        img3 = request.FILES.get('img3')
+        lat = request.POST.get('lat')
+        lng = request.POST.get('lng')
+
+        # 3 ta rasm ham borligini tekshirish
+        if img1 and img2 and img3:
+            # Baza ma'lumot saqlash
+            patrol = GuardPatrol.objects.create(
+                guard=request.user,
+                checkpoint_name="Umumiy nazorat",
+                patrol_time_slot=active_slot,
+                image1=img1, image2=img2, image3=img3,
+                latitude=float(lat) if lat and lat != "undefined" else 0.0,
+                longitude=float(lng) if lng and lng != "undefined" else 0.0
+            )
+            
+            # Telegramga yuborish
+            send_patrol_to_telegram(patrol)
+            
+            messages.success(request, "Patrul hisoboti muvaffaqiyatli topshirildi!")
+            return redirect('guard_patrol')
+        else:
+            messages.error(request, "Xatolik: 3 ta rasm yuklash majburiy!")
+
+    return render(request, 'orders/patrol.html', {
+        'active_slot': active_slot,
+        'current_time': now,
+        'is_completed': is_completed
+    })
 def rankings_view(request):
     """Ustalar reytingi sahifasi"""
-    # Bajarilgan buyurtmalar soni va kvadrat metr bo'yicha ustalarni hisoblash
+    # models.Q o'rniga Q o'zi ishlatildi (import qismiga qarang)
     workers_list = Worker.objects.annotate(
-        total_finished=Count('orders', filter=models.Q(orders__status='TUGATILDI')),
-        total_kvadrat=Sum('orders__panel_kvadrat', filter=models.Q(orders__status='TUGATILDI'))
-    ).order_by('-total_kvadrat') # Eng ko'p kvadrat metr qilganlar birinchi chiqadi
+        total_finished=Count('orders', filter=Q(orders__status='TUGATILDI')),
+        total_kvadrat=Sum('orders__panel_kvadrat', filter=Q(orders__status='TUGATILDI'))
+    ).order_by('-total_kvadrat')
 
     context = {
         'workers': workers_list,
@@ -1763,84 +2087,6 @@ from django.db.models import Sum
 from django.utils import timezone
 from datetime import timedelta
 from .models import Material, MaterialTransaction # Modellar shu yerda import qilinishi kerak
-
-def warehouse_dashboard_view(request):
-    """
-    Omborxona boshqaruv panelini ko'rsatuvchi funksiya.
-    Kerakli statistikalar va tezkor harakatlarni hisoblaydi.
-    """
-    
-    # --- 1. Umumiy Statistikalar ---
-    total_material_count = Material.objects.count()
-
-    # --- 2. Kam Zaxira ---
-    # current_stock, min_stock_level dan kichik bo'lgan materiallar
-    low_stock_materials = Material.objects.filter(
-        current_stock__lte=models.F('min_stock_level') # models.F ni ham import qilish kerak
-    ).order_by('-current_stock')
-    
-    low_stock_materials_count = low_stock_materials.count()
-
-    # --- 3. Vaqtga asoslangan Harakatlar Statistikasi (30 kun) ---
-    thirty_days_ago = timezone.now() - timedelta(days=30)
-    
-    
-    monthly_transactions = MaterialTransaction.objects.filter(
-        created_at__gte=thirty_days_ago
-    )
-    
-    # Kirim va Chiqimni hisoblash (umumiy miqdorda)
-    monthly_incoming_sum = monthly_transactions.filter(transaction_type='IN').aggregate(Sum('quantity'))['quantity__sum'] or 0
-    monthly_outgoing_sum = monthly_transactions.filter(transaction_type='OUT').aggregate(Sum('quantity'))['quantity__sum'] or 0
-
-    monthly_stats = {
-        'total_incoming': monthly_incoming_sum,
-        'total_outgoing': monthly_outgoing_sum,
-    }
-    
-    # --- 4. So'nggi Harakatlar (Dashboard uchun) ---
-    recent_transactions = MaterialTransaction.objects.select_related('material').order_by('-created_at')[:5]
-
-    context = {
-        'title': 'Omborxona Boshqaruv Paneli',
-        'total_material_count': total_material_count,
-        'low_stock_materials_count': low_stock_materials_count,
-        'low_stock_materials': low_stock_materials,
-        'monthly_stats': monthly_stats,
-        'recent_transactions': recent_transactions,
-    }
-    
-    return render(request, 'orders/dashboard.html', context)
-@login_required
-def material_transaction_detail(request, pk):
-    """Material tranzaksiyasi tafsilotlari."""
-    transaction = get_object_or_404(MaterialTransaction.objects.select_related(
-        'material', 'order', 'performed_by'
-    ), pk=pk)
-    
-    context = {
-        'transaction': transaction,
-    }
-    
-    return render(request, 'orders/material_transaction_detail.html', context)
-# orders/views.py
-
-from django.shortcuts import render
-# ... (boshqa importlar)
-
-def transaction_history_view(request):
-    """
-    Omborxona harakatlari (kirim/chiqim) tarixini ko'rsatadi.
-    """
-    # Bu yerda MaterialTransaction modelidan ma'lumotlarni olish logikasi bo'lishi mumkin
-    # Masalan: transactions = MaterialTransaction.objects.all().order_by('-timestamp')
-    
-    context = {
-        'title': 'Omborxona Harakatlari Tarixi',
-        # 'transactions': transactions,
-    }
-    return render(request, 'orders/transaction_history.html', context)
-
 
 # orders/views.py
 
