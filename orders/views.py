@@ -466,7 +466,67 @@ def order_list(request):
     }
     return render(request, 'orders/order_list.html', context)
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import DriverTrip, TripPoint
+from django.utils import timezone
 
+@login_required
+def driver_dashboard(request):
+    # Faqat haydovchi yoki admin kira oladi
+    is_driver = "haydovchi" in request.user.username.lower() or request.user.is_staff
+    if not is_driver:
+        messages.error(request, "Kirish taqiqlangan!")
+        return redirect('home')
+
+    # Faqat SHU haydovchiga tegishli oxirgi faol reys
+    active_trip = DriverTrip.objects.filter(
+        driver=request.user, 
+        is_active=True
+    ).last()
+
+    # Haydovchining oxirgi 5 ta yopilgan reysi (Tarixi)
+    trip_history = DriverTrip.objects.filter(
+        driver=request.user, 
+        is_active=False
+    ).order_by('-start_time')[:5]
+
+    return render(request, 'orders/driver_dashboard.html', {
+        'active_trip': active_trip,
+        'trip_history': trip_history
+    })
+@csrf_exempt
+@login_required
+def track_location(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        lat = data.get('lat')
+        lng = data.get('lng')
+        
+        # Faol reysni qidirish yoki yangisini yaratish
+        trip, created = DriverTrip.objects.get_or_create(
+            driver=request.user, 
+            is_active=True,
+            defaults={'car_number': "MASHINA-01"} # Buni profilidan olsa ham bo'ladi
+        )
+        
+        # Yangi nuqtani saqlash
+        last_point = trip.points.last()
+        is_stop = False
+        
+        if last_point:
+            # Agar oxirgi nuqtadan beri 3 minut o'tgan bo'lsa va masofa o'zgarmagan bo'lsa
+            # (Bu yerda mantiqni kengaytirish mumkin)
+            pass
+
+        TripPoint.objects.create(
+            trip=trip,
+            latitude=lat,
+            longitude=lng,
+            is_stop=is_stop
+        )
+        
+        return JsonResponse({"status": "ok", "trip_id": trip.id})
 
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -668,11 +728,13 @@ from .models import GuardPatrol
 BOT_TOKEN = "8593760936:AAGAeS-Dj9OHcRnJPcyu1o1pkW3ow0W7dDk"
 CHAT_ID = "-1003274223599"
 
+import json
+import requests
+
 def send_patrol_to_telegram(patrol):
     """Hisobotni va rasmlarni bitta albom qilib Telegramga yuborish"""
-    # Google Maps linki
     map_url = f"https://www.google.com/maps?q={patrol.latitude},{patrol.longitude}"
-    
+
     caption = (
         f"🚨 *YANGI PATRUL HISOBOTI*\n\n"
         f"👤 *Qorovul:* {patrol.guard.get_full_name() or patrol.guard.username}\n"
@@ -684,116 +746,164 @@ def send_patrol_to_telegram(patrol):
     media_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMediaGroup"
     files = {}
     media = []
-    
-    image_fields = [patrol.image1, patrol.image2, patrol.image3]
+
+    # ✅ 4 ta rasm
+    image_fields = [patrol.image1, patrol.image2, patrol.image3, patrol.image4]
+
     for i, img_field in enumerate(image_fields, 1):
-        if img_field and img_field.storage.exists(img_field.name): # Fayl borligini tekshirish
+        if img_field and img_field.name:
             file_key = f"pic{i}"
             try:
-                files[file_key] = open(img_field.path, 'rb')
+                # local storage bo‘lsa path bo‘ladi
+                files[file_key] = open(img_field.path, "rb")
                 media.append({
                     "type": "photo",
                     "media": f"attach://{file_key}",
-                    "caption": caption if i == 1 else "", 
-                    "parse_mode": "Markdown"
+                    "caption": caption if i == 1 else "",
+                    "parse_mode": "Markdown",
                 })
             except Exception as e:
-                print(f"Rasm ochishda xato: {e}")
+                print(f"Rasm ochishda xato ({file_key}): {e}")
 
-    if media:
-        try:
-            # timeout=40 soniya qildik, rasmlar katta bo'lsa uzatishga ulguradi
-            response = requests.post(
-                media_url, 
-                data={"chat_id": CHAT_ID, "media": json.dumps(media)}, 
-                files=files,
-                timeout=40 
-            )
-            return response.json()
-        except requests.exceptions.Timeout:
-            print("Telegram xatosi: Vaqt tugadi (Timeout). Rasmlar juda katta bo'lishi mumkin.")
-        except Exception as e:
-            print(f"Telegram yuborishda kutilmagan xato: {e}")
-        finally:
-            # Fayllarni har qanday holatda yopish
-            for f in files.values():
+    if not media:
+        print("Telegramga yuborish bekor: rasm topilmadi (media bo'sh).")
+        return None
+
+    try:
+        response = requests.post(
+            media_url,
+            data={"chat_id": CHAT_ID, "media": json.dumps(media)},
+            files=files,
+            timeout=40
+        )
+
+        # ✅ debug: aynan nima xato ekanini ko‘rasan
+        print("TELEGRAM STATUS =", response.status_code)
+        print("TELEGRAM TEXT =", response.text)
+
+        return response.json()
+
+    except requests.exceptions.Timeout:
+        print("Telegram xatosi: Timeout (rasmlar katta bo'lishi mumkin).")
+    except Exception as e:
+        print(f"Telegram yuborishda kutilmagan xato: {e}")
+    finally:
+        for f in files.values():
+            try:
                 f.close()
+            except:
+                pass
+
     return None
 
             
+from datetime import datetime
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from django.utils import timezone
+
+from .models import GuardPatrol  # sizda qaysi appda bo'lsa shu yo'lni to'g'rilang
+
+
 @login_required
 def guard_patrol_view(request):
-    # Shell'da test qilgan mantiqimiz:
     if not (request.user.is_staff or request.user.username == 'Qorovul'):
         messages.error(request, "Sizda bu sahifaga kirish ruxsati yo'q!")
         return redirect('home')
+
     now_dt = timezone.localtime()
-    now = now_dt.time()
+    now_time = now_dt.time()
     today = now_dt.date()
-    
-    # Patrul vaqtlari jadvali
+
+    # ✅ Patrul vaqtlar jadvali (to'g'ri formatda)
     patrol_slots = [
-        ("02:00", "02:20"), ("04:00", "04:20"), ("05:00", "05:20"),
-        ("12:30", "12:20"), ("14:00", "14:20"), ("18:00", "18:20"), ("22:00", "22:20")
+        ("02:00", "02:20"),
+        ("04:00", "04:20"),
+        ("05:00", "05:20"),
+        ("12:00", "12:20"),  # ⚠️ sizda 12:30-12:20 xato edi
+        ("14:00", "14:20"),
+        ("18:00", "18:20"),
+        ("22:00", "22:20"),
     ]
-    
+
+    # Bugun topshirilgan slotlarni 1 martada olib olamiz (tez)
+    completed_qs = GuardPatrol.objects.filter(
+        guard=request.user,
+        created_at__date=today
+    ).values_list('patrol_time_slot', flat=True)
+    completed_set = set(completed_qs)
+
+    # Hozir active slotni topamiz + hamma slotlar uchun status tayyorlaymiz
     active_slot = None
+    slots_ui = []
+
     for start, end in patrol_slots:
         start_t = datetime.strptime(start, "%H:%M").time()
         end_t = datetime.strptime(end, "%H:%M").time()
-        if start_t <= now <= end_t:
-            active_slot = f"{start} - {end}"
-            break
 
-    # --- TEKSHIRILDI STATUSINI ANIQLASH ---
-    is_completed = False
-    if active_slot:
-        is_completed = GuardPatrol.objects.filter(
-            guard=request.user,
-            patrol_time_slot=active_slot,
-            created_at__date=today
-        ).exists()
+        slot_label = f"{start} - {end}"
+        is_active = (start_t <= now_time <= end_t)
 
+        if is_active and active_slot is None:
+            active_slot = slot_label
+
+        slots_ui.append({
+            "label": slot_label,
+            "start": start,
+            "end": end,
+            "is_active": is_active,
+            "is_completed": slot_label in completed_set,
+        })
+
+    # POST faqat active slot bo'lsa ishlasin
     if request.method == "POST":
-        if not active_slot:
-            messages.error(request, "Hozir patrul vaqti emas!")
+        slot_from_post = request.POST.get("slot")  # qaysi slotdan yuborildi
+
+        if not active_slot or slot_from_post != active_slot:
+            messages.error(request, "Hozir patrul vaqti emas yoki noto‘g‘ri vaqt tanlandi!")
             return redirect('guard_patrol')
-        
-        if is_completed:
+
+        if active_slot in completed_set:
             messages.warning(request, "Siz bu vaqt oralig'i uchun hisobot topshirib bo'lgansiz!")
             return redirect('guard_patrol')
 
         img1 = request.FILES.get('img1')
         img2 = request.FILES.get('img2')
         img3 = request.FILES.get('img3')
+        img4 = request.FILES.get('img4')
         lat = request.POST.get('lat')
         lng = request.POST.get('lng')
 
-        # 3 ta rasm ham borligini tekshirish
-        if img1 and img2 and img3:
-            # Baza ma'lumot saqlash
+        if img1 and img2 and img3 and img4:
             patrol = GuardPatrol.objects.create(
                 guard=request.user,
                 checkpoint_name="Umumiy nazorat",
                 patrol_time_slot=active_slot,
-                image1=img1, image2=img2, image3=img3,
+                image1=img1, image2=img2, image3=img3, image4=img4,   # ✅ shu qo‘shildi
                 latitude=float(lat) if lat and lat != "undefined" else 0.0,
                 longitude=float(lng) if lng and lng != "undefined" else 0.0
             )
-            
-            # Telegramga yuborish
-            send_patrol_to_telegram(patrol)
-            
+
+            result = send_patrol_to_telegram(patrol)  # ✅ resultni ushlab qolamiz
+            print("TELEGRAM RESULT =", result)         # ✅ konsolda ko‘rasan
+
             messages.success(request, "Patrul hisoboti muvaffaqiyatli topshirildi!")
             return redirect('guard_patrol')
         else:
-            messages.error(request, "Xatolik: 3 ta rasm yuklash majburiy!")
+            messages.error(request, "Xatolik: 4 ta rasm yuklash majburiy!")
+
+
+         
 
     return render(request, 'orders/patrol.html', {
-        'active_slot': active_slot,
-        'current_time': now,
-        'is_completed': is_completed
+        "slots": slots_ui,
+        "active_slot": active_slot,
+        "current_time": now_dt,  # template'da vaqt ko'rsatish uchun
     })
+
+
+
 def rankings_view(request):
     """Ustalar reytingi sahifasi"""
     # models.Q o'rniga Q o'zi ishlatildi (import qismiga qarang)
