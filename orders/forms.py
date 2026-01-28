@@ -11,7 +11,7 @@ from .models import Order, MaterialTransaction, Material, Category, Worker
 # 1. BUYURTMA (ORDER) FORMALARI
 # -----------------------------------
 
-PANEL_THICKNESS_CHOICES = [
+ESHIK_QALINLIK_CHOICES  = [
     ('', '--- Tanlang ---'),
     ('5', '5 sm'),
     ('8', '8 sm'), 
@@ -55,6 +55,15 @@ class OrderForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_worker_type'})
     )
 
+
+    eshik_qalinligi = forms.TypedChoiceField(
+        choices=ESHIK_QALINLIK_CHOICES,
+        coerce=lambda x: int(x) if x not in ("", None) else None,
+        required=False,
+        label="Eshik qalinligi",
+        widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_eshik_qalinligi'})
+
+    )
     class Meta:
         model = Order
         fields = [
@@ -63,7 +72,7 @@ class OrderForm(forms.ModelForm):
             'balandligi', 'eni', 'zamokli_eshik',
             'panel_type', 'panel_subtype', 'panel_thickness', 'panel_kvadrat',
             'total_price', 'prepayment', 'deadline', 'assigned_workers', 
-            'comment', 'status', 'needs_manager_approval'
+            'comment', 'status', 'needs_manager_approval','eshik_qalinligi', 
         ]
         
         widgets = {
@@ -145,10 +154,15 @@ class OrderForm(forms.ModelForm):
 
         # 1. Eshik mantiqi tekshiruvi
         if worker_type in ['ESHIK', 'LIST_ESHIK']:
-            required_eshik_fields = ['eshik_turi', 'parog_turi', 'eshik_yonalishi', 'balandligi', 'eni']
+            required_eshik_fields = [
+                'eshik_turi', 'parog_turi', 'eshik_yonalishi',
+                'balandligi', 'eni',
+            ]
             for field in required_eshik_fields:
                 if not cleaned_data.get(field):
                     self.add_error(field, "Ushbu maydon to'ldirilishi shart!")
+
+        
 
         # 2. Panel mantiqi tekshiruvi
         if worker_type in ['LIST', 'LIST_ESHIK']:
@@ -197,6 +211,9 @@ class EshikForm(forms.ModelForm):
     class Meta:
         model = Order
         fields = ['eshik_turi', 'zamokli_eshik']
+
+
+
 class StartImageUploadForm(forms.ModelForm):
     class Meta:
         model = Order
@@ -205,7 +222,7 @@ class StartImageUploadForm(forms.ModelForm):
             'start_image': forms.FileInput(attrs={
                 'accept': 'image/*',
                 'class': 'form-control',
-                'required': True
+                'required': False
             })
         }
     
@@ -233,7 +250,7 @@ class FinishImageUploadForm(forms.ModelForm):
             'finish_image': forms.FileInput(attrs={
                 'accept': 'image/*',
                 'class': 'form-control',
-                'required': True
+                'required': False
             })
         }
     
