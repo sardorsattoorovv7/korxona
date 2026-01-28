@@ -371,6 +371,7 @@ class GuardPatrol(models.Model):
     image1 = models.ImageField(upload_to='patrol/%Y/%m/%d/')
     image2 = models.ImageField(upload_to='patrol/%Y/%m/%d/')
     image3 = models.ImageField(upload_to='patrol/%Y/%m/%d/')
+    image4 = models.ImageField(upload_to='patrol/', null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
