@@ -293,8 +293,12 @@ class Order(models.Model):
             if self.balandligi is None or self.eni is None:
                 raise ValidationError("Eshik/Prayom o'lchamlari (balandlik va eni) kiritilishi shart.")
             # Eshik qalinligi tekshiruvi
-            if self.panel_thickness not in ['5', '8', '10', '15']:
-                raise ValidationError("Eshik qalinligi uchun faqat 5, 8, 10 yoki 15 sm tanlash mumkin.")
+            # TO‘G‘RISI — eshik_qalinligi tekshiriladi
+            # if self.eshik_qalinligi not in ['5', '8', '10', '15']:
+            #     raise ValidationError({
+            #         "eshik_qalinligi": "Eshik qalinligi uchun faqat 5, 8, 10 yoki 15 sm tanlash mumkin."
+            #     })
+
 
     def save(self, *args, **kwargs):
         # 1. Order Number yaratish
@@ -493,3 +497,19 @@ class Customer(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.unique_id})"
+    
+
+class DriverTrip(models.Model):
+    driver = models.ForeignKey(User, on_delete=models.CASCADE)
+    car_number = models.CharField(max_length=20)
+    is_active = models.BooleanField(default=True) # Reys ochiq/yopiq
+    start_time = models.DateTimeField(auto_now_add=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+
+class TripPoint(models.Model):
+    trip = models.ForeignKey(DriverTrip, on_delete=models.CASCADE, related_name='points')
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    is_stop = models.BooleanField(default=False) # Bu to'xtash nuqtasi (B nuqta)
+    stop_duration = models.DurationField(null=True, blank=True) # Qancha kutgani
+    timestamp = models.DateTimeField(auto_now_add=True)
