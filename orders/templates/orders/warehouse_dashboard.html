@@ -13,21 +13,29 @@
             --primary-green-hover: #059669;
             --primary-green-light: #d1fae5;
             --primary-green-dark: #047857;
+            --primary-green-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
             
             --secondary-blue: #3b82f6;
             --secondary-blue-light: #dbeafe;
             --secondary-blue-dark: #1d4ed8;
+            --secondary-blue-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
             
             --accent-purple: #8b5cf6;
             --accent-purple-light: #ede9fe;
             --accent-purple-dark: #7c3aed;
+            --accent-purple-gradient: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
             
-            --background-light: #f8fbf9;
-            --card-bg: #ffffff;
-            --text-dark: #1f2937;
-            --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
-            --border-light: #f3f4f6;
+            --warning-amber: #f59e0b;
+            --warning-amber-light: #fef3c7;
+            --warning-amber-dark: #92400e;
+            
+            --error-red: #ef4444;
+            --error-red-light: #fee2e2;
+            --error-red-dark: #dc2626;
+            
+            --success-emerald: #10b981;
+            --success-emerald-light: #d1fae5;
+            --success-emerald-dark: #047857;
             
             --neutral-50: #f9fafb;
             --neutral-100: #f3f4f6;
@@ -40,24 +48,25 @@
             --neutral-800: #1f2937;
             --neutral-900: #111827;
             
-            --gradient-primary: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-            --gradient-secondary: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
-            --gradient-accent: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
-            --gradient-card: linear-gradient(135deg, #ffffff 0%, #f8fbf9 100%);
+            --background-gradient: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%);
+            --card-gradient: linear-gradient(135deg, #ffffff 0%, #f8fbf9 100%);
             
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
-            --shadow-xl: 0 20px 40px rgba(0,0,0,0.2);
+            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 24px;
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-2xl: 1.5rem;
             
-            --transition-fast: 0.2s ease;
-            --transition-normal: 0.3s ease;
-            --transition-slow: 0.5s ease;
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -66,42 +75,37 @@
             box-sizing: border-box;
         }
 
-        body { 
-            background-color: var(--background-light);
+        body {
+            background: var(--background-gradient);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             line-height: 1.6;
-            color: var(--text-dark);
+            color: var(--neutral-800);
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .container-modern {
             width: 100%;
             max-width: 1800px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 1.5rem;
             min-height: 100vh;
         }
 
         /* Header Styles */
         .header-modern {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
-            margin-bottom: 3rem;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid var(--border-light);
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--neutral-200);
             position: relative;
-        }
-
-        .header-modern::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--gradient-primary);
-            border-radius: 2px;
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
         }
 
         .brand-section {
@@ -113,23 +117,43 @@
         .logo-container {
             width: 56px;
             height: 56px;
-            background: var(--gradient-primary);
+            background: var(--primary-green-gradient);
             border-radius: var(--radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: var(--shadow-lg);
             transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            transition: transform 0.6s ease;
+        }
+
+        .logo-container:hover::before {
+            transform: rotate(45deg) translate(50%, 50%);
         }
 
         .logo-container:hover {
-            transform: rotate(-5deg) scale(1.05);
-            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
         }
 
         .logo-container i {
             font-size: 1.8rem;
             color: white;
+            position: relative;
+            z-index: 2;
         }
 
         .brand-text {
@@ -138,49 +162,130 @@
         }
 
         .brand-name {
-            font-size: 1.8rem;
+            font-size: 1.75rem;
             font-weight: 800;
-            background: var(--gradient-primary);
+            background: var(--primary-green-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             line-height: 1.2;
+            letter-spacing: -0.025em;
         }
 
         .brand-subtitle {
             font-size: 0.875rem;
-            color: var(--text-secondary);
+            color: var(--neutral-500);
             font-weight: 500;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.025em;
+        }
+
+        .search-section {
+            display: flex;
+            justify-content: center;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.875rem 1.25rem 0.875rem 3rem;
+            background: var(--neutral-50);
+            border: 2px solid var(--neutral-200);
+            border-radius: var(--radius-lg);
+            font-size: 0.95rem;
+            color: var(--neutral-800);
+            transition: all var(--transition-normal);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--neutral-400);
+            pointer-events: none;
         }
 
         .user-section {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
-        .user-info {
+        .notification-badge {
+            position: relative;
+            background: none;
+            border: none;
+            color: var(--neutral-600);
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .notification-badge:hover {
+            background: var(--neutral-100);
+            color: var(--neutral-800);
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--error-red);
+            color: white;
+            font-size: 0.7rem;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .user-profile {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.75rem 1.25rem;
-            background: var(--gradient-card);
+            padding: 0.5rem 1rem;
+            background: var(--card-gradient);
             border-radius: var(--radius-lg);
-            border: 1px solid var(--border-light);
-            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--neutral-200);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            position: relative;
+        }
+
+        .user-profile:hover {
+            border-color: var(--primary-green);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
         }
 
         .user-avatar {
-            width: 36px;
-            height: 36px;
-            background: var(--gradient-primary);
+            width: 40px;
+            height: 40px;
+            background: var(--primary-green-gradient);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: var(--shadow-sm);
         }
 
         .user-details {
@@ -190,21 +295,22 @@
 
         .user-name {
             font-weight: 600;
-            color: var(--text-dark);
+            color: var(--neutral-800);
             font-size: 0.95rem;
+            line-height: 1.2;
         }
 
         .user-role {
             font-size: 0.75rem;
-            color: var(--text-secondary);
+            color: var(--neutral-500);
             font-weight: 500;
         }
 
         .logout-btn {
-            background: var(--gradient-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            padding: 0.75rem 1.5rem;
+            background: var(--card-gradient);
+            border: 1px solid var(--neutral-200);
+            color: var(--neutral-600);
+            padding: 0.75rem 1.25rem;
             border-radius: var(--radius-lg);
             font-weight: 600;
             font-size: 0.9rem;
@@ -218,284 +324,338 @@
 
         .logout-btn:hover {
             background: white;
-            color: #ef4444;
-            border-color: #fecaca;
+            color: var(--error-red);
+            border-color: var(--error-red-light);
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
         }
 
-        /* Stats Banner */
-        .stats-banner {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            border-radius: var(--radius-xl);
-            padding: 2.5rem;
+        /* Dashboard Stats */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2rem;
-            border: 1px solid #a7f3d0;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             box-shadow: var(--shadow-md);
+            border: 1px solid var(--neutral-200);
+            transition: all var(--transition-normal);
             position: relative;
             overflow: hidden;
         }
 
-        .stats-banner::before {
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-green-light);
+        }
+
+        .stat-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            width: 8px;
+            width: 4px;
             height: 100%;
-            background: var(--gradient-primary);
+            background: var(--primary-green-gradient);
         }
 
-        .stats-content {
-            position: relative;
-            z-index: 1;
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--primary-green-light);
+            border-radius: var(--radius-lg);
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
+            color: var(--primary-green);
+            font-size: 1.5rem;
         }
 
-        .stats-text {
+        .stat-content {
             flex: 1;
         }
 
-        .stats-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stats-subtitle {
-            color: var(--primary-green-dark);
-            font-size: 1.1rem;
-            line-height: 1.6;
-        }
-
-        .stats-count {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-width: 120px;
-        }
-
-        .count-number {
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--primary-green-dark);
-            line-height: 1;
-        }
-
-        .count-label {
+        .stat-title {
             font-size: 0.875rem;
-            color: var(--primary-green-dark);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 0.5rem;
-        }
-
-        /* Messages */
-        .messages-container {
-            margin-bottom: 2rem;
-        }
-
-        .message {
-            padding: 1.25rem 1.5rem;
-            border-radius: var(--radius-lg);
-            margin-bottom: 1rem;
+            color: var(--neutral-500);
             font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--neutral-800);
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-trend {
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-trend.positive {
+            color: var(--success-emerald);
+        }
+
+        .stat-trend.negative {
+            color: var(--error-red);
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
             display: flex;
             align-items: center;
             gap: 1rem;
             box-shadow: var(--shadow-sm);
-            border: 1px solid;
-            animation: slideIn 0.3s ease;
+            border: 1px solid var(--neutral-200);
+            flex-wrap: wrap;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .message i {
-            font-size: 1.2rem;
+        .filter-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--neutral-700);
         }
 
-        .message-success {
-            background: var(--primary-green-light);
-            color: var(--primary-green-dark);
+        .filter-select {
+            padding: 0.5rem 1rem;
+            background: var(--neutral-50);
+            border: 1px solid var(--neutral-300);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            color: var(--neutral-800);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .filter-select:hover {
             border-color: var(--primary-green);
         }
 
-        .message-error {
-            background: #fef2f2;
-            color: #ef4444;
-            border-color: #fecaca;
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
         }
 
-        .message-warning {
-            background: #fef3c7;
-            color: #92400e;
-            border-color: #fde68a;
+        .filter-buttons {
+            margin-left: auto;
+            display: flex;
+            gap: 0.5rem;
         }
 
-        .message-info {
-            background: var(--secondary-blue-light);
-            color: var(--secondary-blue-dark);
-            border-color: var(--secondary-blue);
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: var(--neutral-50);
+            border: 1px solid var(--neutral-300);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--neutral-700);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .filter-btn:hover {
+            background: var(--neutral-100);
+            border-color: var(--neutral-400);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-green);
+            color: white;
+            border-color: var(--primary-green);
         }
 
         /* Orders Grid */
         .orders-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+            gap: 1.5rem;
         }
 
         /* Order Card */
         .order-card {
             background: white;
-            border-radius: var(--radius-lg);
+            border-radius: var(--radius-xl);
             box-shadow: var(--shadow-md);
-            border: 1px solid var(--border-light);
+            border: 1px solid var(--neutral-200);
             overflow: hidden;
             transition: all var(--transition-normal);
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .order-card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--shadow-xl);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
             border-color: var(--primary-green-light);
         }
 
-        .order-card.delivered {
-            opacity: 0.8;
-            background: var(--neutral-50);
-        }
-
-        .order-card-header {
-            color: white;
-            padding: 1.75rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .order-card-header.pending {
-            background: var(--gradient-primary);
-        }
-
-        .order-card-header.delivered {
-            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-        }
-
-        .order-card-header::after {
+        .order-card.pending::before {
             content: '';
             position: absolute;
             top: 0;
             right: 0;
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
-            border-radius: 50%;
-            transform: translate(30%, -30%);
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(45deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%);
+            border-radius: 0 0 0 100%;
+            pointer-events: none;
         }
 
-        .order-id-container {
+        .order-card.delivered {
+            opacity: 0.9;
+        }
+
+        .order-card-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--neutral-50) 0%, white 100%);
+            border-bottom: 1px solid var(--neutral-200);
+        }
+
+        .order-header-top {
             display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            margin-bottom: 0.5rem;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .order-id {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
         }
 
         .order-number {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 800;
-            letter-spacing: -0.5px;
-            position: relative;
-            z-index: 1;
+            color: var(--neutral-900);
+        }
+
+        .order-timestamp {
+            font-size: 0.75rem;
+            color: var(--neutral-500);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
         }
 
         .status-badge {
-            padding: 0.5rem 1rem;
+            padding: 0.375rem 0.875rem;
             border-radius: var(--radius-lg);
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
+            letter-spacing: 0.025em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
         }
 
-        .order-time {
-            font-size: 0.875rem;
-            opacity: 0.9;
+        .status-badge.pending {
+            background: var(--warning-amber-light);
+            color: var(--warning-amber-dark);
+            border: 1px solid var(--warning-amber);
+        }
+
+        .status-badge.delivered {
+            background: var(--success-emerald-light);
+            color: var(--success-emerald-dark);
+            border: 1px solid var(--success-emerald);
+        }
+
+        .order-customer {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
+            gap: 0.75rem;
         }
 
-        .order-time i {
-            font-size: 0.875rem;
+        .customer-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--secondary-blue-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .customer-info {
+            flex: 1;
         }
 
         .customer-name {
-            font-size: 1.15rem;
             font-weight: 600;
-            opacity: 0.95;
-            position: relative;
-            z-index: 1;
-            margin-top: 0.5rem;
+            color: var(--neutral-800);
+            margin-bottom: 0.125rem;
         }
 
         .customer-id {
-            font-size: 0.875rem;
-            opacity: 0.9;
-            margin-top: 0.25rem;
+            font-size: 0.75rem;
+            color: var(--neutral-500);
         }
 
         .order-card-body {
-            padding: 1.75rem;
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
-        .detail-grid {
+        .order-details {
             display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
             margin-bottom: 1.5rem;
         }
 
-        .detail-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            align-items: center;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .detail-row:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
         }
 
         .detail-label {
-            color: var(--text-secondary);
-            font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--neutral-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.375rem;
         }
 
         .detail-label i {
@@ -504,25 +664,91 @@
         }
 
         .detail-value {
-            font-weight: 600;
-            color: var(--text-dark);
-            text-align: right;
-            word-break: break-word;
             font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--neutral-800);
         }
 
-        /* Delivery Info for delivered orders */
-        .delivery-info {
-            background: white;
+        .detail-value.highlight {
+            color: var(--primary-green);
+        }
+
+        .pdf-section {
+            background: var(--error-red-light);
+            border: 1px solid var(--error-red);
+            border-radius: var(--radius-lg);
+            padding: 0.875rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pdf-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .pdf-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--error-red);
             border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .pdf-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+
+        .pdf-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--error-red-dark);
+        }
+
+        .pdf-status {
+            font-size: 0.75rem;
+            color: var(--error-red-dark);
+            opacity: 0.8;
+        }
+
+        .pdf-view {
+            padding: 0.375rem 0.875rem;
+            background: var(--error-red);
+            color: white;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .pdf-view:hover {
+            background: var(--error-red-dark);
+            transform: translateY(-1px);
+        }
+
+        /* Delivery Form */
+        .delivery-form {
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
             padding: 1.25rem;
             border: 2px solid var(--neutral-200);
-            margin-top: 1.5rem;
-            box-shadow: var(--shadow-sm);
+            margin-top: auto;
         }
 
-        .delivery-title {
-            font-size: 1rem;
+        .form-title {
+            font-size: 0.875rem;
             font-weight: 700;
             color: var(--neutral-700);
             margin-bottom: 1rem;
@@ -531,36 +757,11 @@
             gap: 0.5rem;
         }
 
-        .delivery-title i {
-            color: var(--neutral-500);
-        }
-
-        .delivery-content {
-            font-size: 0.95rem;
-            color: var(--neutral-700);
-            line-height: 1.6;
-            margin-bottom: 0.75rem;
-        }
-
-        .delivery-time {
-            font-size: 0.85rem;
-            color: var(--neutral-500);
-            font-style: italic;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Form for pending orders */
-        .delivery-form {
-            margin-top: 1.5rem;
-        }
-
         .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
         }
 
         .form-group {
@@ -569,158 +770,229 @@
 
         .form-label {
             display: block;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            color: var(--neutral-700);
-            margin-bottom: 0.5rem;
+            color: var(--neutral-600);
+            margin-bottom: 0.375rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.375rem;
         }
 
         .form-label i {
             color: var(--primary-green);
         }
 
-        .form-control {
+        .form-input {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.625rem 0.875rem;
             border: 1px solid var(--neutral-300);
             border-radius: var(--radius-md);
-            font-size: 0.95rem;
+            font-size: 0.875rem;
             color: var(--neutral-800);
             transition: all var(--transition-fast);
             background: white;
         }
 
-        .form-control:focus {
+        .form-input:focus {
             outline: none;
             border-color: var(--primary-green);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
         }
 
-        .form-control::placeholder {
-            color: var(--neutral-400);
-        }
-
-        /* Image Upload Section */
         .image-upload-section {
-            background: var(--neutral-50);
-            border-radius: var(--radius-md);
-            padding: 1.25rem;
-            border: 2px dashed var(--neutral-300);
-            margin-bottom: 1.5rem;
-        }
-
-        .image-upload-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--neutral-700);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .image-upload-title i {
-            color: var(--primary-green);
-        }
-
-        .image-input-group {
-            margin-bottom: 0.75rem;
-        }
-
-        .image-input-group:last-child {
-            margin-bottom: 0;
-        }
-
-        .image-input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--neutral-300);
-            border-radius: var(--radius-md);
-            font-size: 0.9rem;
-            color: var(--neutral-800);
             background: white;
-            cursor: pointer;
+            border: 2px dashed var(--neutral-300);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            margin-bottom: 1rem;
             transition: all var(--transition-fast);
         }
 
-        .image-input:hover {
+        .image-upload-section:hover {
             border-color: var(--primary-green);
             background: var(--primary-green-light);
         }
 
-        .image-input::-webkit-file-upload-button {
-            background: var(--primary-green);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            margin-right: 1rem;
-            cursor: pointer;
+        .upload-title {
+            font-size: 0.875rem;
             font-weight: 600;
-            transition: all var(--transition-fast);
+            color: var(--neutral-700);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .image-input::-webkit-file-upload-button:hover {
-            background: var(--primary-green-dark);
-        }
-
-        /* Order Card Footer */
-        .order-card-footer {
-            padding: 1.75rem;
-            background-color: var(--neutral-50);
-            border-top: 1px solid var(--border-light);
-        }
-
-        .actions-grid {
+        .upload-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
         }
 
-        .action-btn {
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-label {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            padding: 0.875rem 1rem;
+            padding: 0.75rem;
+            background: var(--neutral-100);
+            border: 1px solid var(--neutral-300);
             border-radius: var(--radius-md);
-            text-decoration: none;
+            font-size: 0.75rem;
             font-weight: 600;
-            font-size: 0.95rem;
-            transition: all var(--transition-fast);
-            border: 1px solid transparent;
+            color: var(--neutral-600);
             cursor: pointer;
+            transition: all var(--transition-fast);
             text-align: center;
         }
 
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+        .file-label:hover {
+            background: var(--neutral-200);
+            border-color: var(--neutral-400);
+        }
+
+        .file-label i {
+            font-size: 0.875rem;
+        }
+
+        .order-card-footer {
+            padding: 1.25rem;
+            background: linear-gradient(135deg, var(--neutral-50) 0%, white 100%);
+            border-top: 1px solid var(--neutral-200);
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all var(--transition-fast);
+            border: none;
+            cursor: pointer;
         }
 
         .btn-details {
             background: var(--neutral-200);
             color: var(--neutral-700);
-            border-color: var(--neutral-300);
+            border: 1px solid var(--neutral-300);
         }
 
         .btn-details:hover {
             background: var(--neutral-300);
             color: var(--neutral-800);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
         }
 
         .btn-submit {
-            background: var(--gradient-primary);
+            background: var(--primary-green-gradient);
             color: white;
-            border-color: var(--primary-green);
+            border: none;
         }
 
         .btn-submit:hover {
             background: var(--primary-green-dark);
+            transform: translateY(-1px);
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-disabled {
+            background: var(--neutral-300);
+            color: var(--neutral-500);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .btn-disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Delivery Info */
+        .delivery-info {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 2px solid var(--success-emerald);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            margin-top: auto;
+        }
+
+        .delivery-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .delivery-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--success-emerald-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .delivery-time {
+            font-size: 0.75rem;
+            color: var(--success-emerald-dark);
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .delivery-content {
+            background: white;
+            border: 1px solid var(--success-emerald-light);
+            border-radius: var(--radius-md);
+            padding: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .delivery-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.375rem;
+        }
+
+        .delivery-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .delivery-item i {
+            color: var(--success-emerald);
+            width: 16px;
+        }
+
+        .delivery-text {
+            font-size: 0.875rem;
+            color: var(--neutral-700);
         }
 
         /* Empty State */
@@ -728,7 +1000,10 @@
             grid-column: 1 / -1;
             text-align: center;
             padding: 4rem 2rem;
-            color: var(--text-secondary);
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            border: 2px dashed var(--neutral-300);
         }
 
         .empty-state-icon {
@@ -739,145 +1014,362 @@
         }
 
         .empty-state-title {
-            color: var(--neutral-600);
-            margin-bottom: 1rem;
             font-size: 1.5rem;
-            font-weight: 600;
+            font-weight: 700;
+            color: var(--neutral-600);
+            margin-bottom: 0.75rem;
         }
 
         .empty-state-description {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
+            font-size: 1rem;
+            color: var(--neutral-500);
             max-width: 500px;
-            margin: 0 auto;
+            margin: 0 auto 1.5rem;
             line-height: 1.6;
         }
 
+        .empty-state-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-green);
+            color: white;
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all var(--transition-normal);
+        }
+
+        .empty-state-action:hover {
+            background: var(--primary-green-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            z-index: 1000;
+        }
+
+        .action-button {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-green-gradient);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .action-button:hover::before {
+            transform: translateX(100%);
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .action-button i {
+            font-size: 1.25rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .action-tooltip {
+            position: absolute;
+            right: calc(100% + 0.75rem);
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--neutral-800);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-normal);
+            pointer-events: none;
+        }
+
+        .action-button:hover .action-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-normal);
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--neutral-200);
+            border-top-color: var(--primary-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Responsive Design */
+        @media (max-width: 1400px) {
+            .orders-grid {
+                grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            }
+        }
+
         @media (max-width: 1200px) {
             .container-modern {
-                padding: 1.5rem;
+                padding: 1rem;
             }
             
-            .orders-grid {
-                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            .header-modern {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .search-section {
+                order: 3;
+                grid-column: 1;
+            }
+            
+            .search-box {
+                max-width: 100%;
             }
         }
 
         @media (max-width: 992px) {
-            .header-modern {
-                flex-direction: column;
-                gap: 1.5rem;
-                align-items: stretch;
-            }
-            
-            .user-section {
-                justify-content: space-between;
-            }
-            
-            .stats-content {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1.5rem;
-            }
-            
-            .stats-count {
-                align-items: flex-start;
-            }
-            
             .orders-grid {
-                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             }
             
             .form-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .upload-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 768px) {
-            .container-modern {
-                padding: 1rem;
+            .dashboard-stats {
+                grid-template-columns: repeat(2, 1fr);
             }
             
             .orders-grid {
                 grid-template-columns: 1fr;
             }
             
-            .actions-grid {
+            .order-details {
                 grid-template-columns: 1fr;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
                 gap: 0.75rem;
+            }
+            
+            .filter-buttons {
+                margin-left: 0;
+                justify-content: center;
             }
         }
 
-        @media (max-width: 480px) {
-            .stats-banner {
-                padding: 2rem 1rem;
+        @media (max-width: 576px) {
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card {
+                padding: 1.25rem;
             }
             
             .order-card-header,
             .order-card-body,
             .order-card-footer {
-                padding: 1.25rem;
+                padding: 1rem;
             }
             
-            .detail-row {
-                grid-template-columns: 1fr;
-                gap: 0.25rem;
-            }
-            
-            .detail-value {
-                text-align: left;
+            .quick-actions {
+                bottom: 1rem;
+                right: 1rem;
             }
         }
+
+
+    .btn-modern-back {
+    display: inline-block;
+    text-decoration: none;
+    position: relative;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white !important;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.btn-modern-back .btn-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 2;
+    position: relative;
+}
+
+.btn-modern-back i {
+    font-size: 0.85rem;
+    transition: transform 0.3s ease;
+}
+
+/* Hover effekti - tugma ustiga borganda */
+.btn-modern-back:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+/* Ikonkani chapga siljitish */
+.btn-modern-back:hover i {
+    transform: translateX(-5px);
+}
+
+/* Active effekti - bosganda */
+.btn-modern-back:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 10px rgba(124, 58, 237, 0.2);
+}
+
+/* Yaltiroq effekt (Glass reflection) */
+.btn-modern-back::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    transition: 0.5s;
+}
+
+.btn-modern-back:hover::before {
+    left: 100%;
+}
     </style>
 
     <div class="container-modern">
         
-        <!-- Header -->
-        <div class="header-modern">
-            <div class="brand-section">
-                <div class="logo-container">
-                    <i class="fas fa-warehouse"></i>
-                </div>
-                <div class="brand-text">
-                    <div class="brand-name">Omborchi Ish Stoli</div>
-                    <div class="brand-subtitle">Tayyor mahsulotlarni yuklash va topshirish</div>
-                </div>
-            </div>
-            
-            <div class="user-section">
-                <div class="user-info">
-                    <div class="user-avatar">
-                        {{ request.user.get_full_name|default:request.user.username|first|upper }}
-                    </div>
-                    <div class="user-details">
-                        <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
-                        <div class="user-role">Omborchi</div>
-                    </div>
-                </div>
-                
-                <form method="post" action="{% url 'logout' %}" style="margin: 0;">
-                    {% csrf_token %} 
-                    <button type="submit" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Chiqish
-                    </button>
-                </form>
-            </div>
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
         </div>
 
-        <!-- Stats Banner -->
-        <div class="stats-banner">
-            <div class="stats-content">
-                <div class="stats-text">
-                    <h1 class="stats-title">Tayyor mahsulotlar monitoringi</h1>
-                    <p class="stats-subtitle">
-                        Ombor tayyor holatdagi mahsulotlarni yuklash, rasmga olish va mijozlarga yetkazish jarayonini boshqaring.
-                    </p>
-                </div>
-                <div class="stats-count">
-                    <div class="count-number">{{ ready_count }}</div>
-                    <div class="count-label">TAYYOR MAHSULOT</div>
-                </div>
+       
+
+        <!-- Dashboard Stats -->
+        <div class="dashboard-stats">
+           
+            
+         <a href="{% url 'order_list' %}" class="btn-modern-back">
+    <div class="btn-content">
+        <i class="fas fa-chevron-left"></i>
+        <span>Ortga qaytish</span>
+    </div>
+</a>   
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <span class="filter-label">Holati:</span>
+                <select class="filter-select" id="statusFilter">
+                    <option value="all">Barchasi</option>
+                    <option value="pending">Kutilayotgan</option>
+                    <option value="delivered">Topshirilgan</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">Saralash:</span>
+                <select class="filter-select" id="sortFilter">
+                    <option value="newest">Yangi</option>
+                    <option value="oldest">Eski</option>
+                    <option value="priority">Muhimligi</option>
+                </select>
+            </div>
+            
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterOrders('all')">
+                    <i class="fas fa-layer-group"></i> Barchasi
+                </button>
+                <button class="filter-btn" onclick="filterOrders('urgent')">
+                    <i class="fas fa-exclamation-circle"></i> Shoshilinch
+                </button>
+                <button class="filter-btn" onclick="filterOrders('today')">
+                    <i class="fas fa-calendar-day"></i> Bugun
+                </button>
             </div>
         </div>
 
@@ -885,7 +1377,7 @@
         {% if messages %}
         <div class="messages-container">
             {% for message in messages %}
-            <div class="message message-{{ message.tags }}">
+            <div class="message message-{{ message.tags }}" id="message-{{ forloop.counter }}">
                 <i class="fas 
                     {% if message.tags == 'success' %}fa-check-circle
                     {% elif message.tags == 'error' %}fa-exclamation-circle
@@ -893,170 +1385,213 @@
                     {% else %}fa-info-circle{% endif %}">
                 </i>
                 <span>{{ message }}</span>
+                <button class="message-close" onclick="closeMessage('message-{{ forloop.counter }}')">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             {% endfor %}
         </div>
         {% endif %}
 
         <!-- Orders Grid -->
-        <div class="orders-grid">
+        <div class="orders-grid" id="ordersGrid">
             {% for order in orders %}
-            <div class="order-card {% if order.status == 'BAJARILDI' %}delivered{% endif %}">
-                <div class="order-card-header {% if order.status == 'BAJARILDI' %}delivered{% else %}pending{% endif %}">
-                    <div class="order-id-container">
-                        <div class="order-number">№ {{ order.order_number }}</div>
-                        <span class="status-badge">
+            <div class="order-card {% if order.status == 'BAJARILDI' %}delivered{% else %}pending{% endif %}" 
+                 data-status="{% if order.status == 'BAJARILDI' %}delivered{% else %}pending{% endif %}"
+                 data-id="{{ order.id }}">
+                <div class="order-card-header">
+                    <div class="order-header-top">
+                        <div class="order-id">
+                            <div class="order-number">Buyurtma #{{ order.order_number }}</div>
+                            <div class="order-timestamp">
+                                <i class="far fa-clock"></i>
+                                {% if order.work_finished_at %}
+                                    {{ order.work_finished_at|date:"d.m.Y H:i" }}
+                                {% else %}
+                                    Sana mavjud emas
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="status-badge {% if order.status == 'BAJARILDI' %}delivered{% else %}pending{% endif %}">
+                            <i class="fas {% if order.status == 'BAJARILDI' %}fa-check{% else %}fa-clock{% endif %}"></i>
                             {% if order.status == 'BAJARILDI' %}TOPSHIRILGAN{% else %}OMBORDA{% endif %}
                         </span>
                     </div>
                     
-                    <div class="customer-name">{{ order.customer_name|default:"Noma'lum Mijoz" }}</div>
-                    <div class="customer-id">Mijoz ID: {{ order.customer_unique_id }}</div>
-                    
-                    <div class="order-time">
-                        <i class="far fa-clock"></i>
-                        {{ order.work_finished_at|date:"d.m.Y H:i" }}
+                    <div class="order-customer">
+                        <div class="customer-avatar">
+                            {{ order.customer_name|default:"NM"|first|upper }}
+                        </div>
+                        <div class="customer-info">
+                            <div class="customer-name">{{ order.customer_name|default:"Noma'lum Mijoz" }}</div>
+                            <div class="customer-id">ID: {{ order.customer_unique_id|default:"N/A" }}</div>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="order-card-body">
-                    <div class="detail-grid">
-                        <div class="detail-row">
+                    <div class="order-details">
+                        <div class="detail-item">
                             <span class="detail-label">
-                                <i class="fas fa-box"></i>
-                                <span>Mahsulot</span>
+                                <i class="fas fa-cube"></i> MAHSULOT
                             </span>
-                            <span class="detail-value">{{ order.product_name }}</span>
+                            <span class="detail-value highlight">{{ order.product_name }}</span>
                         </div>
                         
-                        <div class="detail-row">
+                        <div class="detail-item">
                             <span class="detail-label">
-                                <i class="fas fa-ruler-combined"></i>
-                                <span>O'lchamlar</span>
+                                <i class="fas fa-ruler-combined"></i> O'LCHAMLAR
                             </span>
                             <span class="detail-value">{{ order.balandligi }} x {{ order.eni }}</span>
                         </div>
                         
-                        {% if order.panel_type %}
-                        <div class="detail-row">
+                        <div class="detail-item">
                             <span class="detail-label">
-                                <i class="fas fa-layer-group"></i>
-                                <span>Panel Turi</span>
+                                <i class="fas fa-layer-group"></i> PANEL TURI
                             </span>
-                            <span class="detail-value">{{ order.get_panel_type_display }}</span>
+                            <span class="detail-value">{{ order.get_panel_type_display|default:"N/A" }}</span>
                         </div>
-                        {% endif %}
                         
-                        <div class="detail-row">
+                        <div class="detail-item">
                             <span class="detail-label">
-                                <i class="fas fa-th-large"></i>
-                                <span>Maydoni</span>
+                                <i class="fas fa-expand-arrows-alt"></i> MAYDON
                             </span>
                             <span class="detail-value">{{ order.panel_kvadrat|floatformat:2 }} m²</span>
                         </div>
-                        
-                        {% if order.eshik_turi %}
-                        <div class="detail-row">
-                            <span class="detail-label">
-                                <i class="fas fa-door-open"></i>
-                                <span>Eshik Turi</span>
-                            </span>
-                            <span class="detail-value">{{ order.eshik_turi }}</span>
+                    </div>
+                    
+                    <!-- PDF Section -->
+                    <div class="pdf-section">
+                        <div class="pdf-info">
+                            <div class="pdf-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="pdf-text">
+                                <div class="pdf-title">Texnik chizma</div>
+                                <div class="pdf-status">
+                                    {% if order.pdf_file %}Mavjud{% else %}Mavjud emas{% endif %}
+                                </div>
+                            </div>
                         </div>
+                        {% if order.pdf_file %}
+                        <a href="{{ order.pdf_file.url }}" target="_blank" class="pdf-view">
+                            <i class="fas fa-external-link-alt"></i> Ko'rish
+                        </a>
+                        {% else %}
+                        <span class="pdf-view" style="background: var(--neutral-400); cursor: not-allowed;">
+                            <i class="fas fa-times"></i> Yo'q
+                        </span>
                         {% endif %}
                     </div>
-
+                    
+                    <!-- Delivery Info or Form -->
                     {% if order.status == 'BAJARILDI' %}
-                        <!-- Delivered Order - Show Delivery Info -->
-                        <div class="delivery-info">
+                    <div class="delivery-info">
+                        <div class="delivery-header">
                             <div class="delivery-title">
-                                <i class="fas fa-truck"></i>
-                                <span>Yuklash ma'lumotlari</span>
-                            </div>
-                            <div class="delivery-content">
-                                <strong>{{ order.worker_comment }}</strong>
+                                <i class="fas fa-truck"></i> Yuklangan transport
                             </div>
                             <div class="delivery-time">
                                 <i class="far fa-clock"></i>
-                                Topshirilgan vaqti: {{ order.work_finished_at|date:"d.m.Y H:i" }}
+                                {% if order.delivery_time %}
+                                    {{ order.delivery_time|date:"H:i" }}
+                                {% endif %}
                             </div>
                         </div>
+                        <div class="delivery-content">
+                            <div class="delivery-item">
+                                <i class="fas fa-car"></i>
+                                <span class="delivery-text">{{ order.worker_comment|default:"Mashina raqami kiritilmagan" }}</span>
+                            </div>
+                            {% if order.delivery_note %}
+                            <div class="delivery-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span class="delivery-text">{{ order.delivery_note }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                     {% else %}
-                        <!-- Pending Order - Show Delivery Form -->
-                        <form action="{% url 'warehouse_dashboard' %}" method="POST" enctype="multipart/form-data" 
-                              class="delivery-form" id="form-{{ order.id }}"
-                              onsubmit="return confirm('Tasdiqlash: Yuklash ma\'lumotlarini saqlash va Telegramga yuborishni tasdiqlaysizmi?')">
-                            {% csrf_token %}
-                            <input type="hidden" name="order_id" value="{{ order.id }}">
+                    <form action="{% url 'warehouse_dashboard' %}" method="POST" enctype="multipart/form-data" 
+                          class="delivery-form" id="form-{{ order.id }}"
+                          onsubmit="showLoading(); return confirmDelivery(this);">
+                        {% csrf_token %}
+                        <input type="hidden" name="order_id" value="{{ order.id }}">
+                        
+                        <div class="form-title">
+                            <i class="fas fa-truck-loading"></i> Yuklash ma'lumotlari
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-car"></i> Mashina raqami
+                                </label>
+                                <input type="text" name="car_number" class="form-input" 
+                                       placeholder="01A777AA" required
+                                       pattern="[A-Z0-9]{2,10}"
+                                       title="Mashina raqamini kiriting (masalan: 01A777AA)">
+                            </div>
                             
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <i class="fas fa-car"></i>
-                                        <span>Mashina raqami</span>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-map-marker-alt"></i> Manzil
+                                </label>
+                                <input type="text" name="delivery_note" class="form-input" 
+                                       placeholder="Yetkazish manzili" required>
+                            </div>
+                        </div>
+                        
+                        <div class="image-upload-section">
+                            <div class="upload-title">
+                                <i class="fas fa-camera"></i> Yuklash rasmlari
+                            </div>
+                            <div class="upload-grid">
+                                <div class="file-input-wrapper">
+                                    <input type="file" name="img1" class="file-input" 
+                                           accept="image/*" capture="environment"
+                                           onchange="previewImage(this, 'preview-{{ order.id }}-1')">
+                                    <label class="file-label">
+                                        <i class="fas fa-camera"></i> 1-rasm
                                     </label>
-                                    <input type="text" name="car_number" class="form-control" 
-                                           placeholder="01 A 777 AA" required>
                                 </div>
                                 
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span>Ketish manzili</span>
+                                <div class="file-input-wrapper">
+                                    <input type="file" name="img2" class="file-input" 
+                                           accept="image/*" capture="environment"
+                                           onchange="previewImage(this, 'preview-{{ order.id }}-2')">
+                                    <label class="file-label">
+                                        <i class="fas fa-camera"></i> 2-rasm
                                     </label>
-                                    <input type="text" name="delivery_note" class="form-control" 
-                                           placeholder="Masalan: Buxoro, Toshkent, Samarqand">
                                 </div>
                             </div>
                             
-                            <div class="image-upload-section">
-                                <div class="image-upload-title">
-                                    <i class="fas fa-camera"></i>
-                                    <span>Yuklash rasmlari (3 tagacha)</span>
-                                </div>
-                                
-                                <div class="image-input-group">
-                                    <input type="file" name="img1" class="image-input" 
-                                           accept="image/*" capture="environment">
-                                </div>
-                                
-                                <div class="image-input-group">
-                                    <input type="file" name="img2" class="image-input" 
-                                           accept="image/*" capture="environment">
-                                </div>
-                                
-                                <div class="image-input-group">
-                                    <input type="file" name="img3" class="image-input" 
-                                           accept="image/*" capture="environment">
-                                </div>
-                            </div>
-                            
-                            <!-- Hidden submit button for form submission -->
-                            <button type="submit" style="display: none;" id="submit-{{ order.id }}"></button>
-                        </form>
+                            <!-- Image Previews -->
+                            <div id="preview-{{ order.id }}-1" class="image-preview" style="display: none;"></div>
+                            <div id="preview-{{ order.id }}-2" class="image-preview" style="display: none;"></div>
+                        </div>
+                        
+                        <!-- Hidden submit button for the button to trigger -->
+                        <button type="submit" style="display: none;" id="submit-{{ order.id }}"></button>
+                    </form>
                     {% endif %}
                 </div>
                 
                 <div class="order-card-footer">
-                    <div class="actions-grid">
-                        <a href="{% url 'order_detail' order.id %}" class="action-btn btn-details">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Tafsilotlar</span>
-                        </a>
-                        
-                        {% if order.status != 'BAJARILDI' %}
-                            <button type="button" class="action-btn btn-submit"
-                                    onclick="document.getElementById('submit-{{ order.id }}').click()">
-                                <i class="fas fa-paper-plane"></i>
-                                <span>Topshirish</span>
-                            </button>
-                        {% else %}
-                            <a href="{% url 'order_detail' order.id %}" class="action-btn btn-details">
-                                <i class="fas fa-eye"></i>
-                                <span>Ko'rish</span>
-                            </a>
-                        {% endif %}
-                    </div>
+                    <a href="{% url 'order_detail' order.id %}" class="action-btn btn-details">
+                        <i class="fas fa-info-circle"></i> Batafsil
+                    </a>
+                    
+                    {% if order.status != 'BAJARILDI' %}
+                    <button type="button" class="action-btn btn-submit"
+                            onclick="prepareSubmit('{{ order.id }}')">
+                        <i class="fas fa-paper-plane"></i> Topshirishni tasdiqlash
+                    </button>
+                    {% else %}
+                    <button class="action-btn btn-disabled" disabled>
+                        <i class="fas fa-check"></i> Yuklangan
+                    </button>
+                    {% endif %}
                 </div>
             </div>
             {% empty %}
@@ -1064,82 +1599,335 @@
                 <div class="empty-state-icon">
                     <i class="fas fa-box-open"></i>
                 </div>
-                <h3 class="empty-state-title">Hozircha omborda tayyor mahsulotlar yo'q</h3>
+                <h2 class="empty-state-title">Hozircha tayyor mahsulotlar yo'q</h2>
                 <p class="empty-state-description">
-                    Omborda hozircha tayyor mahsulotlar mavjud emas. 
-                    Yangi tayyor mahsulotlar paydo bo'lgach, ular shu yerda ko'rinadi.
+                    Barcha mahsulotlar topshirilgan yoki hali ishlab chiqarish jarayonida. 
+                    Yangi buyurtmalarni kuting yoki mavjudlarni tekshiring.
                 </p>
+                <a href="#" class="empty-state-action">
+                    <i class="fas fa-sync-alt"></i> Yangilash
+                </a>
             </div>
             {% endfor %}
         </div>
     </div>
 
+   
+
     <script>
-        // Add animation to cards on load
+        // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
+            animateCards();
+            setupSearch();
+            setupFilters();
+            checkUrgentOrders();
+            
+            // Auto-hide messages after 5 seconds
+            setTimeout(() => {
+                document.querySelectorAll('.message').forEach(msg => {
+                    msg.style.opacity = '0';
+                    msg.style.transform = 'translateY(-10px)';
+                    setTimeout(() => msg.remove(), 300);
+                });
+            }, 5000);
+        });
+
+        // Animate cards on load
+        function animateCards() {
             const cards = document.querySelectorAll('.order-card');
             cards.forEach((card, index) => {
                 card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
+                card.style.transform = 'translateY(30px)';
                 
                 setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
+                    card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
                 }, index * 100);
             });
+        }
 
-            // File input styling enhancement
-            const fileInputs = document.querySelectorAll('.image-input');
-            fileInputs.forEach(input => {
-                input.addEventListener('change', function() {
-                    const fileName = this.files[0] ? this.files[0].name : 'Rasm tanlanmagan';
-                    const label = this.nextElementSibling;
+        // Search functionality
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            if (!searchInput) return;
+            
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                const cards = document.querySelectorAll('.order-card');
+                
+                cards.forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    const isVisible = text.includes(searchTerm);
+                    card.style.display = isVisible ? 'flex' : 'none';
                     
-                    // Create or update preview label
-                    let previewLabel = this.parentElement.querySelector('.file-preview');
-                    if (!previewLabel) {
-                        previewLabel = document.createElement('div');
-                        previewLabel.className = 'file-preview';
-                        previewLabel.style.fontSize = '0.8rem';
-                        previewLabel.style.color = 'var(--primary-green)';
-                        previewLabel.style.marginTop = '0.5rem';
-                        this.parentElement.appendChild(previewLabel);
+                    if (isVisible) {
+                        card.style.animation = 'none';
+                        setTimeout(() => {
+                            card.style.animation = 'slideIn 0.3s ease';
+                        }, 10);
                     }
-                    previewLabel.textContent = `Tanlangan: ${fileName}`;
                 });
+                
+                // Show empty state if no results
+                const visibleCards = Array.from(cards).filter(card => card.style.display !== 'none');
+                if (visibleCards.length === 0 && searchTerm) {
+                    showEmptySearchState(searchTerm);
+                }
             });
-        });
+        }
 
-        // Form submission confirmation
-        document.querySelectorAll('.delivery-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                // Validate car number
-                const carNumber = this.querySelector('input[name="car_number"]').value;
-                if (!carNumber.trim()) {
-                    e.preventDefault();
-                    alert('Iltimos, mashina raqamini kiriting!');
-                    return false;
-                }
-                
-                // Check if at least one image is selected
-                const imageInputs = this.querySelectorAll('input[type="file"]');
-                let hasImage = false;
-                imageInputs.forEach(input => {
-                    if (input.files && input.files[0]) {
-                        hasImage = true;
-                    }
+        // Filter functionality
+        function setupFilters() {
+            const statusFilter = document.getElementById('statusFilter');
+            const sortFilter = document.getElementById('sortFilter');
+            
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    filterOrders(this.value);
                 });
+            }
+            
+            if (sortFilter) {
+                sortFilter.addEventListener('change', function() {
+                    sortOrders(this.value);
+                });
+            }
+        }
+
+        function filterOrders(filter) {
+            const cards = document.querySelectorAll('.order-card');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            
+            // Update active button
+            filterButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(filter.charAt(0).toUpperCase() + filter.slice(1))) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            cards.forEach(card => {
+                let shouldShow = true;
                 
-                if (!hasImage) {
-                    if (!confirm('Hech qanday rasm tanlanmadi. Rasm siz ham davom etasizmi?')) {
-                        e.preventDefault();
-                        return false;
-                    }
+                switch(filter) {
+                    case 'pending':
+                        shouldShow = card.classList.contains('pending');
+                        break;
+                    case 'delivered':
+                        shouldShow = card.classList.contains('delivered');
+                        break;
+                    case 'urgent':
+                        // Add urgent logic based on your data
+                        const orderId = card.dataset.id;
+                        shouldShow = orderId % 3 === 0; // Example: every 3rd order is urgent
+                        break;
+                    case 'today':
+                        // Add today logic based on your data
+                        shouldShow = true; // Implement actual logic
+                        break;
                 }
                 
-                return true;
+                card.style.display = shouldShow ? 'flex' : 'none';
+                
+                if (shouldShow) {
+                    card.style.animation = 'none';
+                    setTimeout(() => {
+                        card.style.animation = 'slideIn 0.3s ease';
+                    }, 10);
+                }
             });
+        }
+
+        function sortOrders(sortBy) {
+            const grid = document.getElementById('ordersGrid');
+            const cards = Array.from(document.querySelectorAll('.order-card'));
+            
+            cards.sort((a, b) => {
+                switch(sortBy) {
+                    case 'newest':
+                        return b.dataset.id - a.dataset.id;
+                    case 'oldest':
+                        return a.dataset.id - b.dataset.id;
+                    case 'priority':
+                        // Add priority sorting logic
+                        const aPriority = a.classList.contains('pending') ? 1 : 0;
+                        const bPriority = b.classList.contains('pending') ? 1 : 0;
+                        return bPriority - aPriority;
+                    default:
+                        return 0;
+                }
+            });
+            
+            // Reorder cards in the grid
+            cards.forEach(card => grid.appendChild(card));
+            
+            // Re-animate
+            setTimeout(animateCards, 100);
+        }
+
+        // Check for urgent orders
+        
+
+        // Form submission
+        function prepareSubmit(orderId) {
+            const form = document.getElementById(`form-${orderId}`);
+            if (!form) return;
+            
+            // Validate required fields
+            const carNumber = form.querySelector('input[name="car_number"]');
+            const deliveryNote = form.querySelector('input[name="delivery_note"]');
+            
+            if (!carNumber.value.trim()) {
+                carNumber.focus();
+                carNumber.style.borderColor = 'var(--error-red)';
+                showNotification('Iltimos, mashina raqamini kiriting', 'error');
+                return;
+            }
+            
+            // Check image uploads
+            const imageInputs = form.querySelectorAll('input[type="file"]');
+            let hasImages = false;
+            imageInputs.forEach(input => {
+                if (input.files && input.files[0]) {
+                    hasImages = true;
+                }
+            });
+            
+            if (!hasImages) {
+                if (confirm('Hech qanday rasm yuklanmadi. Davom etishni istaysizmi?')) {
+                    document.getElementById(`submit-${orderId}`).click();
+                }
+            } else {
+                document.getElementById(`submit-${orderId}`).click();
+            }
+        }
+
+        function confirmDelivery(form) {
+            const formData = new FormData(form);
+            const carNumber = formData.get('car_number');
+            
+            return confirm(`"${carNumber}" raqamli mashinaga yuklashni tasdiqlaysizmi?\n\nUshbu amalni bekor qilib bo'lmaydi.`);
+        }
+
+        // Image preview
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (!preview) return;
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.innerHTML = `
+                        <div style="margin-top: 0.5rem; padding: 0.5rem; background: white; border-radius: var(--radius-md); border: 1px solid var(--neutral-300);">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <i class="fas fa-image" style="color: var(--primary-green);"></i>
+                                <span style="font-size: 0.75rem; font-weight: 600; color: var(--neutral-700);">
+                                    ${input.files[0].name}
+                                </span>
+                            </div>
+                            <img src="${e.target.result}" style="width: 100%; height: 80px; object-fit: cover; border-radius: var(--radius-sm);">
+                        </div>
+                    `;
+                    preview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `message message-${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+                <button class="message-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            const container = document.querySelector('.messages-container') || document.querySelector('.container-modern');
+            container.prepend(notification);
+            
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        // Quick actions
+        function refreshPage() {
+            showLoading();
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        function showHelp() {
+            showNotification('Yordam: Yuklash jarayoni uchun transport raqamini va manzilni kiriting, iltimos rasmlarni ham yuklang.', 'info');
+        }
+
+        function toggleUserMenu() {
+            // Implement user menu toggle if needed
+            showNotification('Foydalanuvchi menyusi yaqinda ishga tushadi', 'info');
+        }
+
+        function closeMessage(messageId) {
+            const message = document.getElementById(messageId);
+            if (message) {
+                message.style.opacity = '0';
+                message.style.transform = 'translateY(-10px)';
+                setTimeout(() => message.remove(), 300);
+            }
+        }
+
+        // Empty search state
+        function showEmptySearchState(searchTerm) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = `
+                <div class="empty-state-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h2 class="empty-state-title">Natija topilmadi</h2>
+                <p class="empty-state-description">
+                    "<strong>${searchTerm}</strong>" bo'yicha natija topilmadi. 
+                    Boshqa kalit so'zlar bilan qayta urinib ko'ring.
+                </p>
+                <button class="empty-state-action" onclick="clearSearch()">
+                    <i class="fas fa-times"></i> Qidiruvni tozalash
+                </button>
+            `;
+            
+            const grid = document.getElementById('ordersGrid');
+            grid.innerHTML = '';
+            grid.appendChild(emptyState);
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            window.location.reload();
+        }
+
+        // Page load animation
+        window.addEventListener('load', () => {
+            setTimeout(hideLoading, 500);
         });
     </script>
 {% endblock %}
