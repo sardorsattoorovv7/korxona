@@ -54,7 +54,11 @@ urlpatterns = [
 
     # Duplicate yo'llar olib tashlandi, lekin quyidagilar qoldirildi
     # path('worker-report/', views.worker_activity_report_view, name='worker_activity_report'),
+    path('driver/dashboard/', views.driver_dashboard, name='driver_dashboard'),
     
+    # Koordinatalarni fonda qabul qilish (POST so'rovlar uchun)
+    path('track-location/', views.track_location, name='track_location'),
+    path('archive/', views.order_archive, name='order_archive'),
     # EKSPORT YO'LI
     path('worker-report/export-csv/', views.export_worker_activity_csv, name='export_worker_activity_csv'),
     path('material_report/', views.material_sarfi_report, name='material_report'),
