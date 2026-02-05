@@ -2874,56 +2874,6 @@
     </div>
 
     <script>
-        // Scroll pozitsiyasini saqlash va tiklash
-        let scrollPosition = 0;
-        
-        // Sahifa yuklanayotganda scroll pozitsiyasini saqlab qolish
-        window.addEventListener('beforeunload', function() {
-            scrollPosition = window.scrollY || document.documentElement.scrollTop;
-            localStorage.setItem('orderListScrollPos', scrollPosition);
-        });
-        
-        // Sahifa yuklanganda scroll pozitsiyasini tiklash
-        window.addEventListener('load', function() {
-            const savedPosition = localStorage.getItem('orderListScrollPos');
-            if (savedPosition) {
-                setTimeout(() => {
-                    window.scrollTo({
-                        top: parseInt(savedPosition),
-                        behavior: 'auto'
-                    });
-                    localStorage.removeItem('orderListScrollPos');
-                }, 50); // 50ms kutish, DOM to'liq yuklanishini kutish uchun
-            }
-            
-            // Filter parametrlari mavjud bo'lsa, to'g'ri joyga o'tish
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('filter')) {
-                setTimeout(() => {
-                    const ordersSection = document.querySelector('.orders-section');
-                    if (ordersSection) {
-                        window.scrollTo({
-                            top: ordersSection.offsetTop - 20,
-                            behavior: 'smooth'
-                        });
-                    }
-                }, 100);
-            }
-            
-            // Anchor link bosilganda to'g'ri joyga o'tish
-            if (window.location.hash === '#child-orders') {
-                setTimeout(() => {
-                    const childOrdersSection = document.getElementById('child-orders');
-                    if (childOrdersSection) {
-                        window.scrollTo({
-                            top: childOrdersSection.offsetTop - 100,
-                            behavior: 'smooth'
-                        });
-                    }
-                }, 150);
-            }
-        });
-        
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -2937,9 +2887,6 @@
                         top: targetElement.offsetTop - 100,
                         behavior: 'smooth'
                     });
-                    
-                    // URL manzilini o'zgartirish
-                    history.pushState(null, null, targetId);
                 }
             });
         });
@@ -2968,15 +2915,6 @@
                     }
                 });
             }
-            
-            // Filter tab bosilganda scroll pozitsiyasini saqlash
-            document.querySelectorAll('.filter-tab, .nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    if (this.href.includes('filter=')) {
-                        localStorage.setItem('filterClick', 'true');
-                    }
-                });
-            });
         });
 
         // Confirmation for delete actions
@@ -2987,28 +2925,5 @@
                 }
             });
         });
-        
-        // Filter parametrlari mavjud bo'lsa, tabni belgilash
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const filter = urlParams.get('filter');
-            
-            if (filter) {
-                const filterTabs = document.querySelectorAll('.filter-tab');
-                filterTabs.forEach(tab => {
-                    if (tab.getAttribute('href').includes(`filter=${filter}`)) {
-                        tab.classList.add('active');
-                    } else {
-                        tab.classList.remove('active');
-                    }
-                });
-            }
-        });
-        
-        // Refresh bo'lganda animatsiyani oldini olish
-        if (performance.navigation.type === 1) {
-            // Bu refresh bo'lganda
-            document.body.style.animation = 'none';
-        }
     </script>
 {% endblock %}
