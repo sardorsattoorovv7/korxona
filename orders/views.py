@@ -228,12 +228,18 @@ def order_list(request):
 
     # Filtr parametri
     filter_type = request.GET.get('filter', 'all')  # all, completed, in_progress, overdue
-    
+    # 1. Avval barcha faol (bitmagan) buyurtmalarni bazaviy filtrlab olamiz
+    base_qs = Order.objects.exclude(status__in=['BAJARILDI', 'USTA_TUGATDI', 'TAYYOR'])
+
+    # 2. Arxivdagilar sonini alohida hisoblaymiz
+    archived_count = Order.objects.filter(
+        status__in=['BAJARILDI', 'USTA_TUGATDI', 'TAYYOR']
+    ).count()
     # ASOSIY BUYURTMALAR (parent_order=None)
-    main_orders = Order.objects.filter(parent_order__isnull=True).order_by('-created_at')
+    main_orders = base_qs.filter(parent_order__isnull=True).order_by('-created_at')
     
     # CHILD BUYURTMALAR - PANEL va UGUL
-    all_child_orders = Order.objects.filter(parent_order__isnull=False).order_by('-created_at')
+    all_child_orders = base_qs.filter(parent_order__isnull=False).order_by('-created_at')
     
     # Panel child orderlar (product_name ichida "panel" so'zi borlar)
     panel_child_orders = all_child_orders.filter(
@@ -260,7 +266,7 @@ def order_list(request):
     )
     
     # Hammasini vaqt bo'yicha ko'rsatadi (asosiy va child birlashtirilgan)
-    orders = Order.objects.all().order_by('-created_at')
+    orders = base_qs.all().order_by('-created_at')
     customers_count = Order.objects.values('customer_unique_id').distinct().count()
     # Filtrlash
     now = timezone.now()
@@ -434,7 +440,11 @@ def order_list(request):
         is_worker, 
         is_observer
     ])
+
+
+    
     context = {
+        'archived_count': archived_count, # Shuni qo'shing
         'orders': orders,
         'unpaid_orders_count': unpaid_orders_count,
         'total_unpaid_amount': total_unpaid_amount,
@@ -465,6 +475,53 @@ def order_list(request):
         'can_view_orders': can_view_orders,
     }
     return render(request, 'orders/order_list.html', context)
+
+
+
+from django.db.models import Q
+
+@login_required
+def order_archive(request):
+    search_query = request.GET.get('q', '')
+    
+    # Arxiv statuslari
+    archive_statuses = ['BAJARILDI', 'USTA_TUGATDI', 'TAYYOR']
+    
+    # Asosiy buyurtmalar
+    main_orders = Order.objects.filter(
+        parent_order__isnull=True, 
+        status__in=archive_statuses
+    ).order_by('-created_at')
+    
+    # Ichki buyurtmalar
+    child_orders = Order.objects.filter(
+        parent_order__isnull=False, 
+        status__in=archive_statuses
+    ).order_by('-created_at')
+
+    # Agar qidiruv bo'lsa
+    if search_query:
+        main_orders = main_orders.filter(
+            Q(id__icontains=search_query) |
+            Q(customer_name__icontains=search_query) |
+            Q(product_name__icontains=search_query)
+        )
+        child_orders = child_orders.filter(
+            Q(id__icontains=search_query) |
+            Q(product_name__icontains=search_query)
+        )
+
+    context = {
+        'main_orders': main_orders,
+        'child_orders': child_orders,
+        'search_query': search_query,
+    }
+    return render(request, 'orders/order_archive.html', context)
+
+
+
+
+
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -823,7 +880,7 @@ def guard_patrol_view(request):
         ("05:00", "05:20"),
         ("12:00", "12:20"),  # ⚠️ sizda 12:30-12:20 xato edi
         ("14:00", "14:20"),
-        ("18:00", "18:20"),
+        ("17:30", "18:20"),
         ("22:00", "22:20"),
     ]
 
@@ -1090,6 +1147,8 @@ def order_worker_start(request, pk):
         messages.warning(request, f"Ishni boshlash uchun buyurtma 'Usta Qabul Qildi' statusida bo'lishi kerak.")
         
     return redirect('order_list')
+
+
 @login_required
 @user_passes_test(lambda u: is_in_group(u, 'Usta') or u.is_superuser, login_url='/login/')
 def order_worker_finish(request, pk):
