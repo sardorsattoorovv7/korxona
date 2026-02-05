@@ -1,0 +1,644 @@
+{% extends "orders/base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header Section -->
+    <div class="archive-header d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="h3 font-weight-bold text-dark mb-2">
+                <i class="fas fa-archive text-primary me-2"></i>Batafsil Arxiv
+            </h1>
+            <p class="text-muted mb-0">Tugatilgan buyurtmalar tarixi</p>
+        </div>
+        <a href="{% url 'order_list' %}" class="btn btn-light btn-lg px-4 shadow-sm d-flex align-items-center">
+            <i class="fas fa-arrow-left me-2"></i> Orqaga
+        </a>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="card search-card border-0 shadow-lg mb-5">
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-10">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0 ps-0" 
+                               placeholder="Buyurtma ID, mijoz ismi, panel turi yoki o'lcham bo'yicha qidiruv..." 
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary btn-lg w-100 shadow-sm d-flex align-items-center justify-content-center" 
+                            type="submit">
+                        <i class="fas fa-search me-2"></i> Qidirish
+                    </button>
+                </div>
+            </form>
+            
+           
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="archive-tabs mb-5">
+        <div class="d-flex border-bottom">
+            <button class="tab-btn active flex-grow-1 py-3" data-tab="parent-content">
+                <div class="d-flex flex-column align-items-center">
+                    <span class="h5 mb-1">Asosiy Buyurtmalar</span>
+                    <span class="badge bg-primary rounded-pill px-3">{{ main_orders.count }}</span>
+                </div>
+            </button>
+            <button class="tab-btn flex-grow-1 py-3" data-tab="child-content">
+                <div class="d-flex flex-column align-items-center">
+                    <span class="h5 mb-1">Ichki Detallar</span>
+                    <span class="badge bg-success rounded-pill px-3">{{ child_orders.count }}</span>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Orders Tab Content -->
+    <div class="tab-content" id="parent-content" style="display: block;">
+        {% if main_orders %}
+        <div class="row g-4">
+            {% for order in main_orders %}
+            <div class="col-xxl-4 col-xl-6 col-lg-6 mb-4">
+                <div class="archive-card card border-0 shadow-sm h-100">
+                    <!-- Card Header -->
+                    <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center py-3 border-0 rounded-top">
+                        <div class="d-flex align-items-center">
+                            <span class="order-id bg-white text-dark px-3 py-1 rounded-pill fw-bold">#{{ order.id }}</span>
+                            <div class="ms-3">
+                                <div class="small">Buyurtma raqami</div>
+                                <strong>{{ order.order_number }}</strong>
+                            </div>
+                        </div>
+                        <span class="status-badge badge {% if order.status == 'Tugatildi' %}bg-success{% else %}bg-warning{% endif %} px-3 py-2">
+                            {{ order.status }}
+                        </span>
+                    </div>
+                    
+                    <!-- Card Body -->
+                    <div class="card-body p-4">
+                        <!-- Customer Info -->
+                        <div class="customer-section mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="customer-icon bg-light-primary rounded-circle p-3 me-3">
+                                    <i class="fas fa-user text-primary fa-lg"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1 fw-bold">{{ order.customer_name }}</h5>
+                                    <p class="text-muted mb-0 small">Mijoz</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product Details -->
+                        <div class="product-card bg-light rounded-3 p-4 mb-4">
+                            <h6 class="fw-bold text-dark mb-3 border-bottom pb-2 d-flex align-items-center">
+                                <i class="fas fa-cube me-2 text-primary"></i>
+                                {{ order.product_name }}
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="spec-item">
+                                        <span class="text-muted small">Balandligi</span>
+                                        <div class="fw-bold">{{ order.balandligi|default:"-" }} cm</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="spec-item">
+                                        <span class="text-muted small">Eni</span>
+                                        <div class="fw-bold">{{ order.eni|default:"-" }} cm</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="spec-item">
+                                        <span class="text-muted small">Qalinligi</span>
+                                        <div class="fw-bold">{{ order.panel_thickness|default:"-" }} mm</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="spec-item">
+                                        <span class="text-muted small">Kvadrat</span>
+                                        <div class="fw-bold text-primary">{{ order.panel_kvadrat|default:"0" }} m²</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Info -->
+                        <div class="payment-card bg-light-success rounded-3 p-4 mb-4">
+                            <div class="row align-items-center">
+                                <div class="col-8">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-money-bill-wave text-success fa-lg me-3"></i>
+                                        <div>
+                                            <div class="text-muted small">Umumiy narx</div>
+                                            <h4 class="fw-bold text-success mb-0">{{ order.total_price }} usd</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4 text-end">
+                                    <div class="text-muted small">Avans</div>
+                                    <div class="fw-bold">{{ order.prepayment }} usd</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Details -->
+                        <div class="details-grid mb-4">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="detail-item">
+                                        <i class="fas fa-door-open text-primary me-2"></i>
+                                        <span class="small">{{ order.eshik_turi|default:"-" }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="detail-item">
+                                        <i class="fas fa-compass text-primary me-2"></i>
+                                        <span class="small">{{ order.eshik_yonalishi|default:"-" }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="detail-item">
+                                        <i class="fas fa-lock text-primary me-2"></i>
+                                        <span class="small">Zamok: {% if order.zamokli_eshik %}Ha{% else %}Yo'q{% endif %}</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="detail-item">
+                                        <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                        <span class="small">{{ order.deadline|date:"d.m.Y" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline -->
+                        <div class="timeline-section border-top pt-4">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="timeline-item">
+                                        <div class="timeline-icon bg-light-primary rounded-circle p-2 mb-2 mx-auto">
+                                            <i class="fas fa-plus text-primary"></i>
+                                        </div>
+                                        <div class="small text-muted">Yaratildi</div>
+                                        <div class="fw-bold">{{ order.created_at|date:"d.m.Y" }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="timeline-item position-relative">
+                                        <div class="timeline-line position-absolute"></div>
+                                        <div class="timeline-icon bg-light-warning rounded-circle p-2 mb-2 mx-auto">
+                                            <i class="fas fa-cogs text-warning"></i>
+                                        </div>
+                                        <div class="small text-muted">Ishlandi</div>
+                                        <div class="fw-bold">{{ order.created_at|date:"d.m.Y" }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="timeline-item">
+                                        <div class="timeline-icon bg-light-success rounded-circle p-2 mb-2 mx-auto">
+                                            <i class="fas fa-check text-success"></i>
+                                        </div>
+                                        <div class="small text-muted">Tugatildi</div>
+                                        <div class="fw-bold text-success">{{ order.worker_finished_at|date:"d.m.Y" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Footer -->
+                    <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            {% if order.pdf_file %}
+                            <a href="{{ order.pdf_file.url }}" class="btn btn-outline-danger btn-sm px-4" target="_blank">
+                                <i class="fas fa-file-pdf me-2"></i>PDF ko'rish
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">
+                                <i class="fas fa-file me-1"></i> PDF fayl mavjud emas
+                            </span>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm px-4 view-details-btn" data-order-id="{{ order.id }}">
+                            <i class="fas fa-eye me-2"></i>Batafsil
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state text-center py-5 my-5">
+            <div class="empty-icon bg-light rounded-circle p-5 d-inline-block mb-4">
+                <i class="fas fa-archive fa-3x text-muted"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-3">Arxivda ma'lumot topilmadi</h4>
+            <p class="text-muted mb-4">Siz qidirgan so'z bo'yicha hech narsa topilmadi yoki arxiv bo'sh</p>
+            <a href="?" class="btn btn-primary px-5">
+                <i class="fas fa-redo me-2"></i>Filtrlarni tozalash
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Child Orders Tab Content -->
+    <div class="tab-content" id="child-content" style="display: none;">
+        {% if child_orders %}
+        <div class="row g-4">
+            {% for child in child_orders %}
+            <div class="col-xxl-3 col-xl-4 col-lg-6 mb-4">
+                <div class="child-card card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <!-- Header -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="badge bg-info rounded-pill px-3 py-2 fw-bold">#{{ child.id }}</span>
+                                <div class="small text-muted mt-1">Ichki detallar</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-light text-dark border px-3 py-2">
+                                    <i class="fas fa-link me-1"></i> #{{ child.parent_order_id }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Product Info -->
+                        <h6 class="fw-bold text-dark mb-3">{{ child.product_name }}</h6>
+                        
+                        <!-- Status -->
+                        <div class="status-indicator mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="status-dot bg-success rounded-circle me-2"></div>
+                                <span class="fw-bold text-success">{{ child.status }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Worker Comment -->
+                        <div class="comment-card bg-light rounded-3 p-3 mb-4">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-comment-dots text-primary mt-1 me-2"></i>
+                                <div>
+                                    <div class="small text-muted mb-1">Usta izohi</div>
+                                    <p class="mb-0">{{ child.worker_comment|default:"Izoh yo'q" }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Completion Info -->
+                        <div class="completion-info border-top pt-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="small text-muted">Tugatilgan vaqt</div>
+                                    <div class="fw-bold">{{ child.worker_finished_at|date:"d.m.Y" }}</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="small text-muted">Soat</div>
+                                    <div class="fw-bold">{{ child.worker_finished_at|date:"H:i" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state text-center py-5 my-5">
+            <div class="empty-icon bg-light rounded-circle p-5 d-inline-block mb-4">
+                <i class="fas fa-cogs fa-3x text-muted"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-3">Ichki detallar topilmadi</h4>
+            <p class="text-muted mb-4">Tugatilgan ichki detallar arxivi bo'sh</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if main_orders.has_other_pages or child_orders.has_other_pages %}
+    <nav class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if main_orders.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ main_orders.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for i in main_orders.paginator.page_range %}
+            <li class="page-item {% if main_orders.number == i %}active{% endif %}">
+                <a class="page-link" href="?page={{ i }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ i }}</a>
+            </li>
+            {% endfor %}
+            
+            {% if main_orders.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ main_orders.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3a0ca3;
+        --success-color: #4cc9f0;
+        --light-primary: #e9ecef;
+        --light-success: #d1f7ff;
+        --border-radius: 16px;
+    }
+
+    /* Header Styles */
+    .archive-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        border-left: 5px solid var(--primary-color);
+    }
+
+    /* Search Card */
+    .search-card {
+        border-radius: var(--border-radius);
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+        border: 1px solid #e0e7ff;
+    }
+
+    /* Tab Navigation */
+    .tab-btn {
+        background: none;
+        border: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        color: #6c757d;
+    }
+
+    .tab-btn.active {
+        color: var(--primary-color);
+    }
+
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-color);
+        border-radius: 2px 2px 0 0;
+    }
+
+    .tab-btn:hover:not(.active) {
+        background-color: #f8f9ff;
+        color: var(--secondary-color);
+    }
+
+    /* Archive Card */
+    .archive-card {
+        border-radius: var(--border-radius);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+    }
+
+    .archive-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(67, 97, 238, 0.15) !important;
+        border-color: var(--primary-color);
+    }
+
+    .archive-card .card-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    }
+
+    /* Child Card */
+    .child-card {
+        border-radius: var(--border-radius);
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .child-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        border-color: var(--success-color);
+    }
+
+    /* Spec Items */
+    .spec-item {
+        padding: 0.5rem;
+        background: white;
+        border-radius: 10px;
+        border: 1px solid #f1f3f4;
+    }
+
+    /* Timeline */
+    .timeline-section {
+        position: relative;
+    }
+
+    .timeline-line {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #dee2e6 50%, transparent 50%);
+        background-size: 20px 2px;
+        transform: translateY(-50%);
+        z-index: 0;
+    }
+
+    .timeline-item {
+        position: relative;
+        z-index: 1;
+    }
+
+    .timeline-icon {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Empty State */
+    .empty-state {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .empty-icon {
+        width: 150px;
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Detail Items */
+    .detail-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #f1f3f4;
+    }
+
+    /* Payment Card */
+    .payment-card {
+        border-left: 4px solid #4cc9f0;
+    }
+
+    .product-card {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    /* Comment Card */
+    .comment-card {
+        border-left: 4px solid #7209b7;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+
+    /* Order ID */
+    .order-id {
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+    }
+
+    /* Customer Icon */
+    .customer-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Status Dot */
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .archive-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+        
+        .tab-btn {
+            padding: 1rem 0.5rem;
+        }
+        
+        .timeline-line {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab Switching
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all tabs
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.style.display = 'none');
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Show corresponding content
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).style.display = 'block';
+            });
+        });
+
+        // View Details Button
+        const viewDetailsBtns = document.querySelectorAll('.view-details-btn');
+        viewDetailsBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const orderId = this.getAttribute('data-order-id');
+                // Add your modal or page navigation logic here
+                alert(`Buyurtma #${orderId} batafsil ma'lumotlari ochiladi`);
+            });
+        });
+
+        // Search input focus effect
+        const searchInput = document.querySelector('input[name="q"]');
+        if (searchInput) {
+            searchInput.addEventListener('focus', function() {
+                this.parentElement.parentElement.style.boxShadow = '0 0 0 3px rgba(67, 97, 238, 0.2)';
+            });
+            
+            searchInput.addEventListener('blur', function() {
+                this.parentElement.parentElement.style.boxShadow = 'none';
+            });
+        }
+
+        // Card hover effects
+        const cards = document.querySelectorAll('.archive-card, .child-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                const header = this.querySelector('.card-header');
+                if (header) {
+                    header.style.background = 'linear-gradient(135deg, #3a0ca3 0%, #4361ee 100%)';
+                }
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                const header = this.querySelector('.card-header');
+                if (header) {
+                    header.style.background = 'linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)';
+                }
+            });
+        });
+
+        // Quick filter functionality
+        const quickFilters = document.querySelectorAll('.badge.bg-light');
+        quickFilters.forEach(filter => {
+            filter.addEventListener('click', function(e) {
+                e.preventDefault();
+                quickFilters.forEach(f => f.classList.remove('bg-primary', 'text-white'));
+                this.classList.add('bg-primary', 'text-white');
+                
+                // Add your filter logic here
+                const filterText = this.textContent.trim();
+                alert(`"${filterText}" bo'yicha filtr qo'llaniladi`);
+            });
+        });
+    });
+</script>
+{% endblock %}
