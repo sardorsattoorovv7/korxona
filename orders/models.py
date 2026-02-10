@@ -514,3 +514,13 @@ class TripPoint(models.Model):
     is_stop = models.BooleanField(default=False) # Bu to'xtash nuqtasi (B nuqta)
     stop_duration = models.DurationField(null=True, blank=True) # Qancha kutgani
     timestamp = models.DateTimeField(auto_now_add=True)
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product_name = models.CharField(max_length=100) # Стеновой, Кровельный, Дверь
+    product_type = models.CharField(max_length=50)  # F1..F8 yoki 80mm, 100mm
+    length = models.FloatField(default=0)
+    quantity = models.IntegerField(default=0)
+    area = models.FloatField(default=0)
+    price = models.FloatField(default=0)
+    total_sum = models.FloatField(default=0)
