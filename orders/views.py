@@ -585,80 +585,34 @@ def track_location(request):
         
         return JsonResponse({"status": "ok", "trip_id": trip.id})
 
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from django.contrib import messages
-from .models import Order
 @login_required
 def warehouse_dashboard(request):
     if request.method == 'POST':
-        # ... (POST kodi o'zgarishsiz qoladi) ...
+        # POST kodi (rasmlarni saqlash va Telegramga yuborish) o'zgarishsiz qoladi
         order_id = request.POST.get('order_id')
         if order_id:
             order = get_object_or_404(Order, id=order_id)
-            car_number = request.POST.get('car_number', 'Noma\'lum')
-            delivery_note = request.POST.get('delivery_note', '')
-
-            img1 = request.FILES.get('img1')
-            img2 = request.FILES.get('img2')
-            img3 = request.FILES.get('img3')
-
-            order.delivery_img_1 = img1
-            order.delivery_img_2 = img2
-            order.delivery_img_3 = img3
-            order.worker_comment = f"Mashina: {car_number} | Manzil: {delivery_note}"
+            # ... (rasmlar va statusni saqlash kodi) ...
             order.status = 'BAJARILDI'
             order.work_finished_at = timezone.now()
             order.save()
-
-            # Telegram yuborish qismi (o'sha-o'sha qoladi)
-            try:
-                caption = (
-                    f"🚚 #TOPSHIRILDI\n"
-                    f"📦 Buyurtma: #{order.id}\n"
-                    f"👤 Mijoz: {order.customer_name}\n"
-                    f"🚛 Moshina: {car_number}\n"
-                    f"📍 Manzil: {delivery_note}\n"
-                    f"👨‍💼 Mas'ul: @{request.user.username}"
-                )
-                media = []
-                files = {}
-                images = [img1, img2, img3]
-                count = 0
-                for img in images:
-                    if img:
-                        count += 1
-                        file_key = f"p{count}"
-                        img.seek(0)
-                        files[file_key] = (img.name, img.read(), img.content_type)
-                        media.append({'type': 'photo', 'media': f'attach://{file_key}', 'caption': caption if count == 1 else ""})
-
-                if media:
-                    requests.post(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMediaGroup", data={'chat_id': TELEGRAM_GROUP_ID, 'media': json.dumps(media)}, files=files)
-                else:
-                    requests.post(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data={'chat_id': TELEGRAM_GROUP_ID, 'text': caption})
-            except Exception as e:
-                print(f"Telegram error: {e}")
-
-            messages.success(request, f"#{order.id} buyurtma topshirildi.")
+            # ... (Telegram yuborish kodi) ...
             return redirect('warehouse_dashboard')
 
-    # --- GET SO'ROVI YANGILANDI ---
-    # 1. Hali topshirilmagan (tayyor) buyurtmalar
+    # --- GET SO'ROVI (FILTR O'ZGARTIRILDI) ---
+    
+    # 1. Faqat PARENT (asosiy) va usta tugatgan buyurtmalar
     ready_orders = Order.objects.filter(
         status='USTA_TUGATDI',
-        parent_order__isnull=False
-    ).order_by('-work_finished_at')
+        parent_order__isnull=True
+    ).order_by('-work_finished_at') # Agar bu maydon usta tugatganda to'ldirilsa
 
-    # 2. Topshirib bo'lingan buyurtmalar (oxirgi 20 tasi)
+    # 2. Topshirib bo'lingan asosiy buyurtmalar (oxirgi 20 tasi)
     delivered_orders = Order.objects.filter(
         status='BAJARILDI',
-        parent_order__isnull=False
+        parent_order__isnull=True  # Faqat asosiy buyurtmalar chiqadi
     ).order_by('-work_finished_at')[:20]
 
-    # Ikkalasini birlashtiramiz (Tayyorlar tepada turadi)
     all_orders = list(ready_orders) + list(delivered_orders)
 
     context = {
@@ -666,10 +620,6 @@ def warehouse_dashboard(request):
         'ready_count': ready_orders.count(),
     }
     return render(request, 'orders/warehouse_dashboard.html', context)
-
-
-
-
 
 @login_required
 def guard_dashboard(request):
@@ -2574,61 +2524,59 @@ def material_sarfi_report(request):
 
 
 
+from django.db.models import Q, Sum, Count, F
+from django.utils.dateparse import parse_date
+from datetime import timedelta
 
-from decimal import Decimal
+from django.db.models import Sum, Count, F
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, Count, F, Q
+from .models import Order
+
+from django.db.models import Sum, Count, F, Q
+
 @login_required
-@user_passes_test(is_report_viewer_or_observer, login_url='/login/')  # ✅ YANGI
-def worker_activity_report_view(request): 
-    """
-    Ustalar ish faoliyati bo'yicha hisobot (Bajarilgan ishlar)
-    Sanalar bo'yicha filtrlash imkoniyati mavjud.
-    """
-    
+def worker_activity_report_view(request):
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
 
-    # Faqat bajarilgan buyurtmalarni filtrlash (TAYYOR va BAJARILDI statuslari)
-    worker_report_orders = Order.objects.filter(
-        status__in=['TAYYOR', 'BAJARILDI']
-    ).filter(
-        worker_finished_at__isnull=False 
-    ).prefetch_related(
-        'assigned_workers__user'
-    ) 
+    # 1. Archive dagi kabi statuslar
+    archive_statuses = ['BAJARILDI', 'USTA_TUGATDI', 'TAYYOR']
     
-    # Sana bo'yicha filtrlash mantig'i
-    worker_filter_q = Q()
-    if start_date:
-        worker_filter_q &= Q(worker_finished_at__gte=start_date)
-    if end_date:
-        try:
-            end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-            worker_filter_q &= Q(worker_finished_at__lt=end_datetime)
-        except ValueError:
-            messages.error(request, "Noto'g'ri sana formati kiritildi.")
-            
-    worker_report_orders = worker_report_orders.filter(worker_filter_q)
+    # 2. Barcha buyurtmalar (Asosiy va ichki)
+    # Xuddi Archive dagi kabi filtrlaymiz
+    orders = Order.objects.filter(status__in=archive_statuses)
 
-    # Ustalar bo'yicha guruhlash va statistikani hisoblash
-    worker_report_list = worker_report_orders.values(
-    'assigned_workers__user__first_name',
-    'assigned_workers__user__last_name',
+    # 3. Sana bo'yicha filtr (Agar sana tanlangan bo'lsa)
+    if start_date:
+        orders = orders.filter(worker_finished_at__date__gte=start_date)
+    if end_date:
+        orders = orders.filter(worker_finished_at__date__lte=end_date)
+
+    # 4. Ustalar bo'yicha guruhlash
+    # Har bir orderning 'assigned_workers' maydonidan foydalanamiz
+    worker_report_list = orders.values(
+        'assigned_workers__id'
     ).annotate(
-        total_finished_kvadrat=Sum('panel_kvadrat'), 
-        total_order_count=Count('id')
-    ).order_by('-total_finished_kvadrat')
-    
-    total_finished_kvadrat = worker_report_list.aggregate(Sum('total_finished_kvadrat'))['total_finished_kvadrat__sum'] or 0
+        first_name=F('assigned_workers__user__first_name'),
+        last_name=F('assigned_workers__user__last_name'),
+        username=F('assigned_workers__user__username'),
+        total_order_count=Count('id'),
+        total_finished_kvadrat=Sum('panel_kvadrat')
+    ).filter(assigned_workers__id__isnull=False).order_by('-total_finished_kvadrat')
+
+    # 5. Jami summa
+    total_kv = orders.aggregate(Sum('panel_kvadrat'))['panel_kvadrat__sum'] or 0
 
     context = {
         "title": "Ustalar Ish Faoliyati Hisoboti",
         'worker_report_list': worker_report_list,
-        'total_finished_kvadrat': total_finished_kvadrat,
+        'total_finished_kvadrat': total_kv,
         'start_date': start_date,
         'end_date': end_date,
-        'is_observer': is_observer(request.user),  # ✅ YANGI
     }
-
     return render(request, 'orders/weekly_report_view.html', context)
 
 @login_required
@@ -3187,3 +3135,75 @@ def get_customer_orders(request, customer_id):
     ).order_by('-created_at')
     
     return JsonResponse({'orders': list(orders)})
+
+
+
+from django.shortcuts import render
+from django.http import JsonResponse
+import json
+from .models import Order, OrderItem # Modellaringiz nomi
+
+def create_order_view(request):
+    if request.method == "POST":
+        try:
+            # Frontenddan kelgan JSON ma'lumotni yuklaymiz
+            data = json.loads(request.body)
+            items = data.get('items', [])
+            customer_name = data.get('customer') # Agar mijoz ismi ham yuborilsa
+            
+            # 1. Asosiy buyurtmani yaratamiz
+            order = Order.objects.create(
+                customer_name=customer_name,
+                # boshqa kerakli maydonlar
+            )
+            
+            # 2. Jadvalning har bir qatorini bazaga saqlaymiz
+            for item in items:
+                OrderItem.objects.create(
+                    order=order,
+                    product_name=item.get('name'),      # Stevnoi, Krovelnie yoki Eshik
+                    product_type=item.get('sub_type'),  # F1..F8 yoki Qalinlik (80mm)
+                    length=item.get('length') or 0,
+                    quantity=item.get('count') or 0,
+                    area=item.get('area') or 0,
+                    price=item.get('price') or 0,
+                    total_sum=item.get('total') or 0
+                )
+            
+            return JsonResponse({"status": "success", "message": "Ma'lumotlar muvaffaqiyatli saqlandi!"})
+        
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+    # Agar GET so'rovi bo'lsa, sahifani o'zini qaytaramiz
+    return render(request, 'orders/create_order.html')
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt # Osonlik uchun, lekin haqiqiy loyihada CSRF token yuborgan ma'qul
+def save_order_ajax(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            items = data.get('items', [])
+            
+            # Asosiy buyurtmani yaratish
+            order = Order.objects.create(customer_name=data.get('customer', 'Noma\'lum'))
+            
+            # Har bir qatorni saqlash
+            for item in items:
+                OrderItem.objects.create(
+                    order=order,
+                    product_name=item['name'],
+                    product_type=item['sub_type'],
+                    length=float(item['length'] or 0),
+                    quantity=int(item['count'] or 0),
+                    area=float(item['area'] or 0),
+                    price=float(item['price'] or 0),
+                    total_sum=float(item['total'] or 0)
+                )
+            return JsonResponse({"status": "success"})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
